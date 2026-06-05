@@ -21,8 +21,10 @@ fi
 # Resolve PowerShell 7 (pwsh). Fall back to the Windows Store install path.
 PWSH="$(command -v pwsh || true)"
 if [ -z "$PWSH" ] && [ -n "$LOCALAPPDATA" ]; then
-    CAND="$LOCALAPPDATA/Microsoft/WindowsApps/pwsh.exe"
-    if [ -f "$CAND" ]; then
+    # $LOCALAPPDATA arrives with backslashes under Git Bash; normalize to '/'.
+    LAD="$(printf '%s' "$LOCALAPPDATA" | tr '\\' '/')"
+    CAND="$LAD/Microsoft/WindowsApps/pwsh.exe"
+    if [ -e "$CAND" ]; then
         PWSH="$CAND"
     fi
 fi

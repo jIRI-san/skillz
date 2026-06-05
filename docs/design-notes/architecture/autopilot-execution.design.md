@@ -133,7 +133,8 @@ Classic PATs (`ghp_*`) are **not supported** by Copilot CLI — a fine-grained P
 ```json
 {
   "runtime": "container",
-  "copilotAuth": "pat",
+  "planPath": "docs/implementation-plans/002-plugin-registry/plan.md",
+  "copilotAuth": { "credentialTarget": "copilot-autopilot" },
   "gitProvider": "github",
   "gitAuth": "pat-shared",
   "model": "gpt-5.3-codex",
@@ -146,11 +147,12 @@ Classic PATs (`ghp_*`) are **not supported** by Copilot CLI — a fine-grained P
 ```
 
 Key fields:
-- `runtime`: `host`, `container`, or `sandbox`
-- `copilotAuth`: `pat` (Credential Manager) or `oauth`
+- `runtime`: `host` or `container` (`sandbox` is documented but out of scope for the current build)
+- `planPath`: repo-relative, traversal-free `.md` path to the plan being executed
+- `copilotAuth`: `{ credentialTarget }` — Windows Credential Manager target holding the PAT
 - `gitProvider`: `github` or `ado`
 - `gitAuth`: `pat-shared`, `oauth`, or `azure-cli`
-- `build`/`test`: Must match allowlist prefixes (validated by schema and launch.ps1)
+- `build`/`test`: Coarse-filtered by schema (launcher allowlist + no shell metacharacters); authoritative argv tokenization + flag denylist enforced in `launch.ps1`
 - `timeout`: Minutes per phase before force-kill
 - `maxIterationsPerStep`: Fix-retry cap
 

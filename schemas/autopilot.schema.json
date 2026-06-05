@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://github.com/skillz/schemas/autopilot.schema.json",
   "title": "Autopilot execution configuration",
-  "description": "Schema for .autopilot.json. The build/test command pattern is the trusted-command policy boundary: it lives here (not in agent-editable config) so an autopilot run cannot widen its own command policy. Targets JSON Schema draft-07 to match Test-Json capabilities in PowerShell 7.",
+  "description": "Schema for .autopilot.json. The build/test command pattern is a COARSE first-line filter (launcher allowlist + no shell metacharacters); the authoritative trusted-command enforcement — argv tokenization, a flag denylist (e.g. pwsh/powershell -EncodedCommand/-Command, npx, pip install), and PATH hardening — lives in scripts/autopilot/launch.ps1 OUTSIDE the agent-editable config, so an autopilot run cannot widen its own command policy. Targets JSON Schema draft-07 to match Test-Json capabilities in PowerShell 7.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -31,20 +31,20 @@
     "planPath": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^[^;&|$`<>(){}\\r\\n]+$",
-      "description": "Repo-relative path to the plan.md the autopilot run executes."
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+\\.md\\z",
+      "description": "Repo-relative path to the plan.md the autopilot run executes. Must be traversal-free (no '..'), contain no absolute/drive prefix or shell metacharacters, and end in .md. The launcher canonicalizes it against the repo root."
     },
     "build": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\\r\\n]*)?$",
-      "description": "Build command. Must begin with a trusted launcher and contain no shell metacharacters; executed as argv with no shell."
+      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\"'%\\r\\n]*)?\\z",
+      "description": "Build command. Coarse filter: must begin with a trusted launcher and contain no shell metacharacters; executed as argv with no shell. Authoritative flag-denylist + argv tokenization run in launch.ps1."
     },
     "test": {
       "type": "string",
       "minLength": 1,
-      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\\r\\n]*)?$",
-      "description": "Test command. Same trusted-launcher + no-metacharacter policy as build."
+      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\"'%\\r\\n]*)?\\z",
+      "description": "Test command. Same trusted-launcher + no-metacharacter coarse filter as build; authoritative checks run in launch.ps1."
     },
     "timeout": {
       "type": "integer",
