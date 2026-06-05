@@ -1,7 +1,7 @@
 ---
 description: "Full code reviewer (GPT Codex) — comprehensive review across all aspects. Invoked by cr agent only."
 name: "cr-codex"
-model: GPT-5.3-Codex (copilot)
+model: GPT-5.5 (copilot)
 tools: [read, search]
 user-invocable: false
 agents: []

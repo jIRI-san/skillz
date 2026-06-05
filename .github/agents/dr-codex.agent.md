@@ -1,7 +1,7 @@
 ---
 description: "Full design plan reviewer (GPT Codex) — comprehensive review across all aspects. Invoked by dr agent only."
 name: "dr-codex"
-model: GPT-5.3-Codex (copilot)
+model: GPT-5.5 (copilot)
 tools: [read, search]
 user-invocable: false
 agents: []
