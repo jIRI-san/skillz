@@ -150,7 +150,7 @@
 - [x] 3.1 `scripts/skillz/Build-Registry.ps1`: scan `plugins/*/plugin.json` → generate `registry.json` (incl. **per-file sha256**, reserved `evals` summary, `status`); generate the pinned bootstrap one-liner ref; stable ordering; idempotent (REQ-3, REQ-16, RISK-7, RISK-13) [after: 2.2] `M`
 - [x] 3.2 Extend `Build-Registry.ps1` to (re)generate the README catalog table between markers from `registry.json`; idempotent (REQ-3, RISK-7) [after: 3.1] `M`
 - [x] 3.3 `scripts/skillz/Test-Registry.ps1`: enforce name+description, semver, dependency resolution (missing+cyclic), **registry-wide dest uniqueness**, registry↔disk drift, **embedded sha256 match**, full-path-resolution dest guard (reject `..`/absolute/UNC/drive-relative/ADS), README↔registry match; `status:partial` exempt from file-existence failure; warn-only evals-present check (REQ-13, REQ-14, REQ-16, RISK-3, RISK-6, RISK-7, RISK-12) [after: 3.2] `L`
-- [ ] 3.4 `scripts/skillz/Sync-Dogfood.ps1`: regenerate `.github/` dogfood copies from authoritative `plugins/` sources; idempotent; convergence makes the drift-check pass (REQ-22, RISK-1) [after: 3.1] `M`
+- [x] 3.4 `scripts/skillz/Sync-Dogfood.ps1`: regenerate `.github/` dogfood copies from authoritative `plugins/` sources; idempotent; convergence makes the drift-check pass (REQ-22, RISK-1) [after: 3.1] `M`
 
 ## Phase 4: Install + Dependency Resolution
 

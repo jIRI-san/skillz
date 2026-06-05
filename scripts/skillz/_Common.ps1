@@ -96,6 +96,55 @@ function Resolve-GithubConstrainedPath {
     return $candidate
 }
 
+function Resolve-PluginConstrainedPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$PluginRoot,
+
+        [Parameter(Mandatory)]
+        [string]$RelativePath
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RelativePath)) {
+        throw 'Source path is empty.'
+    }
+
+    if ($RelativePath.StartsWith('/') -or $RelativePath.StartsWith('\')) {
+        throw "Source path '$RelativePath' must be relative."
+    }
+
+    if ($RelativePath -match '^[A-Za-z]:') {
+        throw "Source path '$RelativePath' cannot be drive-relative or absolute."
+    }
+
+    if ($RelativePath -match '\\\\') {
+        throw "Source path '$RelativePath' cannot be UNC."
+    }
+
+    if ($RelativePath.Contains(':')) {
+        throw "Source path '$RelativePath' cannot contain ':'."
+    }
+
+    $segments = ($RelativePath -replace '\\', '/').Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
+    foreach ($segment in $segments) {
+        if ($segment -eq '..') {
+            throw "Source path '$RelativePath' cannot traverse parent directories."
+        }
+    }
+
+    $normalizedRoot = [System.IO.Path]::GetFullPath($PluginRoot)
+    $normalizedRelativePath = ($RelativePath -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+    $candidate = [System.IO.Path]::GetFullPath((Join-Path $normalizedRoot $normalizedRelativePath))
+    $separator = [System.IO.Path]::DirectorySeparatorChar
+    $rootWithSeparator = $normalizedRoot.TrimEnd($separator) + $separator
+    if (-not $candidate.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Source path '$RelativePath' resolves outside plugin root '$normalizedRoot'."
+    }
+
+    return $candidate
+}
+
 function Get-FileSha256 {
     [CmdletBinding()]
     param(

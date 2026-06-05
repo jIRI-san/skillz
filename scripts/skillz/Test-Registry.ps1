@@ -90,50 +90,6 @@ function Get-PluginStatus {
     return 'stable'
 }
 
-function Resolve-PluginSourcePath {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [string]$PluginRoot,
-
-        [Parameter(Mandatory)]
-        [string]$RelativePath
-    )
-
-    if ([string]::IsNullOrWhiteSpace($RelativePath)) {
-        throw 'Source path is empty.'
-    }
-    if ($RelativePath.StartsWith('/') -or $RelativePath.StartsWith('\')) {
-        throw "Source path '$RelativePath' must be relative."
-    }
-    if ($RelativePath -match '^[A-Za-z]:') {
-        throw "Source path '$RelativePath' cannot be drive-relative or absolute."
-    }
-    if ($RelativePath -match '\\\\') {
-        throw "Source path '$RelativePath' cannot be UNC."
-    }
-    if ($RelativePath.Contains(':')) {
-        throw "Source path '$RelativePath' cannot contain ':'."
-    }
-
-    $segments = ($RelativePath -replace '\\', '/').Split('/', [System.StringSplitOptions]::RemoveEmptyEntries)
-    foreach ($segment in $segments) {
-        if ($segment -eq '..') {
-            throw "Source path '$RelativePath' cannot traverse parent directories."
-        }
-    }
-
-    $normalizedRoot = [System.IO.Path]::GetFullPath($PluginRoot)
-    $candidate = [System.IO.Path]::GetFullPath((Join-Path $normalizedRoot ($RelativePath -replace '/', [System.IO.Path]::DirectorySeparatorChar)))
-    $separator = [System.IO.Path]::DirectorySeparatorChar
-    $rootWithSeparator = $normalizedRoot.TrimEnd($separator) + $separator
-    if (-not $candidate.StartsWith($rootWithSeparator, [System.StringComparison]::OrdinalIgnoreCase)) {
-        throw "Source path '$RelativePath' resolves outside plugin root '$normalizedRoot'."
-    }
-
-    return $candidate
-}
-
 function Test-DependencyCycles {
     [CmdletBinding()]
     param(
@@ -244,24 +200,27 @@ foreach ($plugin in $registryPlugins) {
 
     foreach ($file in @($plugin.files)) {
         $dest = [string]$file.dest
+        $resolvedDest = $null
         if (-not (Test-GithubRelativePath -RelativePath $dest)) {
             Add-RegistryError -Errors $errors -Message "Plugin '$name' has invalid destination path '$dest'."
         }
         else {
             try {
-                [void](Resolve-GithubConstrainedPath -RepoRoot $repoRootPath -RelativePath $dest)
+                $resolvedDest = Resolve-GithubConstrainedPath -RepoRoot $repoRootPath -RelativePath $dest
             }
             catch {
                 Add-RegistryError -Errors $errors -Message "Plugin '$name' destination '$dest' fails confinement guard: $($_.Exception.Message)"
             }
         }
 
-        $destKey = ($dest -replace '\\', '/').ToLowerInvariant()
-        if ($destOwner.ContainsKey($destKey) -and $destOwner[$destKey] -ne $name) {
-            Add-RegistryError -Errors $errors -Message "Destination collision: '$dest' used by '$name' and '$($destOwner[$destKey])'."
-        }
-        else {
-            $destOwner[$destKey] = $name
+        if (-not [string]::IsNullOrWhiteSpace($resolvedDest)) {
+            $destKey = ([System.IO.Path]::GetFullPath($resolvedDest)).ToLowerInvariant()
+            if ($destOwner.ContainsKey($destKey) -and $destOwner[$destKey] -ne $name) {
+                Add-RegistryError -Errors $errors -Message "Destination collision: '$dest' used by '$name' and '$($destOwner[$destKey])'."
+            }
+            else {
+                $destOwner[$destKey] = $name
+            }
         }
 
         $sha = [string]$file.sha256
@@ -346,7 +305,7 @@ foreach ($plugin in $registryPlugins) {
     foreach ($registryFile in @($plugin.files)) {
         $sourcePath = $null
         try {
-            $sourcePath = Resolve-PluginSourcePath -PluginRoot $pluginRoot -RelativePath ([string]$registryFile.src)
+            $sourcePath = Resolve-PluginConstrainedPath -PluginRoot $pluginRoot -RelativePath ([string]$registryFile.src)
         }
         catch {
             Add-RegistryError -Errors $errors -Message "Plugin '$name' source '$($registryFile.src)' fails source guard: $($_.Exception.Message)"
