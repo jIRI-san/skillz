@@ -1,0 +1,19 @@
+{
+  "$schema": "./schemas/autopilot.schema.json",
+  "runtime": "container",
+  "planPath": "docs/implementation-plans/002-plugin-registry/plan.md",
+  "build": "pwsh -NoProfile -File scripts/skillz/Build-Registry.ps1",
+  "test": "pwsh -NoProfile -File scripts/skillz/Test-Registry.ps1",
+  "timeout": 60,
+  "maxIterationsPerStep": 5,
+  "copilotAuth": {
+    "credentialTarget": "copilot-autopilot"
+  },
+  "gitProvider": "github",
+  "gitAuth": "pat-shared",
+  "model": "gpt-5.3-codex",
+  "git": {
+    "name": "autopilot",
+    "email": "autopilot@users.noreply.github.com"
+  }
+}
