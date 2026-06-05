@@ -113,4 +113,4 @@ All three subagents perform a **comprehensive review** across every important di
 - [x] 1.3 Step title (done)
 ```
 
-See [autopilot-execution.design.md](../autopilot-execution.design.md) for the autonomous (host/container/sandbox) execution infrastructure that backs the `ci` skill's autopilot modes.
+See [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the autonomous (host/container/sandbox) execution infrastructure that backs the `ci` skill's autopilot modes.
