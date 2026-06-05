@@ -21,6 +21,8 @@ echo "=== Autopilot Container Entry-Point ==="
 echo "Plan: ${PLAN_SLUG}"
 echo "Mode: ${MODE}"
 echo "Branch: ${BRANCH}"
+echo "Model: ${COPILOT_MODEL:-<CLI default>}"
+echo "Copilot CLI: $(copilot --version 2>/dev/null || echo 'unknown')"
 
 # --- Git credential setup ---
 gh auth setup-git
@@ -86,7 +88,18 @@ for PHASE_NUM in $(seq 1 "${PHASE_COUNT}"); do
 
     TRANSCRIPT="session-transcript-phase${PHASE_NUM}.md"
 
+    # Pass --model explicitly when set so model selection is deterministic
+    # (not just implied by COPILOT_MODEL) and visible in logs.
+    MODEL_ARGS=()
+    if [ -n "${COPILOT_MODEL:-}" ]; then
+        MODEL_ARGS=(--model "${COPILOT_MODEL}")
+        echo "Invoking Copilot CLI with model: ${COPILOT_MODEL}"
+    else
+        echo "Invoking Copilot CLI with CLI default model (COPILOT_MODEL unset)"
+    fi
+
     copilot -p "Execute ${PLAN_PATH}, phase ${PHASE_NUM}" \
+        "${MODEL_ARGS[@]}" \
         --agent autopilot \
         --no-ask-user \
         --share="./${TRANSCRIPT}" \

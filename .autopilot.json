@@ -5,7 +5,7 @@
   "copilotAuth": "pat",
   "gitProvider": "github",
   "gitAuth": "pat-shared",
-  "model": "gpt-5.3-codex",
+  "model": "claude-opus-4.8",
   "git": {
     "name": "jIRI-san",
     "email": "jiri@jiribrossmann.com"
