@@ -133,9 +133,80 @@ function Get-ComparableJson {
     return (ConvertTo-SortedObject -InputObject $InputObject | ConvertTo-Json -Depth 100 -Compress)
 }
 
+function New-ReadmeCatalogTable {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $Registry
+    )
+
+    $lines = @(
+        '| Plugin | Version | Status | Dependencies | Files | Description |',
+        '|--------|---------|--------|--------------|-------|-------------|'
+    )
+
+    foreach ($plugin in ($Registry.plugins | Sort-Object name)) {
+        $deps = if ($plugin.dependencies.Count -gt 0) { ($plugin.dependencies -join ', ') } else { '—' }
+        $status = if ([string]::IsNullOrWhiteSpace($plugin.status)) { 'stable' } else { $plugin.status }
+        $fileCount = @($plugin.files).Count
+        $description = ([string]$plugin.description).Replace('|', '\|')
+        $lines += "| ``$($plugin.name)`` | $($plugin.version) | $status | $deps | $fileCount | $description |"
+    }
+
+    return ($lines -join "`n")
+}
+
+function Update-ReadmeCatalog {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ReadmePath,
+
+        [Parameter(Mandatory)]
+        $Registry
+    )
+
+    $beginMarker = '<!-- BEGIN SKILLZ PLUGIN CATALOG -->'
+    $endMarker = '<!-- END SKILLZ PLUGIN CATALOG -->'
+    $catalogTable = New-ReadmeCatalogTable -Registry $Registry
+    $catalogBlock = @(
+        $beginMarker,
+        $catalogTable,
+        $endMarker
+    ) -join "`n"
+
+    $readmeContent = if (Test-Path -LiteralPath $ReadmePath -PathType Leaf) {
+        Get-Content -LiteralPath $ReadmePath -Raw
+    }
+    else {
+        "# skillz`n"
+    }
+
+    if ($readmeContent.Contains($beginMarker) -and $readmeContent.Contains($endMarker)) {
+        $escapedBegin = [regex]::Escape($beginMarker)
+        $escapedEnd = [regex]::Escape($endMarker)
+        $pattern = "(?s)$escapedBegin.*?$escapedEnd"
+        $updated = [regex]::Replace($readmeContent, $pattern, $catalogBlock, 1)
+    }
+    else {
+        $section = @(
+            '',
+            '## Plugin Catalog',
+            '',
+            $catalogBlock
+        ) -join "`n"
+        $updated = $readmeContent.TrimEnd("`r", "`n") + $section + "`n"
+    }
+
+    if ($updated -ne $readmeContent) {
+        Set-Content -LiteralPath $ReadmePath -Value $updated -Encoding utf8
+    }
+}
+
 $repoRootPath = Resolve-RepoRoot -StartPath $RepoRoot
 $pluginsRoot = Join-Path $repoRootPath 'plugins'
 $registryPath = Join-Path $repoRootPath 'registry.json'
+$readmePath = Join-Path $repoRootPath 'README.md'
 
 if (-not (Test-Path -LiteralPath $pluginsRoot -PathType Container)) {
     throw "Plugins directory not found: $pluginsRoot"
@@ -186,6 +257,7 @@ $registry = [pscustomobject]@{
 }
 
 Write-JsonFileStable -Path $registryPath -InputObject $registry
+Update-ReadmeCatalog -ReadmePath $readmePath -Registry (Read-JsonFile -Path $registryPath)
 Write-Host "Generated registry at '$registryPath' with $($pluginEntries.Count) plugin(s)."
 Write-Host "Bootstrap ref: $bootstrapRef"
 
