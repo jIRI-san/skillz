@@ -226,17 +226,27 @@ foreach ($manifestPath in $manifestPaths) {
 }
 $pluginEntries = @($pluginEntries | Sort-Object name)
 
-$bootstrapRef = Resolve-BootstrapRef
+$existingRegistry = $null
+if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
+    $existingRegistry = Read-JsonFile -Path $registryPath
+}
+
+$bootstrapRef = $null
+if ($null -ne $existingRegistry -and
+    $existingRegistry.PSObject.Properties.Name -contains 'bootstrap' -and
+    $null -ne $existingRegistry.bootstrap -and
+    $existingRegistry.bootstrap.PSObject.Properties.Name -contains 'ref' -and
+    -not [string]::IsNullOrWhiteSpace([string]$existingRegistry.bootstrap.ref)) {
+    $bootstrapRef = [string]$existingRegistry.bootstrap.ref
+}
+else {
+    $bootstrapRef = Resolve-BootstrapRef
+}
 $bootstrap = New-BootstrapMetadata -Ref $bootstrapRef
 
 $registryBody = [pscustomobject]@{
     bootstrap = $bootstrap
     plugins = $pluginEntries
-}
-
-$existingRegistry = $null
-if (Test-Path -LiteralPath $registryPath -PathType Leaf) {
-    $existingRegistry = Read-JsonFile -Path $registryPath
 }
 
 $generatedAt = (Get-Date).ToUniversalTime().ToString('o')
