@@ -1,0 +1,37 @@
+#!/usr/bin/env sh
+# skillz pre-commit hook — runs the local validation gate before each commit.
+#
+# Enable once per clone:
+#   git config core.hooksPath .githooks
+#
+# The gate (scripts/autopilot/validate-local.ps1) runs PSScriptAnalyzer + Pester
+# + schema self-check + entrypoint shell lint. There is intentionally NO GitHub
+# Actions workflow for autopilot — this hook plus the gate script are the
+# pre-commit / pre-merge enforcement point.
+
+set -e
+
+GATE="scripts/autopilot/validate-local.ps1"
+
+# The gate is added in a later step of plan 001; skip cleanly until it exists.
+if [ ! -f "$GATE" ]; then
+    exit 0
+fi
+
+# Resolve PowerShell 7 (pwsh). Fall back to the Windows Store install path.
+PWSH="$(command -v pwsh || true)"
+if [ -z "$PWSH" ] && [ -n "$LOCALAPPDATA" ]; then
+    CAND="$LOCALAPPDATA/Microsoft/WindowsApps/pwsh.exe"
+    if [ -f "$CAND" ]; then
+        PWSH="$CAND"
+    fi
+fi
+
+if [ -z "$PWSH" ]; then
+    echo "pre-commit: pwsh (PowerShell 7+) not found; cannot run validation gate." >&2
+    echo "pre-commit: install PowerShell 7 or run '$GATE' manually before pushing." >&2
+    exit 1
+fi
+
+echo "pre-commit: running local validation gate ($GATE)…"
+"$PWSH" -NoProfile -File "$GATE"
