@@ -226,7 +226,7 @@ function ConvertTo-SortedObject {
         return [pscustomobject]$ordered
     }
 
-    if ($InputObject -is [pscustomobject]) {
+    if ($InputObject -is [pscustomobject] -and -not ($InputObject -is [string])) {
         $ordered = [ordered]@{}
         foreach ($property in ($InputObject.PSObject.Properties.Name | Sort-Object)) {
             $ordered[$property] = ConvertTo-SortedObject -InputObject $InputObject.$property
@@ -239,7 +239,7 @@ function ConvertTo-SortedObject {
         foreach ($item in $InputObject) {
             $items += , (ConvertTo-SortedObject -InputObject $item)
         }
-        return , $items
+        return , ([object[]]$items)
     }
 
     return $InputObject
@@ -273,5 +273,4 @@ function Write-JsonFileStable {
     $json = $sorted | ConvertTo-Json -Depth 100
     Set-Content -LiteralPath $Path -Value "$json`n" -Encoding utf8
 }
-
 
