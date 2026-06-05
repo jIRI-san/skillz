@@ -67,7 +67,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [x] 1.1 Add `.autopilot.json` at repo root using the **design-note shape**: `runtime`, `build` + `test` (single strings), `timeout`, `planPath`, `copilotAuth.{credentialTarget}`, `gitProvider`, `gitAuth`, `model`, `git.{name,email}`, `maxIterationsPerStep`, `mode` default (REQ-1) `S`
-- [ ] 1.2 Add `schemas/autopilot.schema.json` (**JSON Schema draft-07**): required keys, `enum` for `mode` (`host`|`container`), `additionalProperties:false`, and **`pattern` constraints encoding the trusted build/test command prefixes** (policy lives here, not in the agent-editable config) (REQ-1, RISK-5, RISK-8) `M`
+- [x] 1.2 Add `schemas/autopilot.schema.json` (**JSON Schema draft-07**): required keys, `enum` for `mode` (`host`|`container`), `additionalProperties:false`, and **`pattern` constraints encoding the trusted build/test command prefixes** (policy lives here, not in the agent-editable config) (REQ-1, RISK-5, RISK-8) `M`
 - [ ] 1.3 Add `.editorconfig` (`*.ps1`/`*.json`) + repo-root `PSScriptAnalyzerSettings.psd1`; add a pre-commit hook invoking `validate-local.ps1` (REQ-13) `S`
 
 ## Phase 2: Dispatch Core + Auth + Agent

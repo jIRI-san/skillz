@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/skillz/schemas/autopilot.schema.json",
+  "title": "Autopilot execution configuration",
+  "description": "Schema for .autopilot.json. The build/test command pattern is the trusted-command policy boundary: it lives here (not in agent-editable config) so an autopilot run cannot widen its own command policy. Targets JSON Schema draft-07 to match Test-Json capabilities in PowerShell 7.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "runtime",
+    "planPath",
+    "build",
+    "test",
+    "timeout",
+    "maxIterationsPerStep",
+    "copilotAuth",
+    "gitProvider",
+    "gitAuth",
+    "model",
+    "git"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional editor association; ignored at runtime."
+    },
+    "runtime": {
+      "type": "string",
+      "enum": ["host", "container"],
+      "description": "Execution mode. 'sandbox' is out of scope for this plan. The launcher -Mode parameter overrides this default."
+    },
+    "planPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[^;&|$`<>(){}\\r\\n]+$",
+      "description": "Repo-relative path to the plan.md the autopilot run executes."
+    },
+    "build": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\\r\\n]*)?$",
+      "description": "Build command. Must begin with a trusted launcher and contain no shell metacharacters; executed as argv with no shell."
+    },
+    "test": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\\r\\n]*)?$",
+      "description": "Test command. Same trusted-launcher + no-metacharacter policy as build."
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1440,
+      "description": "Per-phase timeout in minutes before force-kill."
+    },
+    "maxIterationsPerStep": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "description": "Fix-retry cap per step to bound in-phase churn."
+    },
+    "copilotAuth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["credentialTarget"],
+      "properties": {
+        "credentialTarget": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Windows Credential Manager target name holding the fine-grained PAT."
+        }
+      }
+    },
+    "gitProvider": {
+      "type": "string",
+      "enum": ["github", "ado"]
+    },
+    "gitAuth": {
+      "type": "string",
+      "enum": ["pat-shared", "oauth", "azure-cli"]
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Copilot CLI model identifier."
+    },
+    "git": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "email"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "email": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}
