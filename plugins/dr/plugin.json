@@ -1,0 +1,41 @@
+{
+  "name": "dr",
+  "version": "1.0.0",
+  "description": "Design review orchestrator with specialist model agents.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "design-review",
+    "agent",
+    "prompt"
+  ],
+  "dependencies": [],
+  "status": "stable",
+  "files": [
+    {
+      "src": "prompts/dr.prompt.md",
+      "dest": "prompts/dr.prompt.md"
+    },
+    {
+      "src": "agents/dr.agent.md",
+      "dest": "agents/dr.agent.md"
+    },
+    {
+      "src": "agents/dr-opus.agent.md",
+      "dest": "agents/dr-opus.agent.md"
+    },
+    {
+      "src": "agents/dr-codex.agent.md",
+      "dest": "agents/dr-codex.agent.md"
+    },
+    {
+      "src": "agents/dr-gemini.agent.md",
+      "dest": "agents/dr-gemini.agent.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}
