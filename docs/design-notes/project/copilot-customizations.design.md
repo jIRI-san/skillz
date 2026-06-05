@@ -81,11 +81,11 @@ All three subagents perform a **comprehensive review** across every important di
 
 **`cip` flow:**
 1. Load all relevant design notes
-2. Locate or create plan folder `docs/implementation-plans/NNN-<slug>/` with `plan.md`
-3. Thorough requirements interview across all dimensions (goals, API surface, error handling, testing, observability, security, performance, migration)
+2. Locate or create plan folder `docs/implementation-plans/NNN-<slug>/` and write `plan.md` to the repo immediately (as soon as the slug is known) so all later passes operate on the in-repo file — avoids VS Code access-control approvals for temporary files
+3. Thorough requirements interview across all dimensions (goals, API surface, error handling, testing, observability, security, performance, migration), refining the repo `plan.md` in place
 4. Draft plan: Decisions log + Requirements table + Risks table + Phases with `[ ]`/`[x]`/`[~]` step markers
-5. Mode-dependent save: agent mode writes the file directly; plan mode uses session memory with handoff offer
-6. Iterative `@dr` review (max 3 rounds) — re-runs if High/Critical findings require significant changes
+5. Keep the in-repo `plan.md` updated each iteration; plan mode hands off to agent mode early to persist (never plan-only-in-session-memory)
+6. Iterative `@dr` review (max 3 rounds) against the in-repo plan file — re-runs if High/Critical findings require significant changes
 
 **`ci` flow:**
 1. Select plan from `docs/implementation-plans/`; load relevant design notes

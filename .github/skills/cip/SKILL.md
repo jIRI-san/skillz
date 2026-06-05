@@ -35,6 +35,15 @@ docs/implementation-plans/NNN-<slug>/
 - **No argument and plan folders exist** → list them with a one-line status summary; ask the user which to work on (or "new").
 - **"new" or no existing plans** → ask for the plan name, derive a kebab-case slug, assign the next sequential number `NNN`, create folder: `docs/implementation-plans/NNN-<slug>/`. The plan file is `docs/implementation-plans/NNN-<slug>/plan.md`.
 
+### Persist to Repo Immediately
+
+As soon as the slug is known (new plan) or the folder is located (resume), **write `plan.md` to the repo** — do not keep the plan in session memory. VS Code access control requires approvals for temporary/out-of-repo files, so every subsequent pass (interview updates, drafting, DR) must operate on the in-repo file path.
+
+- **New plan**: create the folder and write a stub `plan.md` (title + empty template sections from [./assets/plan-template.md](./assets/plan-template.md)) right away. Refine it in place during the interview and drafting.
+- **Resume**: the file already exists; edit it in place.
+
+From this point on, all steps below reference the in-repo path `docs/implementation-plans/NNN-<slug>/plan.md`.
+
 ### Legacy Single-File Migration
 
 If `docs/implementation-plans/` contains loose `.md` files (not inside a folder, excluding `archived/`), these are legacy plans from the old single-file format. Migrate before proceeding:
@@ -186,8 +195,10 @@ Guidelines:
 
 ## Step 5: Save Plan
 
-- **Agent mode** (can write files): write the plan to `docs/implementation-plans/NNN-<slug>/plan.md`; update after each planning iteration. Create the folder if it doesn't exist.
-- **Plan mode** (read-only): maintain the plan content in session memory at `/memories/session/plan.md`; at the end offer a handoff to agent mode to persist to disk.
+The in-repo `plan.md` was created in Step 2 — keep updating it in place after each planning iteration. Never hold the plan only in session memory: VS Code access control requires approvals for temporary files, and DR plus every later pass must run against the in-repo path.
+
+- **Agent mode** (can write files): update `docs/implementation-plans/NNN-<slug>/plan.md` after each iteration.
+- **Plan mode** (read-only): you cannot write the repo file directly — hand off to agent mode to persist to `docs/implementation-plans/NNN-<slug>/plan.md` as early as possible so DR and later passes operate on the repo file, not session memory.
 
 ### Size Limits
 
@@ -224,7 +235,7 @@ Flag overengineering explicitly. Reject findings that optimize for theoretical c
 
 ### Procedure
 
-1. Invoke `@dr` passing the plan file path (or session memory content) **and** the evolution log.
+1. Invoke `@dr` passing the in-repo plan file path (`docs/implementation-plans/NNN-<slug>/plan.md`) **and** the evolution log. DR always reviews the repo file — never session-memory content.
 2. Apply agreed findings; update Decisions section. Append round summary to evolution log.
 3. If `@dr` raised **High** or **Critical** findings requiring substantial plan changes, run another round (up to 3 total).
 4. After round 3, if issues remain:
