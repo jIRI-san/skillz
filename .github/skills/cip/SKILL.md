@@ -236,9 +236,10 @@ Flag overengineering explicitly. Reject findings that optimize for theoretical c
 ### Procedure
 
 1. Invoke `@dr` passing the in-repo plan file path (`docs/implementation-plans/NNN-<slug>/plan.md`) **and** the evolution log. DR always reviews the repo file — never session-memory content.
-2. Apply agreed findings; update Decisions section. Append round summary to evolution log.
-3. If `@dr` raised **High** or **Critical** findings requiring substantial plan changes, run another round (up to 3 total).
-4. After round 3, if issues remain:
+2. **Surface the findings before touching the plan.** Display the full DR report in chat — the complete numbered findings list (title, severity, models, one-line summary) for *every* finding, not just the ones needing a decision. Then state your triage: which findings you'll auto-apply (clear-cut) and which need a user decision. Never silently apply findings; the user must be able to see every issue raised even when no approval is required.
+3. Apply clear-cut findings; for findings that touch an explicit user decision or are ambiguous, ask the user first. Update the Decisions section. Append a round summary to the evolution log.
+4. If `@dr` raised **High** or **Critical** findings requiring substantial plan changes, run another round (up to 3 total).
+5. After round 3, if issues remain:
    - Record them in a "Known Plan Issues" section at the bottom of the plan.
    - Ask: **"3 DR rounds complete. Remaining issues recorded as Known Plan Issues. Continue reviewing or start implementation?"**
    - Only continue past 3 if user explicitly requests more rounds.
