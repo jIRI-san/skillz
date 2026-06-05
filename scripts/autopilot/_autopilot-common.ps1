@@ -37,6 +37,11 @@ $script:TrustedLaunchers = @(
 # Shell metacharacters that must never appear in a build/test command.
 $script:CommandMetacharacters = @(';', '&', '|', '$', '`', '<', '>', '(', ')', '{', '}', '"', "'", '%')
 
+# Sentinel file (repo-root relative) the agent writes to request an @human halt.
+# A markdown agent cannot set the host process exit code, so the orchestrator
+# translates this sentinel into the exit-code-42 contract.
+$script:HumanHaltSentinel = '.autopilot-halt'
+
 function Get-AutopilotExitCode {
     <#
         .SYNOPSIS
@@ -45,6 +50,56 @@ function Get-AutopilotExitCode {
     [CmdletBinding()]
     param()
     return $script:AutopilotExit
+}
+
+function Get-HumanHaltSentinelPath {
+    <#
+        .SYNOPSIS
+            Returns the absolute path to the @human-halt sentinel for a repo/worktree.
+        .PARAMETER RepoRoot
+            Absolute repo/worktree root.
+    #>
+    [CmdletBinding()]
+    [OutputType([string])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot
+    )
+    return (Join-Path $RepoRoot $script:HumanHaltSentinel)
+}
+
+function Resolve-PhaseExitCode {
+    <#
+        .SYNOPSIS
+            Maps a copilot CLI process exit code + halt sentinel to the contract.
+        .DESCRIPTION
+            Contract: 0 = phase complete (advance); 42 = @human halt (not a
+            failure); any other nonzero = failure. If the sentinel file exists it
+            takes precedence and yields 42; the sentinel is consumed (deleted).
+        .PARAMETER RepoRoot
+            Absolute repo/worktree root (where the agent runs and writes sentinel).
+        .PARAMETER ProcessExitCode
+            The exit code returned by the copilot CLI process.
+        .OUTPUTS
+            [int] one of: 0, 42, or the original nonzero process exit code.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory)]
+        [int]$ProcessExitCode
+    )
+    $sentinel = Get-HumanHaltSentinelPath -RepoRoot $RepoRoot
+    if (Test-Path -LiteralPath $sentinel -PathType Leaf) {
+        $reason = (Get-Content -LiteralPath $sentinel -Raw -ErrorAction SilentlyContinue)
+        Write-AutopilotLog "Human-halt sentinel found: $($reason.Trim())" -Level WARN
+        Remove-Item -LiteralPath $sentinel -Force -ErrorAction SilentlyContinue
+        return $script:AutopilotExit.HumanHalt
+    }
+    return $ProcessExitCode
 }
 
 function Protect-Secret {

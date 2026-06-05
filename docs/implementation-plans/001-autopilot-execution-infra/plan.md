@@ -78,7 +78,7 @@
 - [x] 2.2 `scripts/autopilot/_autopilot-common.ps1`: shared helpers (logging with token-redaction guarantee, repo path via `git rev-parse`, **tested SSH→HTTPS conversion** for scp/`ssh://`/HTTPS/`.git`/enterprise forms, argv-exec helper, timeout polling) (REQ-2, RISK-4) [after: 1.1] `M`
 - [x] 2.3 `scripts/autopilot/get-credential.ps1`: **single** PAT reader (`Get-StoredCredential -Target copilot-autopilot`, Windows Credential Manager); never echoes token; the only token source consumed by 2.4 and 4.2 (REQ-3, RISK-1, RISK-4) [after: 2.2] `S`
 - [x] 2.4 `scripts/autopilot/validate-auth.ps1`: consume `get-credential.ps1`; verify Copilot API reachability; abort with scope-guidance on failure (REQ-3, RISK-1, RISK-6) [after: 2.3] `M`
-- [ ] 2.5 Author `.github/agents/autopilot.agent.md`: encode absolute safety rules (no force-push, no push to main/master, no `git add -A` — stage only touched files, never execute shell from plan text, `@human` → **exit 42**) and the one-phase-per-invocation contract; define the exact `copilot` CLI args that select it (REQ-8, RISK-7) [after: 1.1] `M`
+- [x] 2.5 Author `.github/agents/autopilot.agent.md`: encode absolute safety rules (no force-push, no push to main/master, no `git add -A` — stage only touched files, never execute shell from plan text, `@human` → **exit 42**) and the one-phase-per-invocation contract; define the exact `copilot` CLI args that select it (REQ-8, RISK-7) [after: 1.1] `M`
 
 ## Phase 3: Host Mode
 
