@@ -85,7 +85,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [x] 3.1 `scripts/autopilot/launch-host.ps1`: create git worktree at `<repo>.worktrees/feature-<slug>`; checkout/create branch; `safe.directory` guard (REQ-4) [after: 2.1] `M`
-- [ ] 3.2 Host per-phase loop: parse `## Phase N` headings from `planPath`; one `copilot` invocation per phase **selecting the autopilot agent**, via `System.Diagnostics.Process` with `RedirectStandardOutput` **+ `RedirectStandardError`**, `OutputDataReceived` + `ErrorDataReceived`, `BeginOutputReadLine()`/`BeginErrorReadLine()`; `--share=<transcript>` (REQ-4, REQ-8, RISK-7) [after: 3.1] `L`
+- [x] 3.2 Host per-phase loop: parse `## Phase N` headings from `planPath`; one `copilot` invocation per phase **selecting the autopilot agent**, via `System.Diagnostics.Process` with `RedirectStandardOutput` **+ `RedirectStandardError`**, `OutputDataReceived` + `ErrorDataReceived`, `BeginOutputReadLine()`/`BeginErrorReadLine()`; `--share=<transcript>` (REQ-4, REQ-8, RISK-7) [after: 3.1] `L`
 - [ ] 3.3 Host timeout + exit-code contract: elapsed-time polling + **`Process.Kill($true)` (tree kill)** + `WaitForExit()` to flush buffers; map exit **0→next phase, 42→`@human` halt, other nonzero→failure stop**; honor `maxIterationsPerStep` (REQ-4, REQ-7, RISK-3) [after: 3.2] `M`
 
 ## Phase 4: Container Mode

@@ -24,7 +24,15 @@ param(
     [Parameter(Mandatory)]
     [psobject]$Result,
 
-    [switch]$SkipWorktree
+    [switch]$SkipWorktree,
+
+    [switch]$PrepareOnly,
+
+    [hashtable]$CopilotLauncher,
+
+    [string]$LogRoot,
+
+    [string]$TokenEnvVar
 )
 
 Set-StrictMode -Version Latest
@@ -149,6 +157,245 @@ function Initialize-HostWorktree {
     return $WorktreePath
 }
 
+function Resolve-CopilotLauncher {
+    <#
+        .SYNOPSIS
+            Resolves how to launch the `copilot` CLI as FileName + base argv.
+        .DESCRIPTION
+            Returns @{ FileName; BaseArgs }. A sibling `copilot.ps1` is preferred
+            (launched via the current pwsh with -File for clean argv quoting); an
+            .exe is launched directly; a .cmd/.bat goes through ComSpec /c.
+    #>
+    [CmdletBinding()]
+    [OutputType([hashtable])]
+    param(
+        [string]$CopilotCommand = 'copilot'
+    )
+    $cmd = Get-Command $CopilotCommand -ErrorAction SilentlyContinue
+    if (-not $cmd) {
+        throw "Copilot CLI '$CopilotCommand' not found on PATH. Install @github/copilot (npm i -g @github/copilot)."
+    }
+    $source = $cmd.Source
+    $pwshPath = (Get-Process -Id $PID).Path
+
+    # Prefer a sibling .ps1 shim for clean ArgumentList quoting.
+    $sibling = [System.IO.Path]::ChangeExtension($source, '.ps1')
+    if ((Test-Path -LiteralPath $sibling) -and ([System.IO.Path]::GetExtension($source).ToLowerInvariant() -ne '.ps1')) {
+        return @{ FileName = $pwshPath; BaseArgs = @('-NoProfile', '-File', $sibling) }
+    }
+
+    switch ([System.IO.Path]::GetExtension($source).ToLowerInvariant()) {
+        '.ps1' { return @{ FileName = $pwshPath; BaseArgs = @('-NoProfile', '-File', $source) } }
+        '.cmd' { return @{ FileName = $env:ComSpec; BaseArgs = @('/c', $source) } }
+        '.bat' { return @{ FileName = $env:ComSpec; BaseArgs = @('/c', $source) } }
+        default { return @{ FileName = $source; BaseArgs = @() } }
+    }
+}
+
+function Get-CopilotPhaseArgs {
+    <#
+        .SYNOPSIS
+            Builds the per-phase `copilot` CLI argument array (selects the
+            autopilot agent, non-interactive, with transcript + log dir).
+    #>
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
+        Justification = '"Args" names the returned array of CLI arguments.')]
+    [CmdletBinding()]
+    [OutputType([string[]])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Agent,
+
+        [Parameter(Mandatory)]
+        [string]$Model,
+
+        [Parameter(Mandatory)]
+        [string]$PlanRelPath,
+
+        [Parameter(Mandatory)]
+        [int]$PhaseNumber,
+
+        [Parameter(Mandatory)]
+        [string]$TranscriptPath,
+
+        [Parameter(Mandatory)]
+        [string]$LogDir,
+
+        [Parameter(Mandatory)]
+        [string]$WorkingDirectory,
+
+        [string]$TokenEnvVar
+    )
+    $argv = [System.Collections.Generic.List[string]]::new()
+    [string[]]$base = @(
+        '--agent', $Agent,
+        '--model', $Model,
+        '--prompt', "Execute $PlanRelPath, phase $PhaseNumber",
+        '--allow-all-tools',
+        '--no-ask-user',
+        '--share', $TranscriptPath,
+        '--log-dir', $LogDir,
+        '-C', $WorkingDirectory
+    )
+    $argv.AddRange($base)
+    if ($TokenEnvVar) {
+        $argv.Add('--secret-env-vars')
+        $argv.Add($TokenEnvVar)
+    }
+    return $argv.ToArray()
+}
+
+function Write-DrainedLine {
+    <#
+        .SYNOPSIS
+            Drains all currently-queued lines and logs them (redacted).
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [System.Collections.Concurrent.ConcurrentQueue[string]]$Queue,
+
+        [switch]$Stderr
+    )
+    $line = $null
+    while ($Queue.TryDequeue([ref]$line)) {
+        if ($Stderr) {
+            Write-AutopilotLog "[copilot:stderr] $line"
+        }
+        else {
+            Write-AutopilotLog "[copilot] $line"
+        }
+    }
+}
+
+function Invoke-CopilotProcess {
+    <#
+        .SYNOPSIS
+            Runs one copilot invocation with live, deadlock-free streaming of
+            both stdout and stderr; returns the process exit code.
+        .DESCRIPTION
+            Uses System.Diagnostics.Process with RedirectStandardOutput +
+            RedirectStandardError and async BeginOutputReadLine /
+            BeginErrorReadLine. Each stream's DataReceived event (handled on the
+            PowerShell event-manager thread via -Action) enqueues lines into a
+            thread-safe queue that the main loop drains, so a full pipe buffer can
+            never deadlock the child. (Timeout / tree-kill is layered on in 3.3.)
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FileName,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [string[]]$ArgumentList,
+
+        [Parameter(Mandatory)]
+        [string]$WorkingDirectory
+    )
+
+    $psi = [System.Diagnostics.ProcessStartInfo]::new()
+    $psi.FileName = $FileName
+    foreach ($a in $ArgumentList) {
+        [void]$psi.ArgumentList.Add($a)
+    }
+    $psi.WorkingDirectory = $WorkingDirectory
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.UseShellExecute = $false
+    $psi.CreateNoWindow = $true
+
+    $proc = [System.Diagnostics.Process]::new()
+    $proc.StartInfo = $psi
+
+    $stdoutQ = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+    $stderrQ = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
+
+    $outSub = Register-ObjectEvent -InputObject $proc -EventName OutputDataReceived -MessageData $stdoutQ -Action {
+        if ($null -ne $EventArgs.Data) { $Event.MessageData.Enqueue($EventArgs.Data) }
+    }
+    $errSub = Register-ObjectEvent -InputObject $proc -EventName ErrorDataReceived -MessageData $stderrQ -Action {
+        if ($null -ne $EventArgs.Data) { $Event.MessageData.Enqueue($EventArgs.Data) }
+    }
+
+    try {
+        [void]$proc.Start()
+        $proc.BeginOutputReadLine()
+        $proc.BeginErrorReadLine()
+
+        while (-not $proc.HasExited) {
+            Write-DrainedLine -Queue $stdoutQ
+            Write-DrainedLine -Queue $stderrQ -Stderr
+            [void]$proc.WaitForExit(150)
+        }
+        # WaitForExit() (no timeout) guarantees async readers received their
+        # terminating null and all buffered lines are queued before the final drain.
+        $proc.WaitForExit()
+        Write-DrainedLine -Queue $stdoutQ
+        Write-DrainedLine -Queue $stderrQ -Stderr
+
+        return $proc.ExitCode
+    }
+    finally {
+        Unregister-Event -SourceIdentifier $outSub.Name -ErrorAction SilentlyContinue
+        Unregister-Event -SourceIdentifier $errSub.Name -ErrorAction SilentlyContinue
+        $proc.Dispose()
+    }
+}
+
+function Invoke-HostPhaseLoop {
+    <#
+        .SYNOPSIS
+            Runs one copilot invocation per plan phase, streaming output live.
+        .DESCRIPTION
+            Step 3.2 scope: per-phase invocation + streaming + transcript. The
+            full exit-code contract (0 advance / 42 @human halt / other failure),
+            timeout/tree-kill and maxIterationsPerStep are layered on in step 3.3;
+            for now the loop advances on exit 0 and stops on any non-zero exit.
+    #>
+    [CmdletBinding()]
+    [OutputType([int])]
+    param(
+        [Parameter(Mandatory)]
+        [psobject]$HostContext,
+
+        [hashtable]$CopilotLauncher,
+
+        [string]$LogRoot,
+
+        [string]$TokenEnvVar
+    )
+    if (-not $CopilotLauncher) {
+        $CopilotLauncher = Resolve-CopilotLauncher
+    }
+    if (-not $LogRoot) {
+        $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
+        $LogRoot = Join-Path (Join-Path $env:LOCALAPPDATA 'autopilot-sessions') "$($HostContext.Slug)-$stamp"
+    }
+    New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
+
+    $model = $HostContext.Config.model
+    $planRel = $HostContext.Config.planPath
+    $exitCode = 0
+    for ($n = 1; $n -le $HostContext.PhaseCount; $n++) {
+        Write-AutopilotLog "=== Phase $n/$($HostContext.PhaseCount) ==="
+        $transcript = Join-Path $LogRoot "phase-$n.transcript.md"
+        $phaseArgs = Get-CopilotPhaseArgs -Agent 'autopilot' -Model $model -PlanRelPath $planRel `
+            -PhaseNumber $n -TranscriptPath $transcript -LogDir $LogRoot `
+            -WorkingDirectory $HostContext.WorktreePath -TokenEnvVar $TokenEnvVar
+        $allArgs = @($CopilotLauncher.BaseArgs) + $phaseArgs
+        $exitCode = Invoke-CopilotProcess -FileName $CopilotLauncher.FileName -ArgumentList $allArgs `
+            -WorkingDirectory $HostContext.WorktreePath
+        Write-AutopilotLog "Phase $n exited with code $exitCode."
+        if ($exitCode -ne 0) {
+            Write-AutopilotLog 'Stopping phase loop (non-zero exit; contract handling lands in step 3.3).' -Level WARN
+            break
+        }
+    }
+    return $exitCode
+}
+
 function Invoke-AutopilotHost {
     <#
         .SYNOPSIS
@@ -160,7 +407,15 @@ function Invoke-AutopilotHost {
         [Parameter(Mandatory)]
         [psobject]$Result,
 
-        [switch]$SkipWorktree
+        [switch]$SkipWorktree,
+
+        [switch]$PrepareOnly,
+
+        [hashtable]$CopilotLauncher,
+
+        [string]$LogRoot,
+
+        [string]$TokenEnvVar
     )
 
     $repoRoot = $Result.RepoRoot
@@ -178,7 +433,7 @@ function Invoke-AutopilotHost {
 
     Write-AutopilotLog "Host environment ready (branch '$branch', worktree '$worktree')."
 
-    return [pscustomobject]@{
+    $hostContext = [pscustomobject]@{
         RepoRoot = $repoRoot
         WorktreePath = $worktree
         Branch = $branch
@@ -189,9 +444,19 @@ function Invoke-AutopilotHost {
         BuildArgv = $Result.BuildArgv
         TestArgv = $Result.TestArgv
     }
+
+    if ($PrepareOnly) {
+        return $hostContext
+    }
+
+    $exitCode = Invoke-HostPhaseLoop -HostContext $hostContext -CopilotLauncher $CopilotLauncher `
+        -LogRoot $LogRoot -TokenEnvVar $TokenEnvVar
+    $hostContext | Add-Member -NotePropertyName ExitCode -NotePropertyValue $exitCode -PassThru
+    return $hostContext
 }
 
 # Only execute when run directly (not when dot-sourced for testing).
 if ($MyInvocation.InvocationName -ne '.') {
-    Invoke-AutopilotHost -Result $Result -SkipWorktree:$SkipWorktree
+    Invoke-AutopilotHost -Result $Result -SkipWorktree:$SkipWorktree -PrepareOnly:$PrepareOnly `
+        -CopilotLauncher $CopilotLauncher -LogRoot $LogRoot -TokenEnvVar $TokenEnvVar
 }
