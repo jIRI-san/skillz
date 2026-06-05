@@ -75,7 +75,7 @@ function Invoke-AutopilotLaunch {
 
     # --- 3. Canonicalize plan path ------------------------------------------
     $planFile = Resolve-PlanPath -RepoRoot $repoRoot -PlanPath $config.planPath
-    $phases = Get-PlanPhase -PlanFile $planFile
+    $phases = @(Get-PlanPhase -PlanFile $planFile)
     if ($phases.Count -lt 1) {
         throw "Plan has no '## Phase N' headings: $planFile"
     }

@@ -95,7 +95,8 @@ function Resolve-PhaseExitCode {
     $sentinel = Get-HumanHaltSentinelPath -RepoRoot $RepoRoot
     if (Test-Path -LiteralPath $sentinel -PathType Leaf) {
         $reason = (Get-Content -LiteralPath $sentinel -Raw -ErrorAction SilentlyContinue)
-        Write-AutopilotLog "Human-halt sentinel found: $($reason.Trim())" -Level WARN
+        $reasonText = if ([string]::IsNullOrWhiteSpace($reason)) { '(no reason provided)' } else { $reason.Trim() }
+        Write-AutopilotLog "Human-halt sentinel found: $reasonText" -Level WARN
         Remove-Item -LiteralPath $sentinel -Force -ErrorAction SilentlyContinue
         return $script:AutopilotExit.HumanHalt
     }
@@ -205,9 +206,11 @@ function ConvertTo-HttpsRemoteUrl {
         if ([string]::IsNullOrWhiteSpace($u)) {
             throw 'Remote URL is empty.'
         }
-        # Already HTTP(S): return unchanged.
+        # Already HTTP(S): strip any embedded userinfo (user[:secret]@) so a
+        # credential baked into the remote never propagates; the CLI credential
+        # helper supplies auth instead.
         if ($u -match '^https?://') {
-            return $u
+            return ($u -replace '^(https?://)[^/@]+@', '$1')
         }
         # ssh:// form: ssh://[user@]host[:port]/path
         if ($u -match '^ssh://(?:[^@/]+@)?([^:/]+)(?::\d+)?/(.+)$') {
@@ -234,8 +237,12 @@ function Assert-TrustedCommand {
             Authoritative enforcement (the schema is only a coarse first filter):
               * rejects shell metacharacters
               * requires a trusted launcher prefix
-              * applies a flag denylist (pwsh/powershell -EncodedCommand/-e/-Command/-c,
-                npx, pip install, npm install/run) that can execute arbitrary code
+              * applies a flag denylist that can execute arbitrary code:
+                pwsh/powershell -EncodedCommand/-Command (all prefix/alias/colon/
+                slash spellings), node -e/-p, python -c, python -m pip install,
+                npx, pip install, npm install/exec/rebuild family.
+                npm run/test are allowed: they execute project-defined scripts
+                (the trusted-project-code residual), not remote packages.
               * tokenizes into argv with NO shell involvement
             Because the policy forbids quotes, whitespace splitting is unambiguous.
         .PARAMETER Command
@@ -272,27 +279,65 @@ function Assert-TrustedCommand {
         throw "Command launcher '$exe' is not in the trusted allowlist."
     }
 
-    $argline = ($tokens | Select-Object -Skip 1) -join ' '
-    # Flag denylist: forms that turn a trusted launcher into an arbitrary-code engine.
-    $denied = @(
-        '(?i)(^|\s)-e(n(c(o(d(e(d(c(o(m(m(a(n(d)?)?)?)?)?)?)?)?)?)?)?)?)?(\s|$)', # pwsh -e / -EncodedCommand (and prefixes)
-        '(?i)(^|\s)-c(o(m(m(a(n(d)?)?)?)?)?)?(\s|$)'                              # pwsh -c / -Command (and prefixes)
+    $argTokens = @($tokens | Select-Object -Skip 1)
+    # Normalize every flag-shaped token (leading '-' or '/') to its bare,
+    # lower-cased name with any ':value' or '=value' suffix stripped. This is
+    # robust against alias spellings (-ec), colon binding (-Command:x) and the
+    # slash switch char (/c) that a regex-on-the-joined-string would miss.
+    $flagNames = @(
+        foreach ($t in $argTokens) {
+            if ($t -match '^[-/]') {
+                ((($t -replace '^[-/]+', '') -split '[:=]', 2)[0]).ToLowerInvariant()
+            }
+        }
     )
+    # First subcommand = first non-flag argument (used for npm/pip dispatch).
+    $subCommand = @($argTokens | Where-Object { $_ -notmatch '^[-/]' })[0]
+
     if ($exe -in @('pwsh', 'powershell')) {
-        foreach ($d in $denied) {
-            if ($argline -match $d) {
+        # Every prefix PowerShell accepts for -EncodedCommand (e, ec, en, ...) and
+        # -Command (c, co, ...). -ExecutionPolicy normalizes to 'executionpolicy'
+        # and -File to 'file', so neither is affected.
+        $pwshDenied = @(
+            'e', 'ec', 'en', 'enc', 'enco', 'encod', 'encode', 'encoded',
+            'encodedc', 'encodedco', 'encodedcom', 'encodedcomm', 'encodedcomma',
+            'encodedcomman', 'encodedcommand',
+            'c', 'co', 'com', 'comm', 'comma', 'comman', 'command'
+        )
+        foreach ($fn in $flagNames) {
+            if ($pwshDenied -contains $fn) {
                 throw "Command uses a denied PowerShell flag (inline/encoded command execution): $Command"
+            }
+        }
+    }
+    if ($exe -eq 'node') {
+        foreach ($fn in $flagNames) {
+            if ($fn -in @('e', 'eval', 'p', 'print')) {
+                throw "Command uses a denied node inline-eval flag (-e/-p): $Command"
+            }
+        }
+    }
+    if ($exe -in @('python', 'python3')) {
+        if ($flagNames -contains 'c') {
+            throw "Command uses 'python -c' inline code execution; not permitted: $Command"
+        }
+        # python -m pip install <pkg> runs arbitrary setup.py.
+        $mIdx = [array]::IndexOf($argTokens, '-m')
+        if ($mIdx -ge 0) {
+            $afterM = @($argTokens | Select-Object -Skip ($mIdx + 1))
+            if ($afterM.Count -gt 0 -and $afterM[0] -eq 'pip' -and (@($afterM | Select-Object -Skip 1) -contains 'install')) {
+                throw "Command uses 'python -m pip install' (runs arbitrary setup.py); not permitted: $Command"
             }
         }
     }
     if ($exe -eq 'npx') {
         throw "Command uses 'npx' (fetches and runs arbitrary packages); not permitted."
     }
-    if ($exe -eq 'pip' -and $argline -match '(?i)(^|\s)install(\s|$)') {
+    if ($exe -eq 'pip' -and $subCommand -match '(?i)^install$') {
         throw "Command uses 'pip install' (runs arbitrary setup.py); not permitted."
     }
-    if ($exe -eq 'npm' -and $argline -match '(?i)(^|\s)(install|run|exec|i)(\s|$)') {
-        throw "Command uses an npm lifecycle/exec form (runs arbitrary scripts); not permitted."
+    if ($exe -eq 'npm' -and $subCommand -match '(?i)^(i.*|add|ci|clean-install|ic|install-clean|x|exec|rb|rebuild)$') {
+        throw "Command uses an npm install/exec lifecycle form (fetches/runs arbitrary packages); not permitted."
     }
 
     return , $tokens
@@ -322,7 +367,7 @@ function Resolve-PlanPath {
         throw "planPath must be repo-relative and traversal-free: $PlanPath"
     }
     $full = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot $PlanPath))
-    $rootFull = [System.IO.Path]::GetFullPath($RepoRoot)
+    $rootFull = [System.IO.Path]::GetFullPath($RepoRoot).TrimEnd([System.IO.Path]::DirectorySeparatorChar) + [System.IO.Path]::DirectorySeparatorChar
     if (-not $full.StartsWith($rootFull, [StringComparison]::OrdinalIgnoreCase)) {
         throw "planPath escapes the repository root: $PlanPath"
     }

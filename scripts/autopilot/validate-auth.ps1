@@ -44,6 +44,9 @@ $headers = @{
 }
 
 try {
+    # Liveness/authentication probe only: a 200 confirms the token is valid and
+    # not expired, but does NOT prove the "Copilot Requests" scope is present.
+    # A live-but-underscoped token passes here and fails later at the CLI call.
     $resp = Invoke-WebRequest -Uri "$ApiBase/user" -Headers $headers -Method Get -SkipHttpErrorCheck
 }
 catch {
