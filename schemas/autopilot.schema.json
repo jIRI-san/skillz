@@ -1,102 +1,79 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/skillz/schemas/autopilot.schema.json",
-  "title": "Autopilot execution configuration",
-  "description": "Schema for .autopilot.json. The build/test command pattern is a COARSE first-line filter (launcher allowlist + no shell metacharacters); the authoritative trusted-command enforcement — argv tokenization, a flag denylist (e.g. pwsh/powershell -EncodedCommand/-Command, npx, pip install), and PATH hardening — lives in scripts/autopilot/launch.ps1 OUTSIDE the agent-editable config, so an autopilot run cannot widen its own command policy. Targets JSON Schema draft-07 to match Test-Json capabilities in PowerShell 7.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jIRI-san/skillz/schemas/autopilot.schema.json",
+  "title": "Autopilot Configuration",
+  "description": "Per-project configuration for autonomous plan execution via GitHub Copilot CLI.",
   "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "runtime",
-    "planPath",
-    "build",
-    "test",
-    "timeout",
-    "maxIterationsPerStep",
-    "copilotAuth",
-    "gitProvider",
-    "gitAuth",
-    "model",
-    "git"
-  ],
+  "required": ["runtime", "copilotAuth", "gitProvider", "gitAuth", "model", "git", "timeout", "maxIterationsPerStep", "build", "test"],
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Optional editor association; ignored at runtime."
-    },
     "runtime": {
       "type": "string",
-      "enum": ["host", "container"],
-      "description": "Execution mode. 'sandbox' is out of scope for this plan. The launcher -Mode parameter overrides this default."
+      "enum": [
+        "host",
+        "container",
+        "sandbox"
+      ],
+      "description": "Execution runtime. 'host' = git worktree on host. 'container' = Docker container clone-from-remote. 'sandbox' = Windows Sandbox (isolated Win32, disposable)."
     },
-    "planPath": {
+    "copilotAuth": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+\\.md\\z",
-      "description": "Repo-relative path to the plan.md the autopilot run executes. Must be traversal-free (no '..'), contain no absolute/drive prefix or shell metacharacters, and end in .md. The launcher canonicalizes it against the repo root."
+      "enum": ["pat", "oauth"],
+      "description": "How the Copilot CLI authenticates for AI requests."
     },
-    "build": {
+    "gitProvider": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\"'%\\r\\n]*)?\\z",
-      "description": "Build command. Coarse filter: must begin with a trusted launcher and contain no shell metacharacters; executed as argv with no shell. Authoritative flag-denylist + argv tokenization run in launch.ps1."
+      "enum": ["github", "ado"],
+      "description": "Git hosting provider for clone/push/PR operations."
     },
-    "test": {
+    "gitAuth": {
       "type": "string",
-      "minLength": 1,
-      "pattern": "^(dotnet|pwsh|powershell|npm|npx|node|python|python3|pip|pytest|cargo|go|make|ctest|gradle|mvn)( [^;&|$`<>(){}\"'%\\r\\n]*)?\\z",
-      "description": "Test command. Same trusted-launcher + no-metacharacter coarse filter as build; authoritative checks run in launch.ps1."
+      "enum": ["pat-shared", "oauth", "azure-cli"],
+      "description": "How git remote operations authenticate. 'pat-shared' = same PAT as copilotAuth. 'oauth' = GitHub OAuth token. 'azure-cli' = ADO token from az CLI."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model identifier for Copilot CLI (e.g. 'gpt-5.3-codex')."
+    },
+    "git": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": { "type": "string", "description": "Git commit author name." },
+        "email": { "type": "string", "description": "Git commit author email." }
+      }
     },
     "timeout": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 1440,
-      "description": "Per-phase timeout in minutes before force-kill."
+      "description": "Maximum execution time per phase in minutes."
     },
     "maxIterationsPerStep": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 50,
-      "description": "Fix-retry cap per step to bound in-phase churn."
+      "description": "Maximum fix-retry iterations before giving up on a step."
     },
-    "copilotAuth": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["credentialTarget"],
-      "properties": {
-        "credentialTarget": {
-          "type": "string",
-          "minLength": 1,
-          "description": "Windows Credential Manager target name holding the fine-grained PAT."
-        }
-      }
-    },
-    "gitProvider": {
+    "build": {
       "type": "string",
-      "enum": ["github", "ado"]
+      "description": "Build command. Must start with an allowed prefix: dotnet build, dotnet publish, npm run, make, cargo build.",
+      "pattern": "^(dotnet build|dotnet publish|npm run|yarn run|pnpm run|make|cargo build|gradle |mvn )"
     },
-    "gitAuth": {
+    "test": {
       "type": "string",
-      "enum": ["pat-shared", "oauth", "azure-cli"]
+      "description": "Test command. Must start with an allowed prefix: dotnet test, npm test, npm run test, make test, cargo test.",
+      "pattern": "^(dotnet test|npm test|npm run test|yarn test|pnpm test|make test|cargo test|gradle test|mvn test)"
     },
-    "model": {
+    "adoOrg": {
       "type": "string",
-      "minLength": 1,
-      "description": "Copilot CLI model identifier."
+      "description": "Azure DevOps organization URL (required if gitProvider=ado)."
     },
-    "git": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name", "email"],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
-        "email": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
+    "adoProject": {
+      "type": "string",
+      "description": "Azure DevOps project name (required if gitProvider=ado)."
+    },
+    "dockerfileExtensions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional RUN directives appended to base Dockerfile at build time."
     }
   }
 }

@@ -1,462 +1,225 @@
-#requires -Version 7.0
 <#
 .SYNOPSIS
-    Host-mode orchestrator (step 3.1): prepare an isolated git worktree + branch.
+    Host-mode orchestrator for autonomous plan execution.
 .DESCRIPTION
-    Receives the validated launch result from launch.ps1 and prepares the host
-    execution environment: a dedicated git worktree at
-    `<repo>.worktrees/feature-<slug>` on branch `feature-<slug>`, with a
-    `safe.directory` guard so git does not reject the worktree as dubiously
-    owned. The per-phase Copilot CLI loop and timeout/exit-code handling are
-    layered on top in steps 3.2 and 3.3.
-
-    The slug is derived from the plan directory name (e.g.
-    docs/implementation-plans/002-plugin-registry/plan.md -> 002-plugin-registry).
-.PARAMETER Result
-    The launch result object produced by launch.ps1 (RepoRoot, PlanFile, Config,
-    BuildArgv, TestArgv, ...).
-.PARAMETER SkipWorktree
-    Reuse the current repo root as the working tree instead of creating a
-    worktree. Used by tests; not part of the normal flow.
+    Creates a git worktree on a feature branch, loops over plan phases invoking
+    Copilot CLI once per phase with live output streaming and timeout enforcement.
+.PARAMETER PlanSlug
+    The plan folder name (e.g. '002-persistent-storage-for-job-data').
+.PARAMETER Mode
+    Execution scope: 'whole-plan' or 'next-phase'.
+.PARAMETER Config
+    Parsed .autopilot.json object.
+.PARAMETER Token
+    GitHub token for Copilot CLI.
 #>
-[CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [psobject]$Result,
+    [string]$PlanSlug,
 
-    [switch]$SkipWorktree,
+    [Parameter(Mandatory)]
+    [ValidateSet('whole-plan', 'next-phase')]
+    [string]$Mode,
 
-    [switch]$PrepareOnly,
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Config,
 
-    [hashtable]$CopilotLauncher,
+    [Parameter(Mandatory)]
+    [string]$Token,
 
-    [string]$LogRoot,
-
-    [string]$TokenEnvVar
+    [string]$Branch
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. "$PSScriptRoot/_autopilot-common.ps1"
+$BranchName = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
+$RepoRoot = git rev-parse --show-toplevel
+$WorktreeRoot = Join-Path (Split-Path $RepoRoot -Parent) "$((Split-Path $RepoRoot -Leaf)).worktrees"
+$WorktreePath = Join-Path $WorktreeRoot $BranchName.Replace('/', '-')
+$PlanPath = "docs/implementation-plans/$PlanSlug/plan.md"
+$TimeoutMinutes = $Config.timeout
 
-function ConvertTo-BranchSlug {
-    <#
-        .SYNOPSIS
-            Derives a safe branch slug from the plan directory name.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory)]
-        [string]$PlanFile
-    )
-    $planDir = Split-Path -Path $PlanFile -Parent
-    $leaf = Split-Path -Path $planDir -Leaf
-    $slug = (($leaf -replace '[^A-Za-z0-9._-]', '-').Trim('-')).ToLowerInvariant()
-    if ([string]::IsNullOrWhiteSpace($slug)) {
-        throw "Cannot derive a branch slug from plan path: $PlanFile"
-    }
-    return $slug
+# --- Worktree setup ---
+if (-not (Test-Path $WorktreeRoot)) {
+    New-Item -ItemType Directory -Path $WorktreeRoot -Force | Out-Null
 }
 
-function Add-SafeDirectory {
-    <#
-        .SYNOPSIS
-            Idempotently registers a path in git's global safe.directory list.
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [string]$Path
-    )
-    $existing = @(git config --global --get-all safe.directory 2>$null)
-    $norm = $Path -replace '\\', '/'
-    if ($existing -contains $Path -or $existing -contains $norm) {
-        return
-    }
-    git config --global --add safe.directory $Path | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to register safe.directory for: $Path"
-    }
-    Write-AutopilotLog "Registered git safe.directory: $Path"
+if (Test-Path $WorktreePath) {
+    Write-Host "Worktree already exists at $WorktreePath - resuming."
 }
-
-function Test-WorktreeRegistered {
-    <#
-        .SYNOPSIS
-            Returns $true if the given path is already a registered worktree.
-    #>
-    [CmdletBinding()]
-    [OutputType([bool])]
-    param(
-        [Parameter(Mandatory)]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory)]
-        [string]$WorktreePath
-    )
-    $target = ([System.IO.Path]::GetFullPath($WorktreePath)) -replace '\\', '/'
-    $lines = @(git -C $RepoRoot worktree list --porcelain 2>$null)
-    foreach ($line in $lines) {
-        if ($line -match '^worktree (.+)$') {
-            $listed = ([System.IO.Path]::GetFullPath($Matches[1].Trim())) -replace '\\', '/'
-            if ($listed -ieq $target) {
-                return $true
-            }
-        }
-    }
-    return $false
-}
-
-function Initialize-HostWorktree {
-    <#
-        .SYNOPSIS
-            Creates (or reuses) the worktree + branch and returns its path.
-    #>
-    [CmdletBinding()]
-    [OutputType([string])]
-    param(
-        [Parameter(Mandatory)]
-        [string]$RepoRoot,
-
-        [Parameter(Mandatory)]
-        [string]$Branch,
-
-        [Parameter(Mandatory)]
-        [string]$WorktreePath
-    )
-
-    if (Test-WorktreeRegistered -RepoRoot $RepoRoot -WorktreePath $WorktreePath) {
-        Write-AutopilotLog "Reusing existing worktree: $WorktreePath"
-        Add-SafeDirectory -Path $WorktreePath
-        return $WorktreePath
-    }
-
-    $parent = Split-Path -Path $WorktreePath -Parent
-    if (-not (Test-Path -LiteralPath $parent)) {
-        New-Item -ItemType Directory -Path $parent -Force | Out-Null
-    }
-
-    git -C $RepoRoot rev-parse --verify --quiet "refs/heads/$Branch" *> $null
-    $branchExists = ($LASTEXITCODE -eq 0)
-
+else {
+    Write-Host "Creating worktree: $WorktreePath (branch: $BranchName)"
+    # Check if branch exists
+    $branchExists = git branch --list $BranchName
     if ($branchExists) {
-        Write-AutopilotLog "Adding worktree on existing branch '$Branch'."
-        $null = git -C $RepoRoot worktree add $WorktreePath $Branch
+        git worktree add $WorktreePath $BranchName
     }
     else {
-        Write-AutopilotLog "Adding worktree on new branch '$Branch'."
-        $null = git -C $RepoRoot worktree add -b $Branch $WorktreePath
-    }
-    if ($LASTEXITCODE -ne 0) {
-        throw "git worktree add failed for branch '$Branch' at: $WorktreePath"
-    }
-
-    Add-SafeDirectory -Path $WorktreePath
-    return $WorktreePath
-}
-
-function Resolve-CopilotLauncher {
-    <#
-        .SYNOPSIS
-            Resolves how to launch the `copilot` CLI as FileName + base argv.
-        .DESCRIPTION
-            Returns @{ FileName; BaseArgs }. A sibling `copilot.ps1` is preferred
-            (launched via the current pwsh with -File for clean argv quoting); an
-            .exe is launched directly; a .cmd/.bat goes through ComSpec /c.
-    #>
-    [CmdletBinding()]
-    [OutputType([hashtable])]
-    param(
-        [string]$CopilotCommand = 'copilot'
-    )
-    $cmd = Get-Command $CopilotCommand -ErrorAction SilentlyContinue
-    if (-not $cmd) {
-        throw "Copilot CLI '$CopilotCommand' not found on PATH. Install @github/copilot (npm i -g @github/copilot)."
-    }
-    $source = $cmd.Source
-    $pwshPath = (Get-Process -Id $PID).Path
-
-    # Prefer a sibling .ps1 shim for clean ArgumentList quoting.
-    $sibling = [System.IO.Path]::ChangeExtension($source, '.ps1')
-    if ((Test-Path -LiteralPath $sibling) -and ([System.IO.Path]::GetExtension($source).ToLowerInvariant() -ne '.ps1')) {
-        return @{ FileName = $pwshPath; BaseArgs = @('-NoProfile', '-File', $sibling) }
-    }
-
-    switch ([System.IO.Path]::GetExtension($source).ToLowerInvariant()) {
-        '.ps1' { return @{ FileName = $pwshPath; BaseArgs = @('-NoProfile', '-File', $source) } }
-        '.cmd' { return @{ FileName = $env:ComSpec; BaseArgs = @('/c', $source) } }
-        '.bat' { return @{ FileName = $env:ComSpec; BaseArgs = @('/c', $source) } }
-        default { return @{ FileName = $source; BaseArgs = @() } }
+        git worktree add $WorktreePath -b $BranchName
     }
 }
 
-function Get-CopilotPhaseArgs {
-    <#
-        .SYNOPSIS
-            Builds the per-phase `copilot` CLI argument array (selects the
-            autopilot agent, non-interactive, with transcript + log dir).
-    #>
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '',
-        Justification = '"Args" names the returned array of CLI arguments.')]
-    [CmdletBinding()]
-    [OutputType([string[]])]
+# Validate plan exists in worktree
+$fullPlanPath = Join-Path $WorktreePath $PlanPath
+if (-not (Test-Path $fullPlanPath)) {
+    throw "Plan not found at: $fullPlanPath"
+}
+
+# Configure git identity in worktree
+Push-Location $WorktreePath
+try {
+    git config user.name $Config.git.name
+    git config user.email $Config.git.email
+}
+finally {
+    Pop-Location
+}
+
+# --- Phase detection ---
+$planContent = Get-Content $fullPlanPath -Raw
+$phaseMatches = [regex]::Matches($planContent, '## Phase (\d+)')
+$totalPhases = $phaseMatches.Count
+Write-Host "Plan has $totalPhases phases."
+
+# --- Per-phase execution loop ---
+function Invoke-CopilotPhase {
     param(
-        [Parameter(Mandatory)]
-        [string]$Agent,
-
-        [Parameter(Mandatory)]
-        [string]$Model,
-
-        [Parameter(Mandatory)]
-        [string]$PlanRelPath,
-
-        [Parameter(Mandatory)]
         [int]$PhaseNumber,
-
-        [Parameter(Mandatory)]
-        [string]$TranscriptPath,
-
-        [Parameter(Mandatory)]
-        [string]$LogDir,
-
-        [Parameter(Mandatory)]
-        [string]$WorkingDirectory,
-
-        [string]$TokenEnvVar
+        [string]$CopilotToken,
+        [string]$Cwd,
+        [string]$PlanRelPath,
+        [int]$TimeoutMin
     )
-    $argv = [System.Collections.Generic.List[string]]::new()
-    [string[]]$base = @(
-        '--agent', $Agent,
-        '--model', $Model,
-        '--prompt', "Execute $PlanRelPath, phase $PhaseNumber",
-        '--allow-all-tools',
-        '--no-ask-user',
-        '--share', $TranscriptPath,
-        '--log-dir', $LogDir,
-        '-C', $WorkingDirectory
-    )
-    $argv.AddRange($base)
-    if ($TokenEnvVar) {
-        $argv.Add('--secret-env-vars')
-        $argv.Add($TokenEnvVar)
+
+    $transcriptName = "session-transcript-phase$PhaseNumber.md"
+    $prompt = "Execute $PlanRelPath, phase $PhaseNumber"
+
+    Write-Host ""
+    Write-Host "=== Invoking Copilot CLI for Phase $PhaseNumber (timeout: ${TimeoutMin}m) ==="
+
+    # Resolve copilot CLI executable. Process.Start with UseShellExecute=$false
+    # only finds .exe natively; .bat/.ps1 need explicit resolution.
+    $copilotCmd = Get-Command copilot -ErrorAction SilentlyContinue
+    if (-not $copilotCmd) { throw "Copilot CLI not found in PATH. Install via: npm install -g @github/copilot" }
+    $copilotPath = $copilotCmd.Source
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    if ($copilotPath -match '\.bat$') {
+        $psi.FileName = 'cmd.exe'
+        $psi.Arguments = "/c `"$copilotPath`" -p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
+    } elseif ($copilotPath -match '\.ps1$') {
+        $psi.FileName = 'powershell.exe'
+        $psi.Arguments = "-ExecutionPolicy Bypass -File `"$copilotPath`" -p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
+    } else {
+        $psi.FileName = $copilotPath
+        $psi.Arguments = "-p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
     }
-    return $argv.ToArray()
-}
-
-function Write-DrainedLine {
-    <#
-        .SYNOPSIS
-            Drains all currently-queued lines and logs them (redacted).
-    #>
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)]
-        [System.Collections.Concurrent.ConcurrentQueue[string]]$Queue,
-
-        [switch]$Stderr
-    )
-    $line = $null
-    while ($Queue.TryDequeue([ref]$line)) {
-        if ($Stderr) {
-            Write-AutopilotLog "[copilot:stderr] $line"
-        }
-        else {
-            Write-AutopilotLog "[copilot] $line"
-        }
-    }
-}
-
-function Invoke-CopilotProcess {
-    <#
-        .SYNOPSIS
-            Runs one copilot invocation with live, deadlock-free streaming of
-            both stdout and stderr; returns the process exit code.
-        .DESCRIPTION
-            Uses System.Diagnostics.Process with RedirectStandardOutput +
-            RedirectStandardError and async BeginOutputReadLine /
-            BeginErrorReadLine. Each stream's DataReceived event (handled on the
-            PowerShell event-manager thread via -Action) enqueues lines into a
-            thread-safe queue that the main loop drains, so a full pipe buffer can
-            never deadlock the child. (Timeout / tree-kill is layered on in 3.3.)
-    #>
-    [CmdletBinding()]
-    [OutputType([int])]
-    param(
-        [Parameter(Mandatory)]
-        [string]$FileName,
-
-        [Parameter(Mandatory)]
-        [AllowEmptyCollection()]
-        [string[]]$ArgumentList,
-
-        [Parameter(Mandatory)]
-        [string]$WorkingDirectory
-    )
-
-    $psi = [System.Diagnostics.ProcessStartInfo]::new()
-    $psi.FileName = $FileName
-    foreach ($a in $ArgumentList) {
-        [void]$psi.ArgumentList.Add($a)
-    }
-    $psi.WorkingDirectory = $WorkingDirectory
+    $psi.WorkingDirectory = $Cwd
+    $psi.UseShellExecute = $false
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
-    $psi.UseShellExecute = $false
     $psi.CreateNoWindow = $true
+    $psi.EnvironmentVariables['COPILOT_GITHUB_TOKEN'] = $CopilotToken
+    $psi.EnvironmentVariables['GH_TOKEN'] = $CopilotToken
+    $psi.EnvironmentVariables['COPILOT_ALLOW_ALL'] = 'true'
+    $psi.EnvironmentVariables['COPILOT_MODEL'] = $Config.model
 
-    $proc = [System.Diagnostics.Process]::new()
-    $proc.StartInfo = $psi
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+    $process.EnableRaisingEvents = $true
 
-    $stdoutQ = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
-    $stderrQ = [System.Collections.Concurrent.ConcurrentQueue[string]]::new()
-
-    $outSub = Register-ObjectEvent -InputObject $proc -EventName OutputDataReceived -MessageData $stdoutQ -Action {
-        if ($null -ne $EventArgs.Data) { $Event.MessageData.Enqueue($EventArgs.Data) }
-    }
-    $errSub = Register-ObjectEvent -InputObject $proc -EventName ErrorDataReceived -MessageData $stderrQ -Action {
-        if ($null -ne $EventArgs.Data) { $Event.MessageData.Enqueue($EventArgs.Data) }
-    }
-
-    try {
-        [void]$proc.Start()
-        $proc.BeginOutputReadLine()
-        $proc.BeginErrorReadLine()
-
-        while (-not $proc.HasExited) {
-            Write-DrainedLine -Queue $stdoutQ
-            Write-DrainedLine -Queue $stderrQ -Stderr
-            [void]$proc.WaitForExit(150)
-        }
-        # WaitForExit() (no timeout) guarantees async readers received their
-        # terminating null and all buffered lines are queued before the final drain.
-        $proc.WaitForExit()
-        Write-DrainedLine -Queue $stdoutQ
-        Write-DrainedLine -Queue $stderrQ -Stderr
-
-        return $proc.ExitCode
-    }
-    finally {
-        Unregister-Event -SourceIdentifier $outSub.Name -ErrorAction SilentlyContinue
-        Unregister-Event -SourceIdentifier $errSub.Name -ErrorAction SilentlyContinue
-        $proc.Dispose()
-    }
-}
-
-function Invoke-HostPhaseLoop {
-    <#
-        .SYNOPSIS
-            Runs one copilot invocation per plan phase, streaming output live.
-        .DESCRIPTION
-            Step 3.2 scope: per-phase invocation + streaming + transcript. The
-            full exit-code contract (0 advance / 42 @human halt / other failure),
-            timeout/tree-kill and maxIterationsPerStep are layered on in step 3.3;
-            for now the loop advances on exit 0 and stops on any non-zero exit.
-    #>
-    [CmdletBinding()]
-    [OutputType([int])]
-    param(
-        [Parameter(Mandatory)]
-        [psobject]$HostContext,
-
-        [hashtable]$CopilotLauncher,
-
-        [string]$LogRoot,
-
-        [string]$TokenEnvVar
-    )
-    if (-not $CopilotLauncher) {
-        $CopilotLauncher = Resolve-CopilotLauncher
-    }
-    if (-not $LogRoot) {
-        $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
-        $LogRoot = Join-Path (Join-Path $env:LOCALAPPDATA 'autopilot-sessions') "$($HostContext.Slug)-$stamp"
-    }
-    New-Item -ItemType Directory -Path $LogRoot -Force | Out-Null
-
-    $model = $HostContext.Config.model
-    $planRel = $HostContext.Config.planPath
-    $exitCode = 0
-    for ($n = 1; $n -le $HostContext.PhaseCount; $n++) {
-        Write-AutopilotLog "=== Phase $n/$($HostContext.PhaseCount) ==="
-        $transcript = Join-Path $LogRoot "phase-$n.transcript.md"
-        $phaseArgs = Get-CopilotPhaseArgs -Agent 'autopilot' -Model $model -PlanRelPath $planRel `
-            -PhaseNumber $n -TranscriptPath $transcript -LogDir $LogRoot `
-            -WorkingDirectory $HostContext.WorktreePath -TokenEnvVar $TokenEnvVar
-        $allArgs = @($CopilotLauncher.BaseArgs) + $phaseArgs
-        $exitCode = Invoke-CopilotProcess -FileName $CopilotLauncher.FileName -ArgumentList $allArgs `
-            -WorkingDirectory $HostContext.WorktreePath
-        Write-AutopilotLog "Phase $n exited with code $exitCode."
-        if ($exitCode -ne 0) {
-            Write-AutopilotLog 'Stopping phase loop (non-zero exit; contract handling lands in step 3.3).' -Level WARN
-            break
+    # Live output streaming via events
+    $outputHandler = {
+        if (-not [string]::IsNullOrEmpty($EventArgs.Data)) {
+            Write-Host $EventArgs.Data
         }
     }
-    return $exitCode
+    $errorHandler = {
+        if (-not [string]::IsNullOrEmpty($EventArgs.Data)) {
+            Write-Host "ERR: $($EventArgs.Data)" -ForegroundColor Yellow
+        }
+    }
+
+    Register-ObjectEvent -InputObject $process -EventName OutputDataReceived -Action $outputHandler | Out-Null
+    Register-ObjectEvent -InputObject $process -EventName ErrorDataReceived -Action $errorHandler | Out-Null
+
+    $process.Start() | Out-Null
+    $process.BeginOutputReadLine()
+    $process.BeginErrorReadLine()
+
+    # Timeout enforcement via polling
+    $deadline = (Get-Date).AddMinutes($TimeoutMin)
+    while (-not $process.HasExited) {
+        if ((Get-Date) -gt $deadline) {
+            Write-Warning "Phase $PhaseNumber timed out after ${TimeoutMin} minutes. Killing process."
+            $process.Kill()
+            $process.WaitForExit(5000)
+            return @{ ExitCode = -1; TimedOut = $true }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+
+    $process.WaitForExit() # Ensure all output flushed
+    Get-EventSubscriber | Where-Object SourceObject -eq $process | Unregister-Event
+
+    return @{ ExitCode = $process.ExitCode; TimedOut = $false }
 }
 
-function Invoke-AutopilotHost {
-    <#
-        .SYNOPSIS
-            Host-mode orchestrator entry point.
-    #>
-    [CmdletBinding()]
-    [OutputType([psobject])]
-    param(
-        [Parameter(Mandatory)]
-        [psobject]$Result,
+# --- Main execution ---
+$phasesExecuted = 0
+for ($phase = 1; $phase -le $totalPhases; $phase++) {
+    # Re-read plan to check current phase status
+    $currentPlan = Get-Content $fullPlanPath -Raw
 
-        [switch]$SkipWorktree,
+    # Simple heuristic: check if phase has uncompleted steps
+    # Look for "- [ ]" or "- [~]" between this phase heading and the next
+    $phasePattern = "## Phase ${phase}" + '.*?(?=## Phase ' + "$($phase + 1)" + '|## Known Constraints|$)'
+    $phaseSection = [regex]::Match($currentPlan, $phasePattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
 
-        [switch]$PrepareOnly,
+    if (-not $phaseSection.Success) { continue }
 
-        [hashtable]$CopilotLauncher,
-
-        [string]$LogRoot,
-
-        [string]$TokenEnvVar
-    )
-
-    $repoRoot = $Result.RepoRoot
-    $slug = ConvertTo-BranchSlug -PlanFile $Result.PlanFile
-    $branch = "feature-$slug"
-
-    if ($SkipWorktree) {
-        $worktree = $repoRoot
-        Write-AutopilotLog "SkipWorktree: using repo root as working tree ($repoRoot)."
-    }
-    else {
-        $worktreePath = "$repoRoot.worktrees" + [System.IO.Path]::DirectorySeparatorChar + $branch
-        $worktree = Initialize-HostWorktree -RepoRoot $repoRoot -Branch $branch -WorktreePath $worktreePath
+    $hasIncomplete = $phaseSection.Value -match '\- \[ \]|\- \[~\]'
+    if (-not $hasIncomplete) {
+        Write-Host "Phase ${phase}: all steps complete - skipping."
+        continue
     }
 
-    Write-AutopilotLog "Host environment ready (branch '$branch', worktree '$worktree')."
+    Write-Host "Phase ${phase}: has uncompleted steps - executing."
+    $result = Invoke-CopilotPhase -PhaseNumber $phase -CopilotToken $Token -Cwd $WorktreePath -PlanRelPath $PlanPath -TimeoutMin $TimeoutMinutes
 
-    $hostContext = [pscustomobject]@{
-        RepoRoot = $repoRoot
-        WorktreePath = $worktree
-        Branch = $branch
-        Slug = $slug
-        PlanFile = $Result.PlanFile
-        PhaseCount = $Result.PhaseCount
-        Config = $Result.Config
-        BuildArgv = $Result.BuildArgv
-        TestArgv = $Result.TestArgv
+    $phasesExecuted++
+
+    if ($result.TimedOut) {
+        Write-Warning "Execution stopped due to timeout in Phase $phase."
+        break
+    }
+    if ($result.ExitCode -eq 42) {
+        Write-Host "@human step encountered in Phase $phase. Stopping."
+        break
+    }
+    if ($result.ExitCode -ne 0) {
+        Write-Warning "Phase $phase exited with code $($result.ExitCode). Stopping."
+        break
     }
 
-    if ($PrepareOnly) {
-        return $hostContext
+    if ($Mode -eq 'next-phase') {
+        Write-Host "Mode is 'next-phase' - stopping after Phase ${phase}."
+        break
     }
-
-    $exitCode = Invoke-HostPhaseLoop -HostContext $hostContext -CopilotLauncher $CopilotLauncher `
-        -LogRoot $LogRoot -TokenEnvVar $TokenEnvVar
-    $hostContext | Add-Member -NotePropertyName ExitCode -NotePropertyValue $exitCode -PassThru
-    return $hostContext
 }
 
-# Only execute when run directly (not when dot-sourced for testing).
-if ($MyInvocation.InvocationName -ne '.') {
-    Invoke-AutopilotHost -Result $Result -SkipWorktree:$SkipWorktree -PrepareOnly:$PrepareOnly `
-        -CopilotLauncher $CopilotLauncher -LogRoot $LogRoot -TokenEnvVar $TokenEnvVar
+# --- Copy transcripts ---
+$transcriptsDir = Join-Path $RepoRoot "docs/implementation-plans/$PlanSlug/transcripts"
+if (-not (Test-Path $transcriptsDir)) {
+    New-Item -ItemType Directory -Path $transcriptsDir -Force | Out-Null
 }
+
+Get-ChildItem -Path $WorktreePath -Filter 'session-transcript-phase*.md' -ErrorAction SilentlyContinue |
+    ForEach-Object { Copy-Item $_.FullName $transcriptsDir -Force }
+
+Write-Host ""
+Write-Host "=== Host-mode execution complete ==="
+Write-Host "Phases executed: $phasesExecuted"
+Write-Host "Worktree: $WorktreePath"
+Write-Host "Transcripts: $transcriptsDir"

@@ -1,7 +1,18 @@
 # 001: Autopilot Execution Infrastructure
 
+> **⚠️ OBSOLETE — DO NOT EXECUTE.** This plan reimplemented an autopilot that
+> already existed, tested and working, in the source repo it was bootstrapped
+> from. It has been superseded by porting that proven implementation directly
+> into this repo (`scripts/autopilot/`, `schemas/autopilot.schema.json`,
+> `.devcontainer/autopilot/`, `.github/agents/autopilot.agent.md`,
+> `.autopilot.json`). The partial reimplementation (Phases 1–3.2) was discarded.
+> Retained for historical context only. See
+> [autopilot-execution.design.md](../../design-notes/architecture/autopilot-execution.design.md)
+> for the implemented design.
+
 <!-- execution-mode: manual -->
 <!-- scope: phase -->
+<!-- status: obsolete -->
 
 > Builds the autonomous plan-execution infrastructure described in [autopilot-execution.design.md](../../design-notes/architecture/autopilot-execution.design.md). Scope: **container mode** (the `/ci` target for Plan 002) + the shared dispatch core + **host mode** as the minimal local dev/test path. **Sandbox mode is out of scope** (future work). This plan is executed **manually** — it bootstraps the very infrastructure that Plan 002 will later run under.
 

@@ -1,80 +1,115 @@
-#requires -Version 7.0
 <#
 .SYNOPSIS
-    Validates that the stored PAT is live and reaches the GitHub/Copilot API.
+    Validates authentication tokens work before launching autopilot execution.
 .DESCRIPTION
-    Consumes get-credential.ps1 (the single token reader), probes the GitHub API
-    with the token, and aborts with actionable scope guidance on failure. The
-    token is used only to build the Authorization header and is never logged.
-
-    Exit codes: 0 = auth OK; 1 = auth failed (launcher aborts before any work).
-.PARAMETER CredentialTarget
-    Windows Credential Manager target holding the fine-grained PAT.
-.PARAMETER ApiBase
-    GitHub API base URL (default https://api.github.com); override for GHES.
+    For GitHub: runs capability probes (GET /user, GET /repos, copilot probe).
+    For ADO: fetches access token on host to verify az CLI auth works.
+.PARAMETER Config
+    Parsed .autopilot.json object.
+.PARAMETER Token
+    The GitHub token to validate.
+.OUTPUTS
+    [hashtable] with 'Valid' [bool] and 'AdoToken' [string] if ADO.
+    Throws on auth failure with re-auth guidance.
 #>
-[CmdletBinding()]
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingPlainTextForPassword', 'CredentialTarget',
-    Justification = 'CredentialTarget is a Windows Credential Manager target NAME, not a secret value.')]
 param(
     [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
-    [string]$CredentialTarget,
+    [PSCustomObject]$Config,
 
-    [string]$ApiBase = 'https://api.github.com'
+    [Parameter(Mandatory)]
+    [string]$Token
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. "$PSScriptRoot/_autopilot-common.ps1"
+$result = @{ Valid = $false; AdoToken = $null }
 
+# --- GitHub token validation ---
+Write-Host "Validating GitHub token..."
+
+# Probe 1: GET /user - confirms token is valid
+$headers = @{ Authorization = "Bearer $Token"; Accept = 'application/vnd.github+json' }
 try {
-    $cred = & "$PSScriptRoot/get-credential.ps1" -Target $CredentialTarget
+    $userResponse = Invoke-RestMethod -Uri 'https://api.github.com/user' -Headers $headers -Method Get
+    Write-Host "  Token valid for user: $($userResponse.login)"
 }
 catch {
-    Write-AutopilotLog "Could not read credential '$CredentialTarget': $($_.Exception.Message)" -Level ERROR
-    exit 1
+    throw @"
+GitHub token validation failed (GET /user).
+HTTP error: $($_.Exception.Message)
+
+Re-auth guidance:
+- PAT: Create a new fine-grained PAT at https://github.com/settings/tokens?type=beta
+  Required permissions: Copilot Requests, Contents (read/write), Pull Requests (read/write)
+  Store it: New-StoredCredential -Target 'copilot-autopilot' -UserName 'autopilot' -Password '<token>' -Type Generic -Persist LocalMachine
+- OAuth: Run 'copilot login' and retry.
+"@
 }
 
-$headers = @{
-    Authorization = "Bearer $($cred.GetNetworkCredential().Password)"
-    'User-Agent' = 'skillz-autopilot'
-    Accept = 'application/vnd.github+json'
+# Probe 2: GET /repos/{owner}/{repo} - confirms Contents access
+$remote = git remote get-url origin 2>$null
+if ($remote -match 'github\.com[:/]([^/]+)/([^/.]+)') {
+    $owner = $Matches[1]
+    $repo = $Matches[2]
+    try {
+        Invoke-RestMethod -Uri "https://api.github.com/repos/$owner/$repo" -Headers $headers -Method Get | Out-Null
+        Write-Host "  Contents access confirmed for $owner/$repo"
+    }
+    catch {
+        throw @"
+GitHub token lacks Contents access to $owner/$repo.
+HTTP error: $($_.Exception.Message)
+
+Ensure your fine-grained PAT includes 'Contents' permission for this repository.
+"@
+    }
+}
+else {
+    Write-Host "  Skipping repo access probe (non-GitHub remote or no remote configured)."
 }
 
+# Probe 3: Copilot Requests permission (lightweight)
+Write-Host "  Validating Copilot CLI access..."
+$env:COPILOT_GITHUB_TOKEN = $Token
 try {
-    # Liveness/authentication probe only: a 200 confirms the token is valid and
-    # not expired, but does NOT prove the "Copilot Requests" scope is present.
-    # A live-but-underscoped token passes here and fails later at the CLI call.
-    $resp = Invoke-WebRequest -Uri "$ApiBase/user" -Headers $headers -Method Get -SkipHttpErrorCheck
+    $copilotResult = copilot -p "echo hello" -s 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "copilot CLI returned exit code $LASTEXITCODE"
+    }
+    Write-Host "  Copilot CLI access confirmed."
 }
 catch {
-    Write-AutopilotLog "GitHub API unreachable at ${ApiBase}: $($_.Exception.Message)" -Level ERROR
-    exit 1
+    Write-Warning "Copilot CLI probe failed: $($_.Exception.Message). Token may lack Copilot Requests permission."
+    # Non-fatal - the token might still work for the actual execution
 }
 finally {
-    # Drop the plaintext header reference as soon as the request is issued.
-    $headers['Authorization'] = $null
-    $headers = $null
+    Remove-Item Env:\COPILOT_GITHUB_TOKEN -ErrorAction SilentlyContinue
 }
 
-switch ([int]$resp.StatusCode) {
-    200 {
-        Write-AutopilotLog 'Auth validation OK (token live, GitHub API reachable).'
-        exit 0
+# --- ADO validation (if applicable) ---
+if ($Config.gitProvider -eq 'ado') {
+    Write-Host "Validating ADO authentication..."
+    try {
+        $tokenJson = az account get-access-token --resource '499b84ac-1321-427f-aa17-267ca6975798' --query accessToken -o tsv 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw "az account get-access-token failed: $tokenJson"
+        }
+        $result.AdoToken = $tokenJson.Trim()
+        Write-Host "  ADO token acquired successfully."
     }
-    { $_ -in 401, 403 } {
-        Write-AutopilotLog @"
-Auth failed (HTTP $($resp.StatusCode)). The PAT is missing, expired, or lacks scope.
-Required fine-grained PAT permissions: Contents R/W, Pull requests R/W, Copilot Requests R.
-Re-create the token and store it:
-  New-StoredCredential -Target '$CredentialTarget' -UserName 'autopilot' -Password '<PAT>' -Type Generic -Persist LocalMachine
-"@ -Level ERROR
-        exit 1
-    }
-    default {
-        Write-AutopilotLog "Auth probe returned unexpected HTTP $($resp.StatusCode)." -Level ERROR
-        exit 1
+    catch {
+        throw @"
+ADO authentication failed. Cannot fetch access token.
+Error: $($_.Exception.Message)
+
+Re-auth guidance:
+  az login --use-device-code
+Then retry.
+"@
     }
 }
+
+$result.Valid = $true
+Write-Host "Authentication validation passed."
+return $result

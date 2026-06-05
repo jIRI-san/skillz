@@ -1,0 +1,17 @@
+{
+  "name": "Autopilot Execution",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "../.."
+  },
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "containerEnv": {
+    "COPILOT_ALLOW_ALL": "true",
+    "AUTOPILOT_CONTAINER": "true",
+    "TESTCONTAINERS_HOST_OVERRIDE": "host.docker.internal",
+    "DOCKER_HOST": "unix:///var/run/docker.sock"
+  },
+  "remoteUser": "autopilot"
+}

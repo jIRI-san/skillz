@@ -1,0 +1,160 @@
+<#
+.SYNOPSIS
+    Container-mode orchestrator for autonomous plan execution.
+.DESCRIPTION
+    Builds Docker image, runs container with entrypoint script, enforces timeout
+    via polling, extracts transcripts on completion.
+.PARAMETER PlanSlug
+    The plan folder name (e.g. '002-persistent-storage-for-job-data').
+.PARAMETER Mode
+    Execution scope: 'whole-plan' or 'next-phase'.
+.PARAMETER Config
+    Parsed .autopilot.json object.
+.PARAMETER Token
+    GitHub token for Copilot CLI.
+.PARAMETER AdoToken
+    Optional ADO access token.
+#>
+param(
+    [Parameter(Mandatory)]
+    [string]$PlanSlug,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('whole-plan', 'next-phase')]
+    [string]$Mode,
+
+    [Parameter(Mandatory)]
+    [PSCustomObject]$Config,
+
+    [Parameter(Mandatory)]
+    [string]$Token,
+
+    [string]$AdoToken,
+
+    [string]$Branch = "feature/$PlanSlug"
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$RepoRoot = git rev-parse --show-toplevel
+$ImageName = "autopilot-$(Split-Path $RepoRoot -Leaf)".ToLower()
+$ContainerName = "autopilot-run-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+$TimeoutMinutes = $Config.timeout
+$PlanFolder = Join-Path $RepoRoot "docs/implementation-plans/$PlanSlug"
+$TranscriptsDir = Join-Path $PlanFolder 'transcripts'
+$EnvFilePath = $null
+
+try {
+    # --- Build image ---
+    Write-Host "Building Docker image: $ImageName"
+    $dockerfilePath = Join-Path $RepoRoot '.devcontainer/autopilot/Dockerfile'
+
+    # Handle dockerfileExtensions - generate extended Dockerfile if needed
+    $buildContext = $RepoRoot
+    $actualDockerfile = $dockerfilePath
+
+    if ($Config.PSObject.Properties.Name -contains 'dockerfileExtensions' -and $Config.dockerfileExtensions -and $Config.dockerfileExtensions.Count -gt 0) {
+        Write-Host "Appending dockerfileExtensions to Dockerfile..."
+        $tempDockerfile = Join-Path $env:TEMP "autopilot-Dockerfile-extended"
+        $baseContent = Get-Content $dockerfilePath -Raw
+        $extensions = ($Config.dockerfileExtensions | ForEach-Object { "RUN $_" }) -join "`n"
+        # Insert extensions before the USER directive
+        $extendedContent = $baseContent -replace '(# Non-root user)', "$extensions`n`n`$1"
+        Set-Content -Path $tempDockerfile -Value $extendedContent -Encoding UTF8
+        $actualDockerfile = $tempDockerfile
+    }
+
+    docker build -t $ImageName -f $actualDockerfile $buildContext
+    if ($LASTEXITCODE -ne 0) { throw "Docker build failed." }
+
+    # --- Prepare env file ---
+    Write-Host "Preparing environment file..."
+    $EnvFilePath = & (Join-Path $PSScriptRoot 'prepare-env-file.ps1') -Config $Config -Token $Token -AdoToken $AdoToken -Branch $Branch
+
+    # --- Run container ---
+    Write-Host "Starting container: $ContainerName"
+    $dockerArgs = @(
+        'run', '-t'
+        '--name', $ContainerName
+        '--env-file', $EnvFilePath
+        $ImageName
+        '/usr/local/bin/container-entrypoint.sh', $PlanSlug, $Mode
+    )
+
+    # Start container as background process for timeout enforcement
+    $dockerProcess = Start-Process -FilePath 'docker' -ArgumentList $dockerArgs -NoNewWindow -PassThru
+
+    # Brief delay to let docker register the container name
+    Start-Sleep -Seconds 3
+
+    # --- Timeout enforcement via polling ---
+    $deadline = (Get-Date).AddMinutes($TimeoutMinutes)
+    while (-not $dockerProcess.HasExited) {
+        if ((Get-Date) -gt $deadline) {
+            Write-Warning "Container timed out after $TimeoutMinutes minutes."
+            Write-Host "Sending SIGTERM (docker stop)..."
+            docker stop --time 30 $ContainerName 2>$null
+            # Wait briefly for graceful shutdown
+            if (-not $dockerProcess.HasExited) {
+                Start-Sleep -Seconds 5
+                if (-not $dockerProcess.HasExited) {
+                    Write-Warning "Force-killing container..."
+                    docker kill $ContainerName 2>$null
+                }
+            }
+            break
+        }
+
+        # Check container is still running (suppress errors during startup race)
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        $state = docker inspect --format '{{.State.Running}}' $ContainerName 2>$null
+        $ErrorActionPreference = $prevEAP
+        if ($state -eq 'false') { break }
+
+        Start-Sleep -Seconds 2
+    }
+
+    $dockerProcess.WaitForExit()
+    $exitCode = $dockerProcess.ExitCode
+    Write-Host "Container exited with code: $exitCode"
+
+    # --- Extract transcripts ---
+    if (-not (Test-Path $TranscriptsDir)) {
+        New-Item -ItemType Directory -Path $TranscriptsDir -Force | Out-Null
+    }
+
+    Write-Host "Extracting transcripts..."
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    # Copy all transcript files (ignore errors for missing files)
+    for ($i = 1; $i -le 10; $i++) {
+        docker cp "${ContainerName}:/work/session-transcript-phase${i}.md" $TranscriptsDir 2>$null
+    }
+    $ErrorActionPreference = $prevEAP
+
+    # --- Cleanup container ---
+    Write-Host "Removing container: $ContainerName"
+    $ErrorActionPreference = 'Continue'
+    docker rm $ContainerName 2>$null
+    $ErrorActionPreference = $prevEAP
+
+    Write-Host ""
+    Write-Host "=== Container-mode execution complete ==="
+    Write-Host "Exit code: $exitCode"
+    Write-Host "Transcripts: $TranscriptsDir"
+
+    if ($exitCode -ne 0) {
+        Write-Warning "Container execution ended with non-zero exit code."
+    }
+}
+finally {
+    # Always clean up env file (contains tokens)
+    if ($EnvFilePath -and (Test-Path $EnvFilePath)) {
+        $envDir = Split-Path $EnvFilePath -Parent
+        Remove-Item $EnvFilePath -Force -ErrorAction SilentlyContinue
+        Remove-Item $envDir -Force -ErrorAction SilentlyContinue
+        Write-Host "Env file cleaned up."
+    }
+}

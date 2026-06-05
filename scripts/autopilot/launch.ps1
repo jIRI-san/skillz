@@ -1,174 +1,209 @@
-#requires -Version 7.0
 <#
 .SYNOPSIS
-    Autopilot entry point: validate config + command policy + auth, then dispatch.
+    Entry point for autonomous plan execution.
 .DESCRIPTION
-    Loads and schema-validates .autopilot.json, enforces the trusted-command
-    policy (tokenizing build/test into argv via the authoritative checks in
-    _autopilot-common.ps1), canonicalizes the plan path, resolves the execution
-    mode, runs a Docker pre-flight for container mode (fail loudly, no host
-    fallback), sweeps stale secret/session files, validates auth, and dispatches
-    to the mode-specific orchestrator.
-
-    The configuration is read EXACTLY ONCE here. The command policy lives in this
-    launcher and the schema (both outside the agent-editable .autopilot.json), so
-    an autopilot run cannot widen its own command policy mid-run.
+    Validates inputs, runs pre-flight checks, and dispatches to
+    host or container mode orchestrator.
+.PARAMETER PlanSlug
+    Plan folder name (e.g. '002-persistent-storage-for-job-data').
 .PARAMETER Mode
-    Overrides the runtime from config. One of: host, container.
-.PARAMETER ConfigPath
-    Path to the autopilot config (default: <repo>/.autopilot.json).
-.PARAMETER ValidateOnly
-    Run config/schema/policy/mode/Docker pre-flight checks and return a result
-    object WITHOUT validating auth or dispatching. Used by tests and dry runs.
-.EXAMPLE
-    ./launch.ps1 -Mode host
-.EXAMPLE
-    ./launch.ps1 -ValidateOnly
+    Execution scope: 'whole-plan' or 'next-phase'.
+.PARAMETER Runtime
+    Override runtime from config: 'host' or 'container'. Uses config value if omitted.
 #>
-[CmdletBinding()]
 param(
-    [ValidateSet('host', 'container')]
+    [Parameter(Mandatory)]
+    [string]$PlanSlug,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('whole-plan', 'next-phase')]
     [string]$Mode,
 
-    [string]$ConfigPath,
+    [ValidateSet('host', 'container', 'sandbox')]
+    [string]$Runtime,
 
-    [switch]$ValidateOnly
+    [string]$Branch
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. "$PSScriptRoot/_autopilot-common.ps1"
+$RepoRoot = git rev-parse --show-toplevel
+$ScriptDir = $PSScriptRoot
 
-function Invoke-AutopilotLaunch {
-    [CmdletBinding()]
-    param(
-        [string]$Mode,
-        [string]$ConfigPath,
-        [switch]$ValidateOnly
-    )
-
-    $repoRoot = Get-RepoRoot -StartPath $PSScriptRoot
-    if (-not $ConfigPath) {
-        $ConfigPath = Join-Path $repoRoot '.autopilot.json'
-    }
-    if (-not (Test-Path -LiteralPath $ConfigPath -PathType Leaf)) {
-        throw "Config not found: $ConfigPath"
-    }
-
-    # --- 1. Load + schema-validate (draft-07) -------------------------------
-    $schemaPath = Join-Path $repoRoot 'schemas/autopilot.schema.json'
-    if (-not (Test-Path -LiteralPath $schemaPath -PathType Leaf)) {
-        throw "Schema not found: $schemaPath"
-    }
-    $rawConfig = Get-Content -LiteralPath $ConfigPath -Raw
-    if (-not (Test-Json -Json $rawConfig -SchemaFile $schemaPath -ErrorAction SilentlyContinue)) {
-        throw "Config failed schema validation: $ConfigPath"
-    }
-    $config = $rawConfig | ConvertFrom-Json
-    Write-AutopilotLog "Config validated: $ConfigPath"
-
-    # --- 2. Enforce command policy (authoritative; tokenize to argv) --------
-    $buildArgv = Assert-TrustedCommand -Command $config.build
-    $testArgv = Assert-TrustedCommand -Command $config.test
-    Write-AutopilotLog "Command policy OK (build launcher: $($buildArgv[0]), test launcher: $($testArgv[0]))"
-
-    # --- 3. Canonicalize plan path ------------------------------------------
-    $planFile = Resolve-PlanPath -RepoRoot $repoRoot -PlanPath $config.planPath
-    $phases = @(Get-PlanPhase -PlanFile $planFile)
-    if ($phases.Count -lt 1) {
-        throw "Plan has no '## Phase N' headings: $planFile"
-    }
-    Write-AutopilotLog "Plan resolved: $planFile ($($phases.Count) phase(s))"
-
-    # --- 4. Resolve execution mode (param overrides config) -----------------
-    $effectiveMode = if ($Mode) { $Mode } else { $config.runtime }
-    if ($effectiveMode -notin @('host', 'container')) {
-        throw "Unsupported mode '$effectiveMode' (host|container; sandbox is out of scope)."
-    }
-    Write-AutopilotLog "Mode: $effectiveMode"
-
-    # --- 5. Docker pre-flight for container mode (fail loudly) --------------
-    if ($effectiveMode -eq 'container') {
-        $dockerCmd = Get-Command docker -ErrorAction SilentlyContinue
-        if (-not $dockerCmd) {
-            throw 'Container mode requires Docker, but `docker` was not found on PATH. Install Docker Desktop or run with -Mode host (removes container isolation).'
-        }
-        & docker info *> $null
-        if ($LASTEXITCODE -ne 0) {
-            throw 'Container mode requires a running Docker daemon, but `docker info` failed. Start Docker Desktop or run with -Mode host (removes container isolation).'
-        }
-        Write-AutopilotLog 'Docker pre-flight OK.'
-    }
-
-    # --- 6. Sweep stale secret/session files (>24h) -------------------------
-    Clear-StaleSession
-
-    $result = [pscustomobject]@{
-        RepoRoot = $repoRoot
-        ConfigPath = $ConfigPath
-        PlanFile = $planFile
-        Mode = $effectiveMode
-        PhaseCount = $phases.Count
-        BuildArgv = $buildArgv
-        TestArgv = $testArgv
-        Config = $config
-    }
-
-    if ($ValidateOnly) {
-        Write-AutopilotLog 'Validation-only run complete.'
-        return $result
-    }
-
-    # --- 7. Validate auth ---------------------------------------------------
-    $validateAuth = Join-Path $PSScriptRoot 'validate-auth.ps1'
-    if (-not (Test-Path -LiteralPath $validateAuth -PathType Leaf)) {
-        throw "Auth validator not found: $validateAuth"
-    }
-    & $validateAuth -CredentialTarget $config.copilotAuth.credentialTarget
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Auth validation failed; aborting before any work.'
-    }
-
-    # --- 8. Dispatch to mode-specific orchestrator --------------------------
-    $orchestrator = switch ($effectiveMode) {
-        'host' { Join-Path $PSScriptRoot 'launch-host.ps1' }
-        'container' { Join-Path $PSScriptRoot 'launch-container.ps1' }
-    }
-    if (-not (Test-Path -LiteralPath $orchestrator -PathType Leaf)) {
-        throw "Orchestrator for mode '$effectiveMode' not found: $orchestrator"
-    }
-    Write-AutopilotLog "Dispatching to $([System.IO.Path]::GetFileName($orchestrator))"
-    & $orchestrator -Result $result
-    return $result
+# --- Validate slug ---
+if ($PlanSlug -notmatch '^[a-z0-9-]+$') {
+    Write-Error "Invalid plan slug '$PlanSlug'. Must match ^[a-z0-9-]+$."
+    exit 1
 }
 
-function Clear-StaleSession {
-    <#
-        .SYNOPSIS
-            Deletes autopilot session/secret files older than 24 hours.
-    #>
-    [CmdletBinding()]
-    param()
-    $sessionRoot = Join-Path $env:LOCALAPPDATA 'autopilot-sessions'
-    if (-not (Test-Path -LiteralPath $sessionRoot)) {
-        return
-    }
-    $cutoff = [DateTime]::UtcNow.AddHours(-24)
-    Get-ChildItem -LiteralPath $sessionRoot -File -Recurse -ErrorAction SilentlyContinue |
-        Where-Object { $_.LastWriteTimeUtc -lt $cutoff } |
-        ForEach-Object {
-            try {
-                Remove-Item -LiteralPath $_.FullName -Force -ErrorAction Stop
-                Write-AutopilotLog "Swept stale session file: $($_.Name)"
-            }
-            catch {
-                Write-AutopilotLog "Could not remove stale file $($_.Name): $($_.Exception.Message)" -Level WARN
-            }
-        }
+$PlanFolder = Join-Path $RepoRoot "docs/implementation-plans/$PlanSlug"
+if (-not (Test-Path (Join-Path $PlanFolder 'plan.md'))) {
+    Write-Error "Plan not found: $PlanFolder/plan.md"
+    exit 1
 }
 
-# Only execute when run directly (not when dot-sourced for testing).
-if ($MyInvocation.InvocationName -ne '.') {
-    Invoke-AutopilotLaunch -Mode $Mode -ConfigPath $ConfigPath -ValidateOnly:$ValidateOnly
+# --- Load and validate config ---
+$ConfigPath = Join-Path $RepoRoot '.autopilot.json'
+if (-not (Test-Path $ConfigPath)) {
+    Write-Error ".autopilot.json not found in repo root."
+    exit 1
 }
+
+$Config = Get-Content $ConfigPath -Raw | ConvertFrom-Json
+
+# Validate required fields
+$requiredFields = @('runtime', 'copilotAuth', 'gitProvider', 'gitAuth', 'model', 'git', 'timeout', 'maxIterationsPerStep', 'build', 'test')
+foreach ($field in $requiredFields) {
+    if (-not ($Config.PSObject.Properties.Name -contains $field)) {
+        Write-Error "Missing required field '$field' in .autopilot.json"
+        exit 1
+    }
+}
+
+# --- Validate build/test commands against allowlist ---
+$buildPrefixes = @('dotnet build', 'dotnet publish', 'npm run', 'yarn run', 'pnpm run', 'make', 'cargo build', 'gradle ', 'mvn ')
+$testPrefixes = @('dotnet test', 'npm test', 'npm run test', 'yarn test', 'pnpm test', 'make test', 'cargo test', 'gradle test', 'mvn test')
+
+$buildAllowed = $false
+foreach ($prefix in $buildPrefixes) {
+    if ($Config.build.StartsWith($prefix)) { $buildAllowed = $true; break }
+}
+if (-not $buildAllowed) {
+    Write-Error "Build command '$($Config.build)' does not match allowed prefixes: $($buildPrefixes -join ', ')"
+    exit 1
+}
+
+$testAllowed = $false
+foreach ($prefix in $testPrefixes) {
+    if ($Config.test.StartsWith($prefix)) { $testAllowed = $true; break }
+}
+if (-not $testAllowed) {
+    Write-Error "Test command '$($Config.test)' does not match allowed prefixes: $($testPrefixes -join ', ')"
+    exit 1
+}
+
+# --- Determine runtime ---
+$effectiveRuntime = if ($Runtime) { $Runtime } else { $Config.runtime }
+Write-Host "Runtime: $effectiveRuntime"
+
+# --- Docker pre-flight (container mode) ---
+if ($effectiveRuntime -eq 'container') {
+    Write-Host "Checking Docker daemon..."
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    docker info > $null 2>&1
+    $dockerExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+    if ($dockerExit -ne 0) {
+        Write-Error "Docker daemon not available. Start Docker Desktop or switch to host mode."
+        exit 1
+    }
+    Write-Host "Docker OK."
+}
+
+# --- Sandbox pre-flight ---
+if ($effectiveRuntime -eq 'sandbox') {
+    if (-not (Test-Path 'C:\Windows\System32\WindowsSandbox.exe')) {
+        Write-Error "Windows Sandbox not available. Enable it: Enable-WindowsOptionalFeature -Online -FeatureName 'Containers-DisposableClientVM'"
+        exit 1
+    }
+    Write-Host "Windows Sandbox OK."
+}
+
+# --- Detect partial state ---
+$branchName = "feature/$PlanSlug"
+if ($effectiveRuntime -eq 'host') {
+    $worktreePath = Join-Path (Split-Path $RepoRoot -Parent) "autopilot-$PlanSlug"
+    if (Test-Path $worktreePath) {
+        Write-Host ""
+        Write-Host "NOTICE: Existing worktree detected at $worktreePath"
+        Write-Host "This indicates a previous run. Will resume from current state."
+        Write-Host ""
+    }
+}
+else {
+    # Check if remote branch exists (container/sandbox mode resume)
+    $remoteBranch = git ls-remote --heads origin $branchName 2>$null
+    if ($remoteBranch) {
+        Write-Host ""
+        Write-Host "NOTICE: Remote branch '$branchName' already exists."
+        Write-Host "Container will resume from that branch state."
+        Write-Host ""
+    }
+}
+
+# --- Sweep stale env files ---
+Write-Host "Sweeping stale env files..."
+$envSessionDir = Join-Path $env:LOCALAPPDATA 'autopilot-sessions'
+if (Test-Path $envSessionDir) {
+    $staleThreshold = (Get-Date).AddHours(-24)
+    Get-ChildItem $envSessionDir -Directory | Where-Object { $_.LastWriteTime -lt $staleThreshold } | ForEach-Object {
+        Write-Host "  Removing stale session: $($_.Name)"
+        Remove-Item $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# --- Get credentials ---
+Write-Host "Fetching credentials..."
+$credTarget = switch ($Config.copilotAuth) {
+    'pat' { 'copilot-autopilot' }
+    'oauth' { 'copilot-cli' }
+}
+$Token = & (Join-Path $ScriptDir 'get-credential.ps1') -Target $credTarget
+if (-not $Token) {
+    Write-Error "Failed to retrieve token for target '$credTarget'."
+    exit 1
+}
+
+$AdoToken = $null
+if ($Config.gitProvider -eq 'ado') {
+    $AdoToken = & (Join-Path $ScriptDir 'get-credential.ps1') -Target 'ado'
+    if (-not $AdoToken) {
+        Write-Error "Failed to retrieve ADO token."
+        exit 1
+    }
+}
+
+# --- Validate authentication ---
+Write-Host "Validating authentication..."
+& (Join-Path $ScriptDir 'validate-auth.ps1') -Config $Config -Token $Token
+if ($LASTEXITCODE -ne 0) {
+    Write-Error "Authentication validation failed. Run validate-auth.ps1 manually for details."
+    exit 1
+}
+Write-Host "Auth OK."
+
+# --- Dispatch ---
+Write-Host ""
+Write-Host "=== Launching $effectiveRuntime mode ==="
+Write-Host "Plan: $PlanSlug"
+Write-Host "Mode: $Mode"
+Write-Host "Timeout: $($Config.timeout) minutes/phase"
+Write-Host ""
+
+$dispatchParams = @{
+    PlanSlug = $PlanSlug
+    Mode     = $Mode
+    Config   = $Config
+    Token    = $Token
+    Branch   = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
+}
+if ($AdoToken) { $dispatchParams.AdoToken = $AdoToken }
+
+switch ($effectiveRuntime) {
+    'host' {
+        & (Join-Path $ScriptDir 'launch-host.ps1') @dispatchParams
+    }
+    'container' {
+        & (Join-Path $ScriptDir 'launch-container.ps1') @dispatchParams
+    }
+    'sandbox' {
+        & (Join-Path $ScriptDir 'launch-sandbox.ps1') @dispatchParams
+    }
+}
+
+$exitCode = $LASTEXITCODE
+Write-Host ""
+Write-Host "=== Autopilot finished with exit code: $exitCode ==="
+exit $exitCode

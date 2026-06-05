@@ -1,59 +1,73 @@
-#requires -Version 7.0
+#Requires -Modules CredentialManager
 <#
 .SYNOPSIS
-    The single token reader for autopilot (Windows Credential Manager).
+    Reads authentication tokens from Windows Credential Manager for autopilot execution.
 .DESCRIPTION
-    Resolves a stored fine-grained GitHub PAT from Windows Credential Manager and
-    returns it as a [PSCredential]. This is the ONLY token-reading code path;
-    validate-auth.ps1 and prepare-env-file.ps1 both consume it so Credential
-    Manager logic is never duplicated.
-
-    The token is never written to the host, a log, or the pipeline as plaintext.
-    Callers extract it only at the moment of use via
-    `$cred.GetNetworkCredential().Password`.
+    Supports multiple credential targets:
+    - 'copilot-autopilot' - Fine-grained PAT for Copilot CLI + git operations
+    - 'copilot-cli' - OAuth token from `copilot login` pre-auth
+    For ADO: validates `az account show` succeeds (token fetched separately by validate-auth.ps1).
 .PARAMETER Target
-    Windows Credential Manager target name (e.g. 'copilot-autopilot').
+    The credential target to retrieve. One of: 'copilot-autopilot', 'copilot-cli', 'ado'.
 .OUTPUTS
-    [System.Management.Automation.PSCredential]
-.EXAMPLE
-    $cred = ./get-credential.ps1 -Target copilot-autopilot
+    [string] The token value, or throws on failure.
 #>
-[CmdletBinding()]
-[OutputType([System.Management.Automation.PSCredential])]
 param(
     [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
+    [ValidateSet('copilot-autopilot', 'copilot-cli', 'ado')]
     [string]$Target
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if (-not (Get-Module -ListAvailable -Name CredentialManager)) {
-    throw @"
-The CredentialManager module is required but not installed.
-Install it once with:
-  Install-Module CredentialManager -Scope CurrentUser
-Then store the PAT:
-  New-StoredCredential -Target '$Target' -UserName 'autopilot' -Password '<PAT>' -Type Generic -Persist LocalMachine
+function Get-TokenFromCredentialManager {
+    param([string]$CredentialTarget)
+
+    # Check if CredentialManager module is available
+    if (-not (Get-Module -ListAvailable -Name CredentialManager)) {
+        throw @"
+CredentialManager PowerShell module not found.
+Install it: Install-Module -Name CredentialManager -Scope CurrentUser
+Then store your token: New-StoredCredential -Target '$CredentialTarget' -UserName 'autopilot' -Password '<your-token>' -Type Generic -Persist LocalMachine
 "@
-}
+    }
 
-Import-Module CredentialManager -ErrorAction Stop
-
-$cred = Get-StoredCredential -Target $Target
-if (-not $cred) {
-    throw @"
-No stored credential found for target '$Target'.
-Create one with:
-  New-StoredCredential -Target '$Target' -UserName 'autopilot' -Password '<fine-grained-PAT>' -Type Generic -Persist LocalMachine
-Required PAT permissions: Contents R/W, Pull requests R/W, Copilot Requests R.
+    $cred = Get-StoredCredential -Target $CredentialTarget
+    if (-not $cred) {
+        throw @"
+No credential found for target '$CredentialTarget' in Windows Credential Manager.
+Store it: New-StoredCredential -Target '$CredentialTarget' -UserName 'autopilot' -Password '<your-token>' -Type Generic -Persist LocalMachine
 "@
+    }
+
+    # Extract password from NetworkCredential
+    $token = $cred.GetNetworkCredential().Password
+    if ([string]::IsNullOrWhiteSpace($token)) {
+        throw "Credential '$CredentialTarget' exists but password is empty."
+    }
+
+    return $token
 }
 
-# Guard against an empty password (corrupt/blank entry).
-if ([string]::IsNullOrWhiteSpace($cred.GetNetworkCredential().Password)) {
-    throw "Stored credential '$Target' has an empty password; re-create it."
+switch ($Target) {
+    'copilot-autopilot' {
+        return Get-TokenFromCredentialManager -CredentialTarget 'copilot-autopilot'
+    }
+    'copilot-cli' {
+        return Get-TokenFromCredentialManager -CredentialTarget 'copilot-cli'
+    }
+    'ado' {
+        # For ADO, verify az CLI is authenticated (token fetched by validate-auth.ps1)
+        $azAccount = az account show 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            throw @"
+Azure CLI not authenticated. Run:
+  az login --use-device-code
+Then retry.
+"@
+        }
+        # Return success indicator - actual token fetched by validate-auth.ps1
+        return 'ado-authenticated'
+    }
 }
-
-return $cred
