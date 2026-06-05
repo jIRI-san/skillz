@@ -1,7 +1,7 @@
 ---
 description: "Full design plan reviewer (Claude Opus) — comprehensive review across all aspects. Invoked by dr agent only."
 name: "dr-opus"
-model: Claude Opus 4.6 (copilot)
+model: Claude Opus 4.8 (copilot)
 tools: [read, search]
 user-invocable: false
 agents: []
