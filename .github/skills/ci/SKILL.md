@@ -59,7 +59,7 @@ Detect or ask for execution mode:
 
 **"Approve each step, or autopilot?"**
 - **Approve** — stop after each step for review before proceeding. Worktree naming: `feature/<plan-slug>-<phase-slug>-<step-N>` (scoped to current step).
-- **Autopilot** — implement all remaining steps with minimal user input. Single worktree for the entire plan, named `feature/<plan-slug>`. All phases and steps execute on this one worktree from start to end. Skip per-step confirmations (Step 4 "Proceed?", Step 10 "Ready to commit?", Step 11 "Continue or stop?"). Still run build, tests, acceptance criteria validation, and code review — but auto-fix unambiguous CR findings and auto-commit without asking. Continue to next phase without confirmation. Only stop for: `@human` steps, ambiguous CR trade-offs, failing tests that can't be auto-fixed, or blocking dependency issues. The user reviews everything at the end.
+- **Autopilot** — implement all remaining steps with minimal user input. Single worktree for the entire plan, named `feature/<plan-slug>`. All phases and steps execute on this one worktree from start to end. Skip per-step confirmations (Step 4 "Proceed?", Step 10 "Ready to commit?", Step 11 "Continue or stop?"). Still run build, tests, acceptance criteria validation, and code review — and still log CR findings with triage — but auto-fix unambiguous CR findings and auto-commit without asking. Continue to next phase without confirmation. Only stop for: `@human` steps, ambiguous CR trade-offs, failing tests that can't be auto-fixed, or blocking dependency issues. The user reviews everything at the end.
 - **Host autopilot (autonomous)** — delegate execution to Copilot CLI running autonomously in a host worktree. Invokes `scripts/autopilot/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime host`. The agent runs without user interaction, commits per-step, and pushes on phase completion. After invoking, report that autonomous execution has started and exit the `/ci` flow.
 - **Container autopilot (autonomous)** — same as host autopilot but runs inside a Docker container cloned from remote. Requires Docker Desktop. After the user selects this option, ask a follow-up question:
 
@@ -185,8 +185,9 @@ If build or tests fail: diagnose, fix, and re-run. Iterate until both pass.
 
 Invoke `@cr` scoped to the current branch changes (`cr branch`).
 
-- Print the **complete `@cr` output verbatim** — do not summarize or truncate.
-- **Default to "fix all"** — if all findings are unambiguous bugs or improvements with no trade-offs, implement all without asking. Only prompt for selection when findings involve trade-offs, conflicting approaches, or optional style preferences.
+- Print the **complete `@cr` output verbatim** — do not summarize or truncate. Every finding (title, severity, one-line summary) must be visible, even ones you'll auto-fix.
+- **State your triage explicitly** after the output: list which findings you'll auto-fix (clear-cut bugs/improvements with no trade-offs) and which need a user decision. Never silently apply fixes — the user must see every finding raised even when no approval is required.
+- **Default to "fix all"** — if all findings are unambiguous bugs or improvements with no trade-offs, implement all without asking (but still log the triage above). Only prompt for selection when findings involve trade-offs, conflicting approaches, or optional style preferences.
 - If prompting: ask which findings to fix (by number, range, or "all").
 - Apply the fixes.
 - Re-run build and tests until both pass.
@@ -232,7 +233,7 @@ After committing, check if all steps **in the current phase** are `[x]`. If the 
    1. Run `git diff <phase-start-commit>..HEAD --name-only` to get the list of changed files.
    2. For each changed `.cs` file, identify its first-level dependencies: files it references (`using`/calls into) and files that reference it (direct callers). Include these in the review scope.
    3. Run `@cr` on the combined file list (changed files + first-level dependencies).
-   4. Default to "fix all" for unambiguous findings. Commit fixes separately: `fix(<scope>): phase N CR findings`.
+   4. Print the **complete `@cr` output verbatim**, then **state your triage**: which findings you'll auto-fix and which need a user decision. Never silently apply fixes. Default to "fix all" for unambiguous findings; prompt only for trade-offs. Commit fixes separately: `fix(<scope>): phase N CR findings`.
 
 If all steps in the plan are `[x]`, proceed to Step 12.
 
