@@ -1,0 +1,24 @@
+{
+  "name": "autopilot",
+  "version": "1.0.0",
+  "description": "Autonomous plan execution agent payload for .github/agents.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "agent",
+    "autopilot"
+  ],
+  "dependencies": [],
+  "status": "partial",
+  "files": [
+    {
+      "src": "agents/autopilot.agent.md",
+      "dest": "agents/autopilot.agent.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}

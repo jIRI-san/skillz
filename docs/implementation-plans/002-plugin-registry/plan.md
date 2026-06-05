@@ -139,8 +139,8 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [x] 2.1a Author the simple single/few-file plugins (`cr`, `dr`, `cdn`, `udn`): `plugin.json` (with explicit `files[]` `{src,dest}`) + mirror-structured files copied (not moved) from current `.github/`; verify each source sha256 == original (REQ-1, REQ-2, RISK-1) [after: 1.2] `L`
-- [~] 2.1b Author the skill/agent plugins (`cip`, `ci`, `autopilot`): `cip`+`ci` SKILL.md (+`cip` assets) with dependency edges (`cip→dr`, `ci→cr,autopilot`); `autopilot` `plugin.json` declares ONLY `agents/autopilot.agent.md` as installed payload with `status:partial` until Plan 001 ships (REQ-1, REQ-2, REQ-21, RISK-1, RISK-11) [after: 2.1a] `M`
-- [ ] 2.2 Validate every `plugin.json` against `schemas/plugin.schema.json`; confirm dependency edges resolve and registry-wide dest uniqueness holds (REQ-1, REQ-2, RISK-12) [after: 2.1b] `M`
+- [x] 2.1b Author the skill/agent plugins (`cip`, `ci`, `autopilot`): `cip`+`ci` SKILL.md (+`cip` assets) with dependency edges (`cip→dr`, `ci→cr,autopilot`); `autopilot` `plugin.json` declares ONLY `agents/autopilot.agent.md` as installed payload with `status:partial` until Plan 001 ships (REQ-1, REQ-2, REQ-21, RISK-1, RISK-11) [after: 2.1a] `M`
+- [~] 2.2 Validate every `plugin.json` against `schemas/plugin.schema.json`; confirm dependency edges resolve and registry-wide dest uniqueness holds (REQ-1, REQ-2, RISK-12) [after: 2.1b] `M`
 - [ ] 2.3 Confirm `.github/` still holds working copies identical to `plugins/` sources (dogfood baseline); record the dogfood set (`cr`,`dr`,`cip`,`ci`,`cdn`,`udn`,`autopilot`) (REQ-15, REQ-22, RISK-1) [after: 2.1b] `S`
 
 ## Phase 3: Registry Index Generation

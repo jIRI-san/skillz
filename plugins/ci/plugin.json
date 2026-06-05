@@ -1,0 +1,28 @@
+{
+  "name": "ci",
+  "version": "1.0.0",
+  "description": "Code implementation workflow skill with autonomous execution guidance.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "skill",
+    "implementation",
+    "autopilot"
+  ],
+  "dependencies": [
+    "cr",
+    "autopilot"
+  ],
+  "status": "stable",
+  "files": [
+    {
+      "src": "skills/ci/SKILL.md",
+      "dest": "skills/ci/SKILL.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}
