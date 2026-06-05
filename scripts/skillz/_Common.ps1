@@ -110,7 +110,7 @@ function Get-FileSha256 {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
-function Parse-SemVer {
+function ConvertTo-SemVer {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -123,12 +123,12 @@ function Parse-SemVer {
     }
 
     return [pscustomobject]@{
-        Original   = $Version
-        Major      = [int]$Matches.major
-        Minor      = [int]$Matches.minor
-        Patch      = [int]$Matches.patch
+        Original = $Version
+        Major = [int]$Matches.major
+        Minor = [int]$Matches.minor
+        Patch = [int]$Matches.patch
         PreRelease = if ($Matches.ContainsKey('pre')) { $Matches.pre } else { $null }
-        Build      = if ($Matches.ContainsKey('build')) { $Matches.build } else { $null }
+        Build = if ($Matches.ContainsKey('build')) { $Matches.build } else { $null }
     }
 }
 
@@ -196,8 +196,8 @@ function Compare-SemVer {
         [string]$Right
     )
 
-    $leftVersion = Parse-SemVer -Version $Left
-    $rightVersion = Parse-SemVer -Version $Right
+    $leftVersion = ConvertTo-SemVer -Version $Left
+    $rightVersion = ConvertTo-SemVer -Version $Right
 
     foreach ($part in 'Major', 'Minor', 'Patch') {
         if ($leftVersion.$part -lt $rightVersion.$part) { return -1 }
@@ -237,9 +237,9 @@ function ConvertTo-SortedObject {
     if ($InputObject -is [System.Collections.IEnumerable] -and -not ($InputObject -is [string])) {
         $items = @()
         foreach ($item in $InputObject) {
-            $items += ,(ConvertTo-SortedObject -InputObject $item)
+            $items += , (ConvertTo-SortedObject -InputObject $item)
         }
-        return ,$items
+        return , $items
     }
 
     return $InputObject
@@ -273,3 +273,5 @@ function Write-JsonFileStable {
     $json = $sorted | ConvertTo-Json -Depth 100
     Set-Content -LiteralPath $Path -Value "$json`n" -Encoding utf8
 }
+
+

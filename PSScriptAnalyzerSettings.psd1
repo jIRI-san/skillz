@@ -1,8 +1,7 @@
 @{
-    # PSScriptAnalyzer settings for the skillz autopilot scripts.
-    # The local validation gate (scripts/autopilot/validate-local.ps1) and the
-    # pre-commit hook run Invoke-ScriptAnalyzer with these settings and require
-    # ZERO warnings across scripts/autopilot/**.
+    # PSScriptAnalyzer settings for skillz PowerShell scripts.
+    # Plan 002 extends this shared baseline to scripts/skillz/** so both
+    # scripts/autopilot/** and scripts/skillz/** stay warning-free.
 
     # Use the full built-in rule set as the baseline.
     IncludeDefaultRules = $true
