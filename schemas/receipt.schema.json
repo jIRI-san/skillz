@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jIRI-san/skillz/schemas/receipt.schema.json",
+  "title": "Skillz Plugin Receipt",
+  "description": "Per-plugin installation tracking stored in .github/.skillz/receipts/<name>.json.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "version", "source", "ref", "installedAt", "files"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ref": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$",
+      "description": "Resolved immutable commit SHA used for both registry and payload fetch."
+    },
+    "installedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "degraded": {
+      "type": "boolean",
+      "description": "True when plugin version advanced partially due to skipped-modified files."
+    },
+    "evalStatus": {
+      "type": ["string", "null"],
+      "enum": ["none", "passing", "failing", null],
+      "description": "Reserved eval status seam."
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["dest", "sha256", "outcome"],
+        "properties": {
+          "dest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["installed", "updated", "skipped-modified"]
+          }
+        }
+      }
+    }
+  }
+}

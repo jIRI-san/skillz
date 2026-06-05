@@ -131,7 +131,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [x] 1.1 Create `plugins/` root + `scripts/skillz/` root; add `scripts/skillz/_Common.ps1` (`#requires -Version 7.0`; helpers: repo-root resolve, `.github/`-confinement path guard, sha256 helper, semver parse/compare, JSON read/write with stable key order) (REQ-1, REQ-14, RISK-3) `M`
-- [ ] 1.2 Add `schemas/plugin.schema.json` (name/version/description/author/license/tags/dependencies/`files[]` as `{src,dest}` objects/optional `status`/reserved `evals`), `schemas/registry.schema.json` (incl. per-file `sha256`), and `schemas/receipt.schema.json` (required `ref` SHA, per-file `{dest,sha256,outcome}`, optional `degraded`, reserved `evalStatus`) (REQ-1, REQ-16, RISK-2, RISK-9) `M`
+- [x] 1.2 Add `schemas/plugin.schema.json` (name/version/description/author/license/tags/dependencies/`files[]` as `{src,dest}` objects/optional `status`/reserved `evals`), `schemas/registry.schema.json` (incl. per-file `sha256`), and `schemas/receipt.schema.json` (required `ref` SHA, per-file `{dest,sha256,outcome}`, optional `degraded`, reserved `evalStatus`) (REQ-1, REQ-16, RISK-2, RISK-9) `M`
 - [ ] 1.3 Extend `.editorconfig` + `PSScriptAnalyzerSettings.psd1` to cover `scripts/skillz/**`; verify `Invoke-ScriptAnalyzer` clean (REQ-20) `S`
 
 ## Phase 2: Migrate Customizations into `plugins/`
