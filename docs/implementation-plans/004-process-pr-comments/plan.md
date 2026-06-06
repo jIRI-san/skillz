@@ -106,14 +106,14 @@
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 5.1 Package + register: validate `plugins/pprc/plugin.json` against `schemas/plugin.schema.json`; run `Build-Registry.ps1` to add `pprc` (with per-file sha256) to `registry.json` (REQ-13, REQ-18, RISK-9) [after: 4.2] `M`
-- [ ] 5.2 Install into skalary `.github/` via `Install-Plugin.ps1` (or `Sync-Dogfood.ps1`); verify dogfood drift-check passes and VS Code loads the `process-pr-comments` skill; re-run lint on dogfood copies (REQ-17, REQ-18, RISK-9) [after: 5.1] `M`
+- [x] 5.1 Package + register: validate `plugins/pprc/plugin.json` against `schemas/plugin.schema.json`; run `Build-Registry.ps1` to add `pprc` (with per-file sha256) to `registry.json` (REQ-13, REQ-18, RISK-9) [after: 4.2] `M`
+- [x] 5.2 Install into skalary `.github/` via `Install-Plugin.ps1` (or `Sync-Dogfood.ps1`); verify dogfood drift-check passes and VS Code loads the `process-pr-comments` skill; re-run lint on dogfood copies (REQ-17, REQ-18, RISK-9) [after: 5.1] `M`
   <details><summary>Details</summary>
 
   **002-absent fallback (independent of the 002-only `Build-Registry` step 5.1):** if Plan 002 registry tooling is unavailable, skip 5.1/5.2 and instead manually copy `plugins/pprc/**` into `.github/skills/process-pr-comments/**`, record the gap, and revisit once 002 ships.
 
   </details>
-- [ ] 5.3 Docs: add `docs/design-notes/architecture/process-pr-comments.design.md` (workflow, auth model, REST+GraphQL split, dispositions, approval gate, branch-safety, security); add row to `.design-notes.md` index; ensure README catalog includes `pprc`; document `gh` CLI + auth as a prerequisite (REQ-18, RISK-1, RISK-9) [after: 5.1] `M`
+- [x] 5.3 Docs: add `docs/design-notes/architecture/process-pr-comments.design.md` (workflow, auth model, REST+GraphQL split, dispositions, approval gate, branch-safety, security); add row to `.design-notes.md` index; ensure README catalog includes `pprc`; document `gh` CLI + auth as a prerequisite (REQ-18, RISK-1, RISK-9) [after: 5.1] `M`
 
 ## Notes
 

@@ -1,0 +1,21 @@
+{
+  "evalStatus": "none",
+  "files": [
+    {
+      "dest": "skills/process-pr-comments/scripts/GitHubPr.psm1",
+      "outcome": "installed",
+      "sha256": "e26047ffc1a010dd3ef691373017cfa432896f16a66396739990799db19e9f1a"
+    },
+    {
+      "dest": "skills/process-pr-comments/SKILL.md",
+      "outcome": "installed",
+      "sha256": "7068c8f17554eb8e625324f51f058db6169bd54de19464f3af677a4efd6ecf33"
+    }
+  ],
+  "installedAt": "2026-06-06T19:42:06.7109636Z",
+  "name": "pprc",
+  "ref": "950ce5f492370bb1ae22b23cd404da5736f802d8",
+  "source": "local:/work@950ce5f492370bb1ae22b23cd404da5736f802d8",
+  "version": "1.0.0"
+}
+

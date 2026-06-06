@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-06T17:10:31.0506163Z",
+  "generatedAt": "2026-06-06T19:41:35.2687779Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -224,6 +224,36 @@
         "agent",
         "design-review",
         "prompt"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "author": "jIRI-san",
+      "dependencies": [],
+      "description": "Process PR comments skill for classifying, fixing, and replying to review feedback.",
+      "evals": {
+        "status": "none"
+      },
+      "files": [
+        {
+          "dest": "skills/process-pr-comments/scripts/GitHubPr.psm1",
+          "sha256": "e26047ffc1a010dd3ef691373017cfa432896f16a66396739990799db19e9f1a",
+          "src": "skills/process-pr-comments/scripts/GitHubPr.psm1"
+        },
+        {
+          "dest": "skills/process-pr-comments/SKILL.md",
+          "sha256": "7068c8f17554eb8e625324f51f058db6169bd54de19464f3af677a4efd6ecf33",
+          "src": "skills/process-pr-comments/SKILL.md"
+        }
+      ],
+      "license": "MIT",
+      "name": "pprc",
+      "status": "stable",
+      "tags": [
+        "github",
+        "pr",
+        "review",
+        "skill"
       ],
       "version": "1.0.0"
     },
