@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-06T17:10:31.0506163Z",
+  "generatedAt": "2026-06-06T19:44:30.8020760Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -169,7 +169,7 @@
         },
         {
           "dest": "prompts/cr.prompt.md",
-          "sha256": "6f1205eb2b1273a75f71b9ac4dd630921355310442dcdc556831316f7fedc4f4",
+          "sha256": "89a23779168194cfc51b50574a1941c8cc64a5917bab459ba38020f651012d6e",
           "src": "prompts/cr.prompt.md"
         }
       ],
@@ -208,12 +208,12 @@
         },
         {
           "dest": "agents/dr.agent.md",
-          "sha256": "135af5966b94433f13e1f48c025b234f556b3e7665d27ff14b0dc5b46b70d512",
+          "sha256": "99f51dd5eafa97f6b76cbfa584d7c285612946bdc81d300caa4d7f8f6418470c",
           "src": "agents/dr.agent.md"
         },
         {
           "dest": "prompts/dr.prompt.md",
-          "sha256": "70e48fa0d391acc30a697450d407b63ae23529c5599e0295690102a68db82bdb",
+          "sha256": "83b02e04ff69d078c8d6c1cbdec7b313f056e00aaffcb70b3a49f6b88f5f0c2d",
           "src": "prompts/dr.prompt.md"
         }
       ],
