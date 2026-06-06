@@ -57,23 +57,14 @@ Detect or ask for execution mode:
    - Unrecognized pattern → ask (see below).
 2. **On `main`/`master` or unrecognized branch** — after showing the progress summary, ask:
 
-**"Approve each step, or autopilot?"**
+**"Approve each step, autopilot, or autonomous?"**
 - **Approve** — stop after each step for review before proceeding. Worktree naming: `feature/<plan-slug>-<phase-slug>-<step-N>` (scoped to current step).
 - **Autopilot** — implement all remaining steps with minimal user input. Single worktree for the entire plan, named `feature/<plan-slug>`. All phases and steps execute on this one worktree from start to end. Skip per-step confirmations (Step 4 "Proceed?", Step 10 "Ready to commit?", Step 11 "Continue or stop?"). Still run build, tests, acceptance criteria validation, and code review — and still log CR findings with triage — but auto-fix unambiguous CR findings and auto-commit without asking. Continue to next phase without confirmation. Only stop for: `@human` steps, ambiguous CR trade-offs, failing tests that can't be auto-fixed, or blocking dependency issues. The user reviews everything at the end.
-- **Host autopilot (autonomous)** — delegate execution to Copilot CLI running autonomously in a host worktree. Invokes `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime host`. The agent runs without user interaction, commits per-step, and pushes on phase completion. After invoking, report that autonomous execution has started and exit the `/ci` flow.
-- **Container autopilot (autonomous)** — same as host autopilot but runs inside a Docker container cloned from remote. Requires Docker Desktop. After the user selects this option, ask a follow-up question:
+- **Autonomous** — **Read** `.github/skills/autopilot/SKILL.md` and follow its steps immediately. After handing off, do not continue `/ci` Steps 2–12.
 
-  **"Start from which branch?"**
-  - **Current branch (`<current-branch>`)** — the container clones the repo and checks out this branch as the starting point, then creates `feature/<plan-slug>` from it. Requires the branch to be pushed to remote.
-  - **main** (default) — the container starts from main and creates `feature/<plan-slug>` from it.
+> **Note:** The **Autonomous** option is hidden when `AUTOPILOT_CONTAINER=true` (execution is already inside an autonomous container). In that case, only show Approve and Autopilot.
 
-  Then invoke: `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime container -Branch <chosen-branch>`
-
-- **Sandbox autopilot (autonomous)** — runs inside Windows Sandbox (isolated, disposable Win32 VM). Mounts repo read-only, clones locally inside sandbox. Same branch follow-up question as container mode. Requires Windows Pro/Enterprise with `Containers-DisposableClientVM` enabled. Invoke: `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime sandbox -Branch <chosen-branch>`
-
-> **Note:** The autonomous options (Host/Container/Sandbox autopilot) are hidden when the environment variable `AUTOPILOT_CONTAINER=true` is set (indicates execution is already inside an autonomous container). Only show Approve and Autopilot in that case.
-
-Remember the chosen mode for the rest of the session.
+For Approve and Autopilot, remember the chosen mode for the rest of the session.
 
 ## Step 2: Load Context
 
@@ -86,6 +77,8 @@ Remember the chosen mode for the rest of the session.
 ## Step 3: Branch Detection
 
 Run `git branch --show-current`.
+
+> **Autonomous mode:** skip Steps 3–12. The autopilot launcher handles its own worktree/branch flow.
 
 Ask the user: **"Create a new worktree for this work, or use the current branch `<current-branch>`?"**
 - Option A: **New worktree** (default for `main`/`master`)
