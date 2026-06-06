@@ -9,16 +9,21 @@ function Resolve-RepoRoot {
         [string]$StartPath = $PSScriptRoot
     )
 
+    $candidateStartPath = [System.IO.Path]::GetFullPath($StartPath)
+    if (Test-Path -LiteralPath $candidateStartPath -PathType Leaf) {
+        $candidateStartPath = Split-Path -Parent $candidateStartPath
+    }
+
     $previous = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    $repoRoot = git rev-parse --show-toplevel 2>$null
+    $repoRoot = git -C $candidateStartPath rev-parse --show-toplevel 2>$null
     $exitCode = $LASTEXITCODE
     $ErrorActionPreference = $previous
     if ($exitCode -eq 0 -and -not [string]::IsNullOrWhiteSpace($repoRoot)) {
         return [System.IO.Path]::GetFullPath($repoRoot.Trim())
     }
 
-    $current = [System.IO.Path]::GetFullPath($StartPath)
+    $current = $candidateStartPath
     while ($true) {
         if (Test-Path -LiteralPath (Join-Path $current '.git')) {
             return $current
