@@ -99,13 +99,16 @@ function New-StructuralEvalEntries {
         }
 
         $errorMessage = $null
-        if ($null -ne $test.ErrorRecord -and
-            $null -ne $test.ErrorRecord.Exception -and
-            -not [string]::IsNullOrWhiteSpace([string]$test.ErrorRecord.Exception.Message)) {
-            $errorMessage = [string]$test.ErrorRecord.Exception.Message
-        }
-        elseif ($null -ne $test.ErrorRecord -and -not [string]::IsNullOrWhiteSpace([string]$test.ErrorRecord)) {
-            $errorMessage = [string]$test.ErrorRecord
+        if ($null -ne $test.ErrorRecord) {
+            $errorRecordHasException = $test.ErrorRecord.PSObject.Properties.Name -contains 'Exception'
+            if ($errorRecordHasException -and
+                $null -ne $test.ErrorRecord.Exception -and
+                -not [string]::IsNullOrWhiteSpace([string]$test.ErrorRecord.Exception.Message)) {
+                $errorMessage = [string]$test.ErrorRecord.Exception.Message
+            }
+            elseif (-not [string]::IsNullOrWhiteSpace([string]$test.ErrorRecord)) {
+                $errorMessage = [string]$test.ErrorRecord
+            }
         }
 
         $entries.Add([ordered]@{
