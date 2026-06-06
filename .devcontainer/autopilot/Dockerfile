@@ -4,6 +4,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 ARG GH_CLI_VERSION=2.74.0
+# Fallback only — launch-container.ps1 resolves and passes the latest published
+# version via --build-arg COPILOT_CLI_VERSION so each build auto-upgrades.
+ARG COPILOT_CLI_VERSION=1.0.60
 
 # System dependencies + Node.js (needed for Copilot CLI)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -36,7 +39,7 @@ RUN curl -sSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /u
     && rm -rf /var/lib/apt/lists/*
 
 # GitHub Copilot CLI
-RUN npm install -g @github/copilot
+RUN npm install -g @github/copilot@${COPILOT_CLI_VERSION}
 
 # Container entry-point script
 COPY scripts/autopilot/container-entrypoint.sh /usr/local/bin/container-entrypoint.sh

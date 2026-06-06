@@ -65,7 +65,33 @@ try {
         $actualDockerfile = $tempDockerfile
     }
 
-    docker build -t $ImageName -f $actualDockerfile $buildContext
+    # Resolve the latest published Copilot CLI version so each build picks up new
+    # releases automatically. Passed as a build-arg; Docker only busts the npm
+    # install layer when the version actually changes. Falls back to the
+    # Dockerfile's pinned default if the npm registry is unreachable.
+    # npm writes notices to stderr, which would abort under $ErrorActionPreference
+    # 'Stop'; run the probe with a local 'Continue' preference and stderr muted.
+    $buildArgs = @()
+    $latestCli = $null
+    try {
+        $latestCli = & {
+            $ErrorActionPreference = 'Continue'
+            npm view '@github/copilot' version 2>$null
+        }
+    }
+    catch {
+        $latestCli = $null
+    }
+    if ($LASTEXITCODE -eq 0 -and $latestCli) {
+        $latestCli = ($latestCli | Select-Object -Last 1).Trim()
+        Write-Host "Latest Copilot CLI version: $latestCli"
+        $buildArgs += @('--build-arg', "COPILOT_CLI_VERSION=$latestCli")
+    }
+    else {
+        Write-Warning "Could not resolve latest Copilot CLI version from npm; using Dockerfile default."
+    }
+
+    docker build @buildArgs -t $ImageName -f $actualDockerfile $buildContext
     if ($LASTEXITCODE -ne 0) { throw "Docker build failed." }
 
     # --- Prepare env file ---

@@ -5,13 +5,13 @@
   "copilotAuth": "pat",
   "gitProvider": "github",
   "gitAuth": "pat-shared",
-  "model": "claude-opus-4.8",
+  "model": "gpt-5.5",
   "git": {
     "name": "jIRI-san",
     "email": "jiri@jiribrossmann.com"
   },
-  "timeout": 60,
-  "maxIterationsPerStep": 5,
+  "timeout": 180,
+  "maxIterationsPerStep": 10,
   "build": "npm run build",
   "test": "npm test"
 }
