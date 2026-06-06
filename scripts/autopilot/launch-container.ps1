@@ -44,6 +44,8 @@ $TimeoutMinutes = $Config.timeout
 $PlanFolder = Join-Path $RepoRoot "docs/implementation-plans/$PlanSlug"
 $TranscriptsDir = Join-Path $PlanFolder 'transcripts'
 $EnvFilePath = $null
+# Default to failure so any early throw or unread exit code surfaces as non-zero.
+$exitCode = 1
 
 try {
     # --- Build image ---
@@ -110,6 +112,10 @@ try {
 
     # Start container as background process for timeout enforcement
     $dockerProcess = Start-Process -FilePath 'docker' -ArgumentList $dockerArgs -NoNewWindow -PassThru
+    # Cache the native process handle now so $dockerProcess.ExitCode remains
+    # readable after the process exits. Without this, Start-Process -PassThru
+    # returns $null for ExitCode once the process has terminated.
+    $null = $dockerProcess.Handle
 
     # Brief delay to let docker register the container name
     Start-Sleep -Seconds 3
@@ -144,6 +150,10 @@ try {
 
     $dockerProcess.WaitForExit()
     $exitCode = $dockerProcess.ExitCode
+    if ($null -eq $exitCode) {
+        Write-Warning "Could not read container exit code; treating as failure."
+        $exitCode = 1
+    }
     Write-Host "Container exited with code: $exitCode"
 
     # --- Extract transcripts ---
@@ -184,3 +194,6 @@ finally {
         Write-Host "Env file cleaned up."
     }
 }
+
+# Propagate the container exit code to the caller (launch.ps1).
+exit $exitCode

@@ -69,6 +69,65 @@ else {
     Write-Host "  Skipping repo access probe (non-GitHub remote or no remote configured)."
 }
 
+# Probe 4: workflow push capability — required to push commits that add or
+# modify .github/workflows/**. A missing scope/permission makes GitHub reject
+# the final push, silently discarding every commit made inside the container.
+# Surface it here, before the (potentially multi-hour) run starts.
+#
+# GitHub does NOT expose fine-grained permissions via any API, so the depth of
+# the check depends on the token type (inferred from its prefix):
+#   ghp_*        classic PAT        -> hard-verifiable via X-OAuth-Scopes header
+#   github_pat_* fine-grained PAT   -> not introspectable; emit exact instruction
+#   gho_/ghu_*   OAuth/user token   -> scopes header if present, else advisory
+Write-Host "  Checking workflow push capability..."
+$tokenType =
+    if ($Token -like 'github_pat_*') { 'fine-grained' }
+    elseif ($Token -like 'ghp_*') { 'classic' }
+    elseif ($Token -like 'gho_*' -or $Token -like 'ghu_*') { 'oauth' }
+    else { 'unknown' }
+
+if ($tokenType -eq 'fine-grained') {
+    # Fine-grained permissions are invisible to the API. Cannot verify; instruct.
+    Write-Host "  Fine-grained PAT detected (github_pat_*)."
+    Write-Host "  NOTE: Fine-grained permissions are not introspectable via the GitHub API."
+    Write-Host "        If this plan edits .github/workflows/**, the PAT must grant"
+    Write-Host "        Repository permissions -> Workflows -> Read and write,"
+    Write-Host "        otherwise the push will be rejected and container commits lost."
+}
+else {
+    try {
+        $scopeResponse = Invoke-WebRequest -Uri 'https://api.github.com/user' -Headers $headers -Method Get -UseBasicParsing
+        # Header access differs between Windows PowerShell 5.1 (string) and 7 (string[]).
+        $scopeKey = $scopeResponse.Headers.Keys | Where-Object { $_ -ieq 'X-OAuth-Scopes' } | Select-Object -First 1
+        if ($scopeKey) {
+            $rawScopes = $scopeResponse.Headers[$scopeKey]
+            if ($rawScopes -is [array]) { $rawScopes = $rawScopes -join ',' }
+            $scopes = ([string]$rawScopes -split ',') | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+            if ($scopes -contains 'workflow') {
+                Write-Host "  Workflow scope present ($tokenType token)."
+            }
+            else {
+                Write-Warning @"
+GitHub $tokenType token is missing the 'workflow' scope.
+Any push that adds or changes .github/workflows/** will be REJECTED by GitHub,
+discarding ALL commits made inside the container.
+
+Fix before running plans that touch workflows:
+- Edit the token at https://github.com/settings/tokens and enable the 'workflow' scope.
+- Re-store it:
+  New-StoredCredential -Target 'copilot-autopilot' -UserName 'autopilot' -Password '<token>' -Type Generic -Persist LocalMachine
+"@
+            }
+        }
+        else {
+            Write-Host "  Token type '$tokenType': no OAuth scopes header returned; cannot verify workflow scope. Ensure workflow push access if the plan edits .github/workflows/**."
+        }
+    }
+    catch {
+        Write-Warning "Could not determine token workflow scope: $($_.Exception.Message)"
+    }
+}
+
 # Probe 3: Copilot Requests permission (lightweight)
 Write-Host "  Validating Copilot CLI access..."
 $env:COPILOT_GITHUB_TOKEN = $Token
