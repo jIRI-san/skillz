@@ -178,7 +178,7 @@
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 6.1 `scripts/skillz/bootstrap.ps1`: `#requires -Version 7.0`; `-Ref` param (default = pinned tag from `Build-Registry`); fetch verb scripts + `registry.json` from the pinned ref into consuming repo's `scripts/skillz/`; create `.github/.skillz/`; print next-step guidance; execute no plugin payload (REQ-12, RISK-4, RISK-8, RISK-13) [after: 4.6] `M`
+- [x] 6.1 `scripts/skillz/bootstrap.ps1`: `#requires -Version 7.0`; `-Ref` param (default = pinned tag from `Build-Registry`); fetch verb scripts + `registry.json` from the pinned ref into consuming repo's `scripts/skillz/`; create `.github/.skillz/`; print next-step guidance; execute no plugin payload (REQ-12, RISK-4, RISK-8, RISK-13) [after: 4.6] `M`
 
 ## Phase 7: Tests + CI
 
