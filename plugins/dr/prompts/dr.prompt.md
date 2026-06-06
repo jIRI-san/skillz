@@ -4,4 +4,6 @@ name: dr
 agent: dr
 ---
 
-Run a design review. Argument: ${input}
+## Design Review Request
+
+1. Run a design review. Argument: `${input}`.

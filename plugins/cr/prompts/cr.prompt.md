@@ -4,4 +4,6 @@ name: cr
 agent: cr
 ---
 
-Run a code review. Argument: ${input}
+## Code Review Request
+
+1. Run a code review. Argument: `${input}`.
