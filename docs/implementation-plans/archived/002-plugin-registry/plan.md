@@ -1,4 +1,4 @@
-# 002: Plugin Registry + PowerShell Management
+# 002: Plugin Registry + PowerShell Management [DONE]
 
 <!-- execution-mode: container-autopilot -->
 <!-- scope: plan -->
