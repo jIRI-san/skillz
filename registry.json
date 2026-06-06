@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skillz/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skillz/bootstrap.ps1"
   },
-  "generatedAt": "06/05/2026 20:05:25",
+  "generatedAt": "06/06/2026 11:55:54",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -16,7 +16,7 @@
       "files": [
         {
           "dest": "agents/autopilot.agent.md",
-          "sha256": "bd69adc53d2d44300fe1affd07859c956e8f70e02f78b9a08ac7919cb47b8032",
+          "sha256": "091c3920671c558f2ff8568b93b2eaa22fb67edc1d201b159f1dc9dbed854ac4",
           "src": "agents/autopilot.agent.md"
         }
       ],
@@ -39,7 +39,7 @@
       "files": [
         {
           "dest": "prompts/cdn.prompt.md",
-          "sha256": "fd6ab9cd040e26bb72427a9be2cb915c083336ccf16daeaf05839d041410a7e6",
+          "sha256": "e8b8c8e98e45736b08c62ec1f8e8ca35a286bd780850274890c95599f66b571a",
           "src": "prompts/cdn.prompt.md"
         }
       ],
@@ -139,7 +139,7 @@
         },
         {
           "dest": "agents/scripts/get-diff-branch.ps1",
-          "sha256": "1c61dcab1153e52612d19652531e846513cb73e9e48de36d5feedfb64f75e5f6",
+          "sha256": "bb5672b75b32a63c5b31a52650556c978818f0ee9917d4a3219ff3e7ca2f78f6",
           "src": "agents/scripts/get-diff-branch.ps1"
         },
         {
@@ -149,17 +149,17 @@
         },
         {
           "dest": "agents/scripts/get-diff-files.ps1",
-          "sha256": "832a432959179437fb237caf282a9550e58751cd7c18c43ad394196f053dacb3",
+          "sha256": "986f9bb28ee92015ccae23939f64b372de5fc9f28992f557cc96fc51f8f35ed3",
           "src": "agents/scripts/get-diff-files.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-paths.ps1",
-          "sha256": "572351bb0af93c54bf5596311ba476a7794728e06ec3d28ca209e9b385d8dfed",
+          "sha256": "a81bb4a759196a67bb3b2d5c74c433ce100108adbca7216f98f5e2dbc1c754dd",
           "src": "agents/scripts/get-diff-paths.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-smart-default.ps1",
-          "sha256": "178d6b8f25c0e044198df6c9f2e5e5633eaf202b541739fc924ecf6e6a866461",
+          "sha256": "810c023fd0f1bca8ba8130f7c2fcf9e37290267ccde838f6088bf73ef2a9a01b",
           "src": "agents/scripts/get-diff-smart-default.ps1"
         },
         {
@@ -208,7 +208,7 @@
         },
         {
           "dest": "agents/dr.agent.md",
-          "sha256": "86c3925747f7e7c0c31b08d81fb026b6b2903b59bccf23b24c6115ac476f087a",
+          "sha256": "135af5966b94433f13e1f48c025b234f556b3e7665d27ff14b0dc5b46b70d512",
           "src": "agents/dr.agent.md"
         },
         {
