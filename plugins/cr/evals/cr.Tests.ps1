@@ -5,27 +5,27 @@ $ErrorActionPreference = 'Stop'
 
 Describe 'cr structural evals' {
     BeforeAll {
-        $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
-        Import-Module (Join-Path $repoRoot 'tests/evals/EvalCommon.psm1') -Force
+        $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
+        Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $pluginRoot = Join-Path $repoRoot 'plugins/cr'
-        $manifestPath = Join-Path $pluginRoot 'plugin.json'
+        $script:pluginRoot = Join-Path $script:repoRoot 'plugins/cr'
+        $manifestPath = Join-Path $script:pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
-        $entries = @($manifest.files)
+        $script:entries = @($manifest.files)
     }
 
     It 'covers orchestrator, subagents, and prompt artifacts with expected types' {
-        $artifactSrcs = @($entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' } | ForEach-Object { [string]$_.src })
+        $artifactSrcs = @($script:entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' } | ForEach-Object { [string]$_.src })
         $artifactSrcs | Should -Contain 'agents/cr.agent.md'
         $artifactSrcs | Should -Contain 'agents/cr-opus.agent.md'
         $artifactSrcs | Should -Contain 'agents/cr-codex.agent.md'
         $artifactSrcs | Should -Contain 'agents/cr-gemini.agent.md'
         $artifactSrcs | Should -Contain 'prompts/cr.prompt.md'
 
-        foreach ($entry in @($entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' })) {
+        foreach ($entry in @($script:entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' })) {
             $src = [string]$entry.src
             $dest = [string]$entry.dest
-            $path = Join-Path $pluginRoot ($src -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+            $path = Join-Path $script:pluginRoot ($src -replace '/', [System.IO.Path]::DirectorySeparatorChar)
 
             $artifactType = Get-ArtifactType -DestinationPath $dest
             if ($src.EndsWith('.agent.md', [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -36,7 +36,7 @@ Describe 'cr structural evals' {
             }
 
             $frontmatter = Get-PluginFrontmatter -Path $path
-            Test-RequiredKeys -ArtifactType $artifactType -Frontmatter $frontmatter -Path $path | Should -BeTrue
+            Test-RequiredFrontmatter -ArtifactType $artifactType -Frontmatter $frontmatter -Path $path | Should -BeTrue
 
             $expectedName = if ($artifactType -eq 'agent') {
                 [System.IO.Path]::GetFileName($src) -replace '\.agent\.md$', ''
@@ -50,7 +50,7 @@ Describe 'cr structural evals' {
     }
 
     It 'requires each helper referenced by cr.agent.md to exist and be declared in plugin.json' {
-        $agentPath = Join-Path $pluginRoot 'agents/cr.agent.md'
+        $agentPath = Join-Path $script:pluginRoot 'agents/cr.agent.md'
         $agentBody = Get-Content -LiteralPath $agentPath -Raw
         $scriptMatches = [regex]::Matches($agentBody, '\.github/agents/scripts/(?<name>get-diff-[a-z-]+\.ps1)')
         $referencedScripts = @($scriptMatches | ForEach-Object { [string]$_.Groups['name'].Value } | Sort-Object -Unique)
@@ -58,29 +58,29 @@ Describe 'cr structural evals' {
 
         foreach ($scriptName in $referencedScripts) {
             $relativePath = "agents/scripts/$scriptName"
-            $manifestEntries = @($entries | Where-Object { [string]$_.src -eq $relativePath })
+            $manifestEntries = @($script:entries | Where-Object { [string]$_.src -eq $relativePath })
             $manifestEntries.Count | Should -Be 1
 
-            $resolved = Test-ReferencedFile -BasePath $pluginRoot -RelativePath $relativePath
+            $resolved = Test-ReferencedFile -BasePath $script:pluginRoot -RelativePath $relativePath
             Test-Path -LiteralPath $resolved -PathType Leaf | Should -BeTrue
         }
     }
 
     It 'resolves markdown links across the bundle when link targets are real repo paths' {
-        $markdownEntries = @($entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' })
+        $markdownEntries = @($script:entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' })
         $resolvedDesignNotePaths = [System.Collections.Generic.List[string]]::new()
         foreach ($entry in $markdownEntries) {
-            $path = Join-Path $pluginRoot (([string]$entry.src) -replace '/', [System.IO.Path]::DirectorySeparatorChar)
+            $path = Join-Path $script:pluginRoot (([string]$entry.src) -replace '/', [System.IO.Path]::DirectorySeparatorChar)
             $raw = Get-Content -LiteralPath $path -Raw
-            $matches = [regex]::Matches($raw, '\[[^\]]+\]\((?<target>[^)]+)\)')
+            $linkMatches = [regex]::Matches($raw, '\[[^\]]+\]\((?<target>[^)]+)\)')
 
-            foreach ($match in $matches) {
+            foreach ($match in $linkMatches) {
                 $target = [string]$match.Groups['target'].Value
                 if ($target -match '^src/path/') {
                     continue
                 }
 
-                $resolved = Resolve-MarkdownLink -RepoRoot $repoRoot -ArtifactDestinationPath ([string]$entry.dest) -LinkTarget $target
+                $resolved = Resolve-MarkdownLink -RepoRoot $script:repoRoot -ArtifactDestinationPath ([string]$entry.dest) -LinkTarget $target
                 if (-not [string]::IsNullOrWhiteSpace([string]$resolved)) {
                     Test-Path -LiteralPath $resolved -PathType Leaf | Should -BeTrue
                 }
@@ -89,7 +89,7 @@ Describe 'cr structural evals' {
             $designNoteMatches = [regex]::Matches($raw, '(?<path>docs/design-notes/[A-Za-z0-9._\-/]+\.md)')
             foreach ($designNoteMatch in $designNoteMatches) {
                 $designNotePath = [string]$designNoteMatch.Groups['path'].Value
-                $resolved = Resolve-MarkdownLink -RepoRoot $repoRoot -ArtifactDestinationPath ([string]$entry.dest) -LinkTarget ('/' + $designNotePath)
+                $resolved = Resolve-MarkdownLink -RepoRoot $script:repoRoot -ArtifactDestinationPath ([string]$entry.dest) -LinkTarget ('/' + $designNotePath)
                 Test-Path -LiteralPath $resolved -PathType Leaf | Should -BeTrue
                 $resolvedDesignNotePaths.Add(([string]$resolved).Replace('\', '/'))
             }

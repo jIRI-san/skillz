@@ -7,7 +7,7 @@ Import-Module (Join-Path $PSScriptRoot 'EvalCommon.psm1') -Force
 
 $script:EvalInputSizeCeiling = 15000
 
-function New-EvalSkipSignal {
+function Get-EvalSkipSignal {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -24,7 +24,7 @@ function New-EvalSkipSignal {
     }
 }
 
-function New-EvalOkSignal {
+function Get-EvalOkSignal {
     [CmdletBinding()]
     param(
         [AllowNull()]
@@ -139,7 +139,7 @@ function Resolve-EvalConfig {
     }
 
     if ([string]::IsNullOrWhiteSpace([string]$config.judgeModel) -or [string]$config.judgeModel -eq '<slug>') {
-        return New-EvalSkipSignal -Reason "LLM evals skipped: set '.eval.config.json' with a real 'judgeModel' value." -Config ([pscustomobject]$config)
+        return Get-EvalSkipSignal -Reason "LLM evals skipped: set '.eval.config.json' with a real 'judgeModel' value." -Config ([pscustomobject]$config)
     }
 
     if ([double]$config.passThreshold -lt 0 -or [double]$config.passThreshold -gt 1) {
@@ -152,7 +152,7 @@ function Resolve-EvalConfig {
         throw "Invalid timeoutSeconds '$($config.timeoutSeconds)'. Expected integer >= 10."
     }
 
-    return New-EvalOkSignal -Config ([pscustomobject]$config)
+    return Get-EvalOkSignal -Config ([pscustomobject]$config)
 }
 
 function Test-CopilotAuth {
@@ -167,7 +167,7 @@ function Test-CopilotAuth {
         -TimeoutSeconds $TimeoutSeconds
 
     if ($probe.timedOut) {
-        return New-EvalSkipSignal -Reason 'LLM evals skipped: Copilot auth probe timed out.'
+        return Get-EvalSkipSignal -Reason 'LLM evals skipped: Copilot auth probe timed out.'
     }
 
     if ($probe.exitCode -ne 0) {
@@ -175,18 +175,18 @@ function Test-CopilotAuth {
         if ([string]::IsNullOrWhiteSpace($stderr)) {
             $stderr = 'unknown auth/runtime error'
         }
-        return New-EvalSkipSignal -Reason "LLM evals skipped: Copilot auth probe failed ($stderr)."
+        return Get-EvalSkipSignal -Reason "LLM evals skipped: Copilot auth probe failed ($stderr)."
     }
 
     if (-not ($probe.stdout -match 'AUTH_OK')) {
-        return New-EvalSkipSignal -Reason 'LLM evals skipped: Copilot auth probe returned unexpected output.'
+        return Get-EvalSkipSignal -Reason 'LLM evals skipped: Copilot auth probe returned unexpected output.'
     }
 
-    return New-EvalOkSignal
+    return Get-EvalOkSignal
 }
 
 function New-EvalSandbox {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory)]
         [string]$RepoRoot
@@ -197,6 +197,9 @@ function New-EvalSandbox {
         throw "Unable to read origin URL from '$RepoRoot'."
     }
     $originFetchUrl = ConvertTo-GithubHttpsRemoteUrl -RemoteUrl $originRaw
+    if (-not $PSCmdlet.ShouldProcess($RepoRoot, 'Create eval sandbox clone')) {
+        return Get-EvalSkipSignal -Reason 'LLM eval sandbox creation skipped by ShouldProcess.'
+    }
 
     $sandboxPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skalary-eval-sandbox-" + [guid]::NewGuid().ToString('N'))
     $cloneResult = Invoke-ExternalCommand -FilePath 'git' `
@@ -256,13 +259,13 @@ function New-EvalSandbox {
 }
 
 function Remove-EvalSandbox {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory)]
         [string]$SandboxPath
     )
 
-    if (Test-Path -LiteralPath $SandboxPath) {
+    if ((Test-Path -LiteralPath $SandboxPath) -and $PSCmdlet.ShouldProcess($SandboxPath, 'Remove eval sandbox')) {
         Remove-Item -LiteralPath $SandboxPath -Recurse -Force
     }
 }
@@ -324,12 +327,12 @@ function Invoke-EvalBackend {
     )
 
     if ($Backend -eq 'container') {
-        return New-EvalSkipSignal -Reason 'LLM evals skipped: container backend is a reserved stub and is not implemented yet.'
+        return Get-EvalSkipSignal -Reason 'LLM evals skipped: container backend is a reserved stub and is not implemented yet.'
     }
 
     $prompt = if ($ArtifactType -eq 'agent') { $Scenario } else { Get-EvalArtifactPrompt -ArtifactBody $ArtifactBody -Scenario $Scenario }
     if ($prompt.Length -gt $script:EvalInputSizeCeiling) {
-        return New-EvalSkipSignal -Reason "LLM eval case skipped: prompt payload exceeds input ceiling ($($script:EvalInputSizeCeiling) chars)."
+        return Get-EvalSkipSignal -Reason "LLM eval case skipped: prompt payload exceeds input ceiling ($($script:EvalInputSizeCeiling) chars)."
     }
 
     $arguments = @('-p', $prompt, '--no-ask-user', '--allow-all', '--silent')
@@ -346,7 +349,7 @@ function Invoke-EvalBackend {
         -TimeoutSeconds $TimeoutSeconds
 
     if ($result.timedOut) {
-        return New-EvalSkipSignal -Reason "LLM eval case skipped: backend timed out after $TimeoutSeconds seconds."
+        return Get-EvalSkipSignal -Reason "LLM eval case skipped: backend timed out after $TimeoutSeconds seconds."
     }
     if ($result.exitCode -ne 0) {
         throw "LLM backend failed (exit $($result.exitCode)): $($result.stderr)"
@@ -390,6 +393,10 @@ function Invoke-EvalJudge {
 
         [int]$TimeoutSeconds = 300
     )
+
+    if ($Temperature -ne 0) {
+        throw "Judge temperature must be 0 for deterministic scoring (got '$Temperature')."
+    }
 
     $guid = [guid]::NewGuid().ToString('N')
     $startBoundary = "<<<UNTRUSTED_OUTPUT_START:$guid>>>"

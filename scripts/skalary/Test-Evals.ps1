@@ -64,7 +64,7 @@ function Get-TestArtifact {
     return $DefaultArtifact
 }
 
-function New-StructuralEvalEntries {
+function Get-StructuralEvalEntryList {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -160,7 +160,7 @@ if ($evalTestFiles.Count -gt 0) {
     }
 
     $testResult = Invoke-Pester -Path $evalTestFiles.FullName -PassThru
-    foreach ($entry in @(New-StructuralEvalEntries -PesterResult $testResult)) {
+    foreach ($entry in @(Get-StructuralEvalEntryList -PesterResult $testResult)) {
         $entries.Add($entry)
     }
 }

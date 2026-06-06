@@ -83,7 +83,7 @@ function Get-PluginFrontmatter {
     return $frontmatter
 }
 
-function Test-RequiredKeys {
+function Test-RequiredFrontmatter {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -274,8 +274,10 @@ function Test-BodySection {
         return $true
     }
 
-    $hasProcedure = [regex]::IsMatch($body, '(?mi)^\s*\d+\.\s+\S') -or
+    $hasProcedure = (
+        [regex]::IsMatch($body, '(?mi)^\s*\d+\.\s+\S') -or
         [regex]::IsMatch($body, '(?mi)^\s*##\s*step\b')
+    )
     if (-not $hasProcedure) {
         throw "File '$Path' ($ArtifactType) must include a numbered or step-style procedure."
     }
@@ -285,7 +287,7 @@ function Test-BodySection {
 
 Export-ModuleMember -Function @(
     'Get-PluginFrontmatter',
-    'Test-RequiredKeys',
+    'Test-RequiredFrontmatter',
     'Get-ArtifactType',
     'Test-ReferencedFile',
     'Resolve-MarkdownLink',
