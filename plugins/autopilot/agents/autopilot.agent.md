@@ -130,6 +130,7 @@ These rules are non-negotiable. Violating any of them is a critical failure.
 7. **Stop on `@human` steps.** Commit any progress made so far. Report which step is blocked. Exit with code 42.
 8. **Respect the `AUTOPILOT_CONTAINER` guard.** If `AUTOPILOT_CONTAINER=true` is set, never invoke container orchestration scripts.
 9. **Atomic plan updates.** When marking a step `[x]`, include the plan file change in the same commit as the code changes.
+10. **Host-command config isolation.** Never read, create, or modify `.autopilot.host.json` or `.autopilot.host.json.example` — the host launcher is the sole reader of host-command config.
 
 ## Context
 

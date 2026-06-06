@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/jIRI-san/skalary/plugins/autopilot/schemas/autopilot.host.schema.json",
   "title": "Autopilot Host Command Configuration",
-  "description": "Host launcher command override. SECURITY WARNING: the configured command runs headlessly with no approval prompt. Use only trusted binaries.",
+  "description": "Host launcher command override. SECURITY WARNING: the configured command runs headlessly with no approval prompt; use only trusted binaries. An untrusted build/test command can plant this file and persist to the next host run.",
   "type": "object",
   "additionalProperties": false,
   "required": [

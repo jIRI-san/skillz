@@ -46,7 +46,7 @@ if (-not (Test-Path (Join-Path $PlanFolder 'plan.md'))) {
 # --- Load and validate config ---
 $ConfigPath = Join-Path $RepoRoot '.autopilot.json'
 if (-not (Test-Path $ConfigPath)) {
-    Write-Error ".autopilot.json not found in repo root."
+    Write-Error ".autopilot.json not found — run '/ci' Autonomous to generate it, or create it from .autopilot.json.example."
     exit 1
 }
 
@@ -86,6 +86,11 @@ if (-not $testAllowed) {
 # --- Determine runtime ---
 $effectiveRuntime = if ($Runtime) { $Runtime } else { $Config.runtime }
 Write-Host "Runtime: $effectiveRuntime"
+
+if ($effectiveRuntime -eq 'host' -and $env:AUTOPILOT_DISABLE_HOST -eq 'true') {
+    Write-Error "Host runtime disabled via AUTOPILOT_DISABLE_HOST."
+    exit 1
+}
 
 # --- Docker pre-flight (container mode) ---
 if ($effectiveRuntime -eq 'container') {
