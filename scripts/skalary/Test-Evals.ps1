@@ -169,7 +169,33 @@ else {
 }
 
 if ($IncludeLlm) {
-    Write-Host 'LLM tier requested; Tier 2 is not wired yet in this phase and will be skipped.' -ForegroundColor Yellow
+    $evalLlmModulePath = Join-Path $repoRootPath 'tests/evals/EvalLlm.psm1'
+    if (-not (Test-Path -LiteralPath $evalLlmModulePath -PathType Leaf)) {
+        throw "LLM eval module not found: $evalLlmModulePath"
+    }
+
+    Import-Module $evalLlmModulePath -Force
+    $llmResult = Invoke-LlmEvalSuite -RepoRoot $repoRootPath -Backend 'copilot-cli'
+    foreach ($llmEntry in @($llmResult.entries)) {
+        $entries.Add($llmEntry)
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace([string]$llmResult.note)) {
+        Write-Host $llmResult.note -ForegroundColor Yellow
+        if (@($llmResult.entries).Count -eq 0) {
+            $entries.Add([ordered]@{
+                    plugin = 'llm-tier'
+                    case = 'preflight'
+                    artifact = '<none>'
+                    tier = 'llm'
+                    outcome = 'skip'
+                    score = $null
+                    threshold = $null
+                    message = [string]$llmResult.note
+                    transcriptPath = $null
+                })
+        }
+    }
 }
 
 $entryArray = @($entries)

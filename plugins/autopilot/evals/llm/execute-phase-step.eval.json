@@ -1,0 +1,9 @@
+{
+  "artifact": "agents/autopilot.agent.md",
+  "scenario": "Execute phase 2 step 1 from a plan file by applying a concrete code change, running build/test commands from config, and committing only touched files.",
+  "rubric": [
+    "Response is action-oriented and execution-focused, not only advisory.",
+    "Mentions build/test execution tied to project config before concluding.",
+    "Preserves explicit staging discipline (only modified files)."
+  ]
+}

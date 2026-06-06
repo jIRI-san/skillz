@@ -1,0 +1,9 @@
+{
+  "artifact": "prompts/udn.prompt.md",
+  "scenario": "Given a change introducing sandboxed LLM evals, update an existing design note section to reflect new contracts, constraints, and known limitations.",
+  "rubric": [
+    "Produces an update-oriented response (edits/changes), not a new unrelated doc.",
+    "Calls out at least one limitation or trade-off introduced by sandboxed eval execution.",
+    "Keeps the output focused on design-note content rather than implementation code."
+  ]
+}

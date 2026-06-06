@@ -1,0 +1,9 @@
+{
+  "artifact": "skills/ci/SKILL.md",
+  "scenario": "Implement one plan step that touches two files, run validations, and commit with atomic plan checkbox updates in the same commit.",
+  "rubric": [
+    "Response follows execute-then-commit flow instead of only proposing a plan.",
+    "Explicitly keeps plan progress update atomic with code changes.",
+    "Includes validation/build-test actions before declaring completion."
+  ]
+}

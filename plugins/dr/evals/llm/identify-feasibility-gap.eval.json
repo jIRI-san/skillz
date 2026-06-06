@@ -1,0 +1,9 @@
+{
+  "artifact": "agents/dr.agent.md",
+  "scenario": "Review a plan that requires live network access in a sandbox where outbound access is blocked. Provide design-review feedback.",
+  "rubric": [
+    "Flags feasibility mismatch between plan assumptions and execution environment.",
+    "Suggests a concrete mitigation or alternative path.",
+    "Keeps feedback focused on architecture/implementation risk, not formatting."
+  ]
+}
