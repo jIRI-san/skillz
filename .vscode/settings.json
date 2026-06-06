@@ -14,6 +14,6 @@
     ".github/agents/scripts/get-diff-paths.ps1": true,
     ".github/agents/scripts/get-diff-smart-default.ps1": true,
     ".github/agents/scripts/get-diff-uncommitted.ps1": true,
-    "./scripts/autopilot/launch.ps1": true
+    "./plugins/autopilot/scripts/launch.ps1": true
   }
 }

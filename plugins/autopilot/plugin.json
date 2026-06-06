@@ -1,12 +1,14 @@
 {
   "name": "autopilot",
-  "version": "1.0.0",
-  "description": "Autonomous plan execution agent payload for .github/agents.",
+  "version": "1.1.0",
+  "description": "Self-contained autopilot plugin payload for agent, skill, scripts, schemas, and devcontainer.",
   "author": "jIRI-san",
   "license": "MIT",
   "tags": [
     "agent",
-    "autopilot"
+    "skill",
+    "autopilot",
+    "automation"
   ],
   "dependencies": [],
   "status": "partial",
@@ -14,6 +16,70 @@
     {
       "src": "agents/autopilot.agent.md",
       "dest": "agents/autopilot.agent.md"
+    },
+    {
+      "src": "skills/autopilot/SKILL.md",
+      "dest": "skills/autopilot/SKILL.md"
+    },
+    {
+      "src": "scripts/clean-sandbox-cache.ps1",
+      "dest": "skills/autopilot/scripts/clean-sandbox-cache.ps1"
+    },
+    {
+      "src": "scripts/container-entrypoint.sh",
+      "dest": "skills/autopilot/scripts/container-entrypoint.sh"
+    },
+    {
+      "src": "scripts/get-credential.ps1",
+      "dest": "skills/autopilot/scripts/get-credential.ps1"
+    },
+    {
+      "src": "scripts/launch-container.ps1",
+      "dest": "skills/autopilot/scripts/launch-container.ps1"
+    },
+    {
+      "src": "scripts/launch-host.ps1",
+      "dest": "skills/autopilot/scripts/launch-host.ps1"
+    },
+    {
+      "src": "scripts/launch-sandbox.ps1",
+      "dest": "skills/autopilot/scripts/launch-sandbox.ps1"
+    },
+    {
+      "src": "scripts/launch.ps1",
+      "dest": "skills/autopilot/scripts/launch.ps1"
+    },
+    {
+      "src": "scripts/prepare-env-file.ps1",
+      "dest": "skills/autopilot/scripts/prepare-env-file.ps1"
+    },
+    {
+      "src": "scripts/validate-auth.ps1",
+      "dest": "skills/autopilot/scripts/validate-auth.ps1"
+    },
+    {
+      "src": "schemas/autopilot.schema.json",
+      "dest": "skills/autopilot/schemas/autopilot.schema.json"
+    },
+    {
+      "src": "schemas/autopilot.host.schema.json",
+      "dest": "skills/autopilot/schemas/autopilot.host.schema.json"
+    },
+    {
+      "src": "devcontainer/Dockerfile",
+      "dest": "skills/autopilot/devcontainer/Dockerfile"
+    },
+    {
+      "src": "devcontainer/devcontainer.json",
+      "dest": "skills/autopilot/devcontainer/devcontainer.json"
+    },
+    {
+      "src": ".autopilot.json.example",
+      "dest": "skills/autopilot/.autopilot.json.example"
+    },
+    {
+      "src": ".autopilot.host.json.example",
+      "dest": "skills/autopilot/.autopilot.host.json.example"
     }
   ],
   "evals": {

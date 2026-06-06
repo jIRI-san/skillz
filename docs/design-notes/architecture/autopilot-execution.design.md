@@ -1,11 +1,11 @@
 ---
 description: Autonomous plan execution via Copilot CLI — host/container/sandbox modes, auth, orchestration, agent definition
 globs:
-  - scripts/autopilot/**
-  - .devcontainer/autopilot/**
+  - plugins/autopilot/scripts/**
+  - plugins/autopilot/devcontainer/**
   - .github/agents/autopilot.agent.md
   - .autopilot.json
-  - schemas/autopilot.schema.json
+  - plugins/autopilot/schemas/autopilot.schema.json
 ---
 
 # Autonomous Plan Execution
@@ -54,7 +54,7 @@ Infrastructure for delegating implementation plan execution to GitHub Copilot CL
 
 ### Container Mode
 
-- Builds image from `.devcontainer/autopilot/Dockerfile`
+- Builds image from `.github/skills/autopilot/devcontainer/Dockerfile`
 - Passes auth via env file (prepared by `prepare-env-file.ps1`)
 - Container entry point: `container-entrypoint.sh` handles clone, branch, per-phase loops
 - Timeout via `docker inspect` polling + `docker stop`/`docker kill`
@@ -156,7 +156,7 @@ Key fields:
 - `timeout`: Minutes per phase before force-kill
 - `maxIterationsPerStep`: Fix-retry cap
 
-Schema: `schemas/autopilot.schema.json`
+Schema: `plugins/autopilot/schemas/autopilot.schema.json`
 
 ## Agent Definition (`.github/agents/autopilot.agent.md`)
 

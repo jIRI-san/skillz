@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jIRI-san/skalary/plugins/autopilot/schemas/autopilot.host.schema.json",
+  "title": "Autopilot Host Command Configuration",
+  "description": "Host launcher command override. SECURITY WARNING: the configured command runs headlessly with no approval prompt. Use only trusted binaries.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "command"
+  ],
+  "properties": {
+    "command": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Executable name or absolute path for host-mode autopilot invocations."
+    },
+    "args": {
+      "type": "array",
+      "description": "Static arguments appended to each host-mode autopilot invocation.",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

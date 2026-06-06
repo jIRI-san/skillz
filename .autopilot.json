@@ -1,5 +1,5 @@
 {
-  "$schema": "./schemas/autopilot.schema.json",
+  "$schema": "./plugins/autopilot/schemas/autopilot.schema.json",
   "$comment": "Per-project autopilot execution config. See docs/design-notes/architecture/autopilot-execution.design.md for details.",
   "runtime": "container",
   "copilotAuth": "pat",
@@ -15,4 +15,3 @@
   "build": "npm run build",
   "test": "npm test"
 }
-

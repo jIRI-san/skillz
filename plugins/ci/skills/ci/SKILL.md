@@ -60,16 +60,16 @@ Detect or ask for execution mode:
 **"Approve each step, or autopilot?"**
 - **Approve** — stop after each step for review before proceeding. Worktree naming: `feature/<plan-slug>-<phase-slug>-<step-N>` (scoped to current step).
 - **Autopilot** — implement all remaining steps with minimal user input. Single worktree for the entire plan, named `feature/<plan-slug>`. All phases and steps execute on this one worktree from start to end. Skip per-step confirmations (Step 4 "Proceed?", Step 10 "Ready to commit?", Step 11 "Continue or stop?"). Still run build, tests, acceptance criteria validation, and code review — and still log CR findings with triage — but auto-fix unambiguous CR findings and auto-commit without asking. Continue to next phase without confirmation. Only stop for: `@human` steps, ambiguous CR trade-offs, failing tests that can't be auto-fixed, or blocking dependency issues. The user reviews everything at the end.
-- **Host autopilot (autonomous)** — delegate execution to Copilot CLI running autonomously in a host worktree. Invokes `scripts/autopilot/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime host`. The agent runs without user interaction, commits per-step, and pushes on phase completion. After invoking, report that autonomous execution has started and exit the `/ci` flow.
+- **Host autopilot (autonomous)** — delegate execution to Copilot CLI running autonomously in a host worktree. Invokes `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime host`. The agent runs without user interaction, commits per-step, and pushes on phase completion. After invoking, report that autonomous execution has started and exit the `/ci` flow.
 - **Container autopilot (autonomous)** — same as host autopilot but runs inside a Docker container cloned from remote. Requires Docker Desktop. After the user selects this option, ask a follow-up question:
 
   **"Start from which branch?"**
   - **Current branch (`<current-branch>`)** — the container clones the repo and checks out this branch as the starting point, then creates `feature/<plan-slug>` from it. Requires the branch to be pushed to remote.
   - **main** (default) — the container starts from main and creates `feature/<plan-slug>` from it.
 
-  Then invoke: `scripts/autopilot/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime container -Branch <chosen-branch>`
+  Then invoke: `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime container -Branch <chosen-branch>`
 
-- **Sandbox autopilot (autonomous)** — runs inside Windows Sandbox (isolated, disposable Win32 VM). Mounts repo read-only, clones locally inside sandbox. Same branch follow-up question as container mode. Requires Windows Pro/Enterprise with `Containers-DisposableClientVM` enabled. Invoke: `scripts/autopilot/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime sandbox -Branch <chosen-branch>`
+- **Sandbox autopilot (autonomous)** — runs inside Windows Sandbox (isolated, disposable Win32 VM). Mounts repo read-only, clones locally inside sandbox. Same branch follow-up question as container mode. Requires Windows Pro/Enterprise with `Containers-DisposableClientVM` enabled. Invoke: `.github/skills/autopilot/scripts/launch.ps1 -PlanSlug <slug> -Mode whole-plan -Runtime sandbox -Branch <chosen-branch>`
 
 > **Note:** The autonomous options (Host/Container/Sandbox autopilot) are hidden when the environment variable `AUTOPILOT_CONTAINER=true` is set (indicates execution is already inside an autonomous container). Only show Approve and Autopilot in that case.
 

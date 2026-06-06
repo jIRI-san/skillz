@@ -513,10 +513,6 @@ try {
     $orderedPlugins = @($resolvedOrder.Ordered)
     $pendingPlugins = @($resolvedOrder.Pending)
 
-    if (@($orderedPlugins | Where-Object { [string]$_.name -eq 'ci' }).Count -gt 0) {
-        & (Join-Path $PSScriptRoot 'Initialize-Autopilot.ps1') -RepoRoot $targetRepoRoot -SourceRoot $sourceRepoRoot
-    }
-
     if ($pendingPlugins.Count -eq 0) {
         Write-Host "Plugin '$Name' is already up to date at '$resolvedSha'."
         exit 0

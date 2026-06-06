@@ -87,7 +87,6 @@ $scriptFiles = @(
     'Build-Registry.ps1',
     'Find-Plugin.ps1',
     'Get-Plugin.ps1',
-    'Initialize-Autopilot.ps1',
     'Install-Plugin.ps1',
     'Remove-Plugin.ps1',
     'Sync-Dogfood.ps1',
