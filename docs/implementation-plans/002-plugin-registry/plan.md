@@ -168,11 +168,11 @@
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 5.1 `scripts/skillz/Update-Plugin.ps1`: resolve single SHA; compare receipt version vs registry; verify existing file hashes (record `skipped-modified` with actual hash unless `-Force`); replace updated files; advance version only if all files updated else mark receipt `degraded`; refresh receipt `ref` (REQ-7, REQ-14, RISK-5) [after: 4.6] `M`
-- [ ] 5.2 `scripts/skillz/Remove-Plugin.ps1`: delete only receipt-listed files whose sha256 matches (warn+keep modified unless `-Force`); refuse if a dependent installed plugin needs it (unless `-Force`); prune empty dirs; delete receipt; never touch unlisted files (REQ-8, REQ-14, RISK-5) [after: 4.6] `M`
-- [ ] 5.3 `scripts/skillz/Get-Plugin.ps1`: list registry plugins with version + installed state (from receipts) + **modified** flag (disk vs receipt hash) + **outdated** flag (receipt vs registry version); `-Installed` filter (REQ-9, REQ-6) [after: 4.6] `M`
-- [ ] 5.4 `scripts/skillz/Find-Plugin.ps1`: case-insensitive search over name/description/tags in `registry.json`; return matches with metadata (REQ-10) [after: 3.2] `S` <!-- parallelizable with Phase 4: only reads registry.json -->
-- [ ] 5.5 Verbs lint pass: `Invoke-ScriptAnalyzer` zero warnings across update/remove/list/search (REQ-20) [after: 5.1, 5.2, 5.3, 5.4] `S`
+- [x] 5.1 `scripts/skillz/Update-Plugin.ps1`: resolve single SHA; compare receipt version vs registry; verify existing file hashes (record `skipped-modified` with actual hash unless `-Force`); replace updated files; advance version only if all files updated else mark receipt `degraded`; refresh receipt `ref` (REQ-7, REQ-14, RISK-5) [after: 4.6] `M`
+- [x] 5.2 `scripts/skillz/Remove-Plugin.ps1`: delete only receipt-listed files whose sha256 matches (warn+keep modified unless `-Force`); refuse if a dependent installed plugin needs it (unless `-Force`); prune empty dirs; delete receipt; never touch unlisted files (REQ-8, REQ-14, RISK-5) [after: 4.6] `M`
+- [x] 5.3 `scripts/skillz/Get-Plugin.ps1`: list registry plugins with version + installed state (from receipts) + **modified** flag (disk vs receipt hash) + **outdated** flag (receipt vs registry version); `-Installed` filter (REQ-9, REQ-6) [after: 4.6] `M`
+- [x] 5.4 `scripts/skillz/Find-Plugin.ps1`: case-insensitive search over name/description/tags in `registry.json`; return matches with metadata (REQ-10) [after: 3.2] `S` <!-- parallelizable with Phase 4: only reads registry.json -->
+- [x] 5.5 Verbs lint pass: `Invoke-ScriptAnalyzer` zero warnings across update/remove/list/search (REQ-20) [after: 5.1, 5.2, 5.3, 5.4] `S`
 
 ## Phase 6: Bootstrap
 
