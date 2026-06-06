@@ -5,7 +5,8 @@
   "description": "VS Code Copilot customizations (agents, prompts, skills, autopilot).",
   "scripts": {
     "build": "pwsh -NoProfile -File scripts/validate.ps1",
-    "test": "pwsh -NoProfile -File scripts/validate.ps1"
+    "test": "pwsh -NoProfile -File scripts/validate.ps1",
+    "eval": "pwsh -NoProfile -File scripts/skalary/Test-Evals.ps1"
   },
   "license": "MIT"
 }
