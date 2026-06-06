@@ -24,7 +24,8 @@ function Get-ResolvedFiles([string[]]$InputPaths) {
             $children = Get-ChildItem -Path $p -Recurse -File | Where-Object {
                 $skip = $false
                 foreach ($ex in $excludeDirs) {
-                    if ($_.FullName -match "(\\|/)$ex(\\|/)") { $skip = $true; break }
+                    $escaped = [regex]::Escape($ex)
+                    if ($_.FullName -match "(\\|/)$escaped(\\|/)") { $skip = $true; break }
                 }
                 (-not $skip) -and ($textExtensions -contains $_.Extension.ToLower())
             }

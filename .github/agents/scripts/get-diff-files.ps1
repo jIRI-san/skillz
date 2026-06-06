@@ -16,11 +16,9 @@ param(
     [int]$N = 1   # used only when Scope = commits
 )
 
-$fileArgs = $Files | ForEach-Object { $_ }
-
 switch ($Scope) {
     "uncommitted" {
-        git diff HEAD -- @fileArgs
+        git diff HEAD -- @Files
     }
     "branch" {
         $remoteHead = git rev-parse --abbrev-ref origin/HEAD 2>$null
@@ -29,9 +27,9 @@ switch ($Scope) {
         } else {
             $defaultBranch = $remoteHead -replace "^origin/", ""
         }
-        git diff "${defaultBranch}...HEAD" -- @fileArgs
+        git diff "${defaultBranch}...HEAD" -- @Files
     }
     "commits" {
-        git log -p -$N --no-merges -- @fileArgs
+        git log -p -$N --no-merges -- @Files
     }
 }

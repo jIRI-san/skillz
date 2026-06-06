@@ -79,7 +79,7 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
 
 2. **Archive plan** — mark the plan done and move it:
    - Edit `plan.md` title to append `[DONE]`: `# NNN: Plan Title [DONE]`
-   - Move folder: `Move-Item docs/implementation-plans/NNN-<slug> docs/implementation-plans/archive/NNN-<slug>`
+   - Move folder: `Move-Item docs/implementation-plans/NNN-<slug> docs/implementation-plans/archived/NNN-<slug>`
    - Stage and commit: `git commit -m "chore: archive completed plan NNN"`
 
 3. **Create PR** — generate a PR with a structured title and body:

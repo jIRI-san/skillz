@@ -6,7 +6,7 @@ tools: [read, search, agent, todo]
 agents: ["dr-opus", "dr-codex", "dr-gemini"]
 handoffs:
   - label: Update plan
-    agent: GitHub Copilot
+    agent: agent
     prompt: "Update the plan to address the findings from the design review above. Use plan mode."
     send: false
 ---

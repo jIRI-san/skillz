@@ -15,9 +15,8 @@ param(
 $defaultBranch = git rev-parse --abbrev-ref origin/HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $defaultBranch) {
     # Fallback: try main, then master
-    $defaultBranch = git rev-parse --verify main 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { $defaultBranch = "main" }
-    else { $defaultBranch = "master" }
+    git rev-parse --verify main 2>$null | Out-Null
+    $defaultBranch = if ($LASTEXITCODE -eq 0) { "main" } else { "master" }
 } else {
     $defaultBranch = $defaultBranch -replace "^origin/", ""
 }

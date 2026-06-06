@@ -34,5 +34,4 @@ Examples:
 4. **Update `docs/design-notes/.design-notes.md`**:
    - Add a row to the Available Skills table for the new file
 
-5. **Update `.github/copilot-instructions.md`**:
-   - Add an `<instruction>` entry inside the `<instructions>` block that describes when to load the new design note (mirror the style of the existing entries)
+> No change to `.github/copilot-instructions.md` is required — it loads `.design-notes.md` as the single discovery layer, so a new row in the Available Skills table is enough for the agent to find the note.

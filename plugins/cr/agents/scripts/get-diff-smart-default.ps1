@@ -19,8 +19,8 @@ $currentBranch = git branch --show-current
 # Resolve default remote branch
 $remoteHead = git rev-parse --abbrev-ref origin/HEAD 2>$null
 if ($LASTEXITCODE -ne 0 -or -not $remoteHead) {
-    $defaultRef = git rev-parse --verify main 2>$null | Out-Null
-    if ($LASTEXITCODE -eq 0) { $defaultBranch = "main" } else { $defaultBranch = "master" }
+    git rev-parse --verify main 2>$null | Out-Null
+    $defaultBranch = if ($LASTEXITCODE -eq 0) { "main" } else { "master" }
     $defaultRef = $defaultBranch
 } else {
     $defaultBranch = $remoteHead -replace "^origin/", ""
@@ -31,16 +31,15 @@ $onDefaultBranch = ($currentBranch -eq $defaultBranch)
 
 if ($Files) {
     if ($onDefaultBranch) {
-        # Uncommitted
-        git diff HEAD --name-only
-        # Unpushed commits
-        git log "$defaultRef..HEAD" --name-only --format="" | Where-Object { $_ -ne "" }
+        # Uncommitted + unpushed commits
+        $changedFiles = @(git diff HEAD --name-only) +
+            @(git log "$defaultRef..HEAD" --name-only --format="")
     } else {
-        # Uncommitted
-        git diff HEAD --name-only
-        # Branch commits
-        git diff "${defaultBranch}...HEAD" --name-only
+        # Uncommitted + branch commits
+        $changedFiles = @(git diff HEAD --name-only) +
+            @(git diff "${defaultBranch}...HEAD" --name-only)
     }
+    $changedFiles | Where-Object { $_ -ne "" } | Sort-Object -Unique
 } else {
     if ($onDefaultBranch) {
         # Uncommitted
