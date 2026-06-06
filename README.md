@@ -71,3 +71,4 @@ Generated from `registry.json` by `scripts/skillz/Build-Registry.ps1`.
 | `dr` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
 | `udn` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
 <!-- END SKILLZ PLUGIN CATALOG -->
+
