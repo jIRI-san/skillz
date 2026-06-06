@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skillz/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skillz/bootstrap.ps1"
   },
-  "generatedAt": "06/06/2026 13:56:23",
+  "generatedAt": "2026-06-06T14:11:07.9512414Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -16,7 +16,7 @@
       "files": [
         {
           "dest": "agents/autopilot.agent.md",
-          "sha256": "8e7bb939d2a30942248618561a8e80f86ba5cce3dded06ae6f990f345dc6b859",
+          "sha256": "091c3920671c558f2ff8568b93b2eaa22fb67edc1d201b159f1dc9dbed854ac4",
           "src": "agents/autopilot.agent.md"
         }
       ],
@@ -39,7 +39,7 @@
       "files": [
         {
           "dest": "prompts/cdn.prompt.md",
-          "sha256": "67bef60fd72a38ac6b4b1877cf2e56b5336b11c7e3d8ca426b8e935a797f0220",
+          "sha256": "e8b8c8e98e45736b08c62ec1f8e8ca35a286bd780850274890c95599f66b571a",
           "src": "prompts/cdn.prompt.md"
         }
       ],
@@ -65,7 +65,7 @@
       "files": [
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "314da6046440d52c4eb9d46a6c2d3f2472e95f57d10963ba14c6b7a2b19f7a20",
+          "sha256": "92bbd7cc83717eded3283ee2066619a5429446704be1cbaf986b72e0d36c85ac",
           "src": "skills/ci/SKILL.md"
         }
       ],
@@ -91,12 +91,12 @@
       "files": [
         {
           "dest": "skills/cip/assets/plan-template.md",
-          "sha256": "7e486ea0f22181077272d6b6dea3c26946d6fa7bd96c7ccc1853b1698bfc73c4",
+          "sha256": "b8818280e9044f83f3305706ba052098a8e227d17fbbe1b1c57d905d145d033e",
           "src": "skills/cip/assets/plan-template.md"
         },
         {
           "dest": "skills/cip/SKILL.md",
-          "sha256": "8f8a466402d763a3446c0441bc0ac237e5dcd8dbf31d2a2ef4c7a05ebd2437da",
+          "sha256": "6d2dbc976a126c57ef0d0a7161a4cdb609232ec605f204b38b624f751fb67677",
           "src": "skills/cip/SKILL.md"
         }
       ],
@@ -119,57 +119,57 @@
       "files": [
         {
           "dest": "agents/cr-codex.agent.md",
-          "sha256": "402e0c328c5f0ede7b0c8eb8aae63384b668f58d32bff39c349ff1ac0386c528",
+          "sha256": "b7c868f8966a1dda48b88d63605b1058b55cd68725c98e9c0d43c988afe28305",
           "src": "agents/cr-codex.agent.md"
         },
         {
           "dest": "agents/cr-gemini.agent.md",
-          "sha256": "5aa7e0fdc754a79db7b9fb7187c095e17bd6831addfa5409c2fb2faf3983bf4e",
+          "sha256": "5f0899e1aaf0196d8955b5853a9cc1f17536589efa736331a9e1af9cf5239991",
           "src": "agents/cr-gemini.agent.md"
         },
         {
           "dest": "agents/cr-opus.agent.md",
-          "sha256": "11a0d0e76416fd6f9681cbe9105303b91c8bb403989b802921154119fbe597f1",
+          "sha256": "ca43528838a35a0b9ab1d69725891724a19ce2597b256c98c96b067dd43f9665",
           "src": "agents/cr-opus.agent.md"
         },
         {
           "dest": "agents/cr.agent.md",
-          "sha256": "95d2afbaed51424db0e1f02fabd934e1b1ad9e0565d095a0e52dae1e1a321e2d",
+          "sha256": "ef621dc239607405bba9da2a9d8b50f61a6b69a05bee8d01576a335e6819c32b",
           "src": "agents/cr.agent.md"
         },
         {
           "dest": "agents/scripts/get-diff-branch.ps1",
-          "sha256": "206aff54bf86a112921afddc06c8158f10ff058a35ebcb446ee67dd26d8805b9",
+          "sha256": "bb5672b75b32a63c5b31a52650556c978818f0ee9917d4a3219ff3e7ca2f78f6",
           "src": "agents/scripts/get-diff-branch.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-commits.ps1",
-          "sha256": "a0b514bf7d3b6519a3a2dfc276e221a438ae5a3ad4cd6d106f2b35beb41630b8",
+          "sha256": "36ee380d2494fcf401f922c0c525b1bd304d4c0c0a739f0ad30d1ad689e8fbd2",
           "src": "agents/scripts/get-diff-commits.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-files.ps1",
-          "sha256": "f6043d72b292bc50052d0a82e3ed22d6510519f0bde300a99d37700da0a6fde8",
+          "sha256": "986f9bb28ee92015ccae23939f64b372de5fc9f28992f557cc96fc51f8f35ed3",
           "src": "agents/scripts/get-diff-files.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-paths.ps1",
-          "sha256": "73baf87298e8d78c0e945fcb11aa2918a28025eb747a845340832675bc991dbb",
+          "sha256": "a81bb4a759196a67bb3b2d5c74c433ce100108adbca7216f98f5e2dbc1c754dd",
           "src": "agents/scripts/get-diff-paths.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-smart-default.ps1",
-          "sha256": "9f845ba0d7d917f2206b79d5a02197ebb9be98375aa518b7e6a635e8699f1c8e",
+          "sha256": "810c023fd0f1bca8ba8130f7c2fcf9e37290267ccde838f6088bf73ef2a9a01b",
           "src": "agents/scripts/get-diff-smart-default.ps1"
         },
         {
           "dest": "agents/scripts/get-diff-uncommitted.ps1",
-          "sha256": "7d318bf2c273e1bb516d86eb156d94346ca94c5e6de9087cf6905f98fc65ebb2",
+          "sha256": "c2df1a5172309b077dfb447c0eace273010eaa8fac0b7e6d13c59434c380bd19",
           "src": "agents/scripts/get-diff-uncommitted.ps1"
         },
         {
           "dest": "prompts/cr.prompt.md",
-          "sha256": "a1652390079f2e9e82d0a4a4c3ced5171abba779fd8da35547ad82f0c30d9770",
+          "sha256": "6f1205eb2b1273a75f71b9ac4dd630921355310442dcdc556831316f7fedc4f4",
           "src": "prompts/cr.prompt.md"
         }
       ],
@@ -193,27 +193,27 @@
       "files": [
         {
           "dest": "agents/dr-codex.agent.md",
-          "sha256": "823846d7ab72c10e1c3751e0b525ee387d395b22a535f7e64eadace1b5f3bce5",
+          "sha256": "c9f22f93b74bd6de959a53c1fc767ebe8433f8c08922af100ffef90ca47178b9",
           "src": "agents/dr-codex.agent.md"
         },
         {
           "dest": "agents/dr-gemini.agent.md",
-          "sha256": "8c030eea8f72ac0f1a6e42be60761b62fde5635df8b4794c4a60c49bc01e523c",
+          "sha256": "bd88b18257c256cb2138694eda79c8966146ccb66d66ac7fb648a2ac2b22a7f7",
           "src": "agents/dr-gemini.agent.md"
         },
         {
           "dest": "agents/dr-opus.agent.md",
-          "sha256": "d268034a670d092bf8c8898844e7636acea7cc5e143370cd089af34c6962012d",
+          "sha256": "8cb02d62c3c03e646b45161c411b5c53e859c2d64d323d979fce9582e9c2d5e1",
           "src": "agents/dr-opus.agent.md"
         },
         {
           "dest": "agents/dr.agent.md",
-          "sha256": "9ed2cecd4a3cbac8578e38e3274a80c0dc89f7ba9c8d68e7dab3f8252afb304f",
+          "sha256": "135af5966b94433f13e1f48c025b234f556b3e7665d27ff14b0dc5b46b70d512",
           "src": "agents/dr.agent.md"
         },
         {
           "dest": "prompts/dr.prompt.md",
-          "sha256": "e5ef7c8ec58b94816305de82d89c1253866e14862878155cae1b302b04b1c267",
+          "sha256": "70e48fa0d391acc30a697450d407b63ae23529c5599e0295690102a68db82bdb",
           "src": "prompts/dr.prompt.md"
         }
       ],
@@ -237,7 +237,7 @@
       "files": [
         {
           "dest": "prompts/udn.prompt.md",
-          "sha256": "fa310802c0c60c523f3fed531f2e7229312742b8872d1e713adbc5e5d7211764",
+          "sha256": "c1d09004a2513725de8a2dee84a102c2a19bf8a39ece531f4d3529bc0e616b9a",
           "src": "prompts/udn.prompt.md"
         }
       ],
