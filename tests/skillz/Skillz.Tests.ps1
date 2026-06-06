@@ -266,7 +266,11 @@ Describe 'skillz plugin registry scripts' {
 
         Set-Content -LiteralPath (Join-Path $target '.github/prompts/cr.prompt.md') -Value "user-edited`n" -Encoding utf8
 
-        Set-Content -LiteralPath (Join-Path $updatedSource 'plugins/cr/prompts/cr.prompt.md') -Value "upstream update`n" -Encoding utf8
+        # Write canonical LF: this file is hashed by Build-Registry then committed.
+        # The eol=lf gitattribute renormalizes the working tree on commit, so a
+        # platform-dependent Set-Content terminator (CRLF on Windows) would make
+        # the recorded hash diverge from the post-commit content.
+        [System.IO.File]::WriteAllText((Join-Path $updatedSource 'plugins/cr/prompts/cr.prompt.md'), "upstream update`n")
         $manifestPath = Join-Path $updatedSource 'plugins/cr/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.version = '1.0.1'
