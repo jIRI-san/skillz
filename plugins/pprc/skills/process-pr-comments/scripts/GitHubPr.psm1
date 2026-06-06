@@ -1,6 +1,8 @@
 #requires -Version 7.0
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
+$script:PprcCachedUserToken = $null
+$script:PprcCachedUserLogin = $null
 
 function Invoke-PprcNativeCommand {
     [CmdletBinding()]
@@ -58,10 +60,23 @@ function Get-GitHubToken {
 function Get-RepoSlug {
     [CmdletBinding()]
     param(
-        [string]$RemoteName = 'origin'
+        [string]$RemoteName = 'origin',
+
+        [string]$RemoteUrl,
+
+        [switch]$UsePushUrl
     )
 
-    $remoteUrl = Invoke-PprcNativeCommand -Command 'git' -Arguments @('remote', 'get-url', $RemoteName) -FailureMessage "Unable to resolve git remote '$RemoteName' URL."
+    if ([string]::IsNullOrWhiteSpace($RemoteUrl)) {
+        $arguments = @('remote', 'get-url')
+        if ($UsePushUrl.IsPresent) {
+            $arguments += '--push'
+        }
+        $arguments += $RemoteName
+        $RemoteUrl = Invoke-PprcNativeCommand -Command 'git' -Arguments $arguments -FailureMessage "Unable to resolve git remote '$RemoteName' URL."
+    }
+
+    $remoteUrl = $RemoteUrl
     $remoteUrl = $remoteUrl.Trim()
 
     $path = $null
@@ -95,6 +110,30 @@ function Get-RepoSlug {
         Repo = $repo
         FullName = "$owner/$repo"
     }
+}
+
+function Get-PprcAuthenticatedUserLogin {
+    [CmdletBinding()]
+    param(
+        [string]$Token = (Get-GitHubToken)
+    )
+
+    if (
+        -not [string]::IsNullOrWhiteSpace($script:PprcCachedUserToken) -and
+        -not [string]::IsNullOrWhiteSpace($script:PprcCachedUserLogin) -and
+        [string]::Equals($script:PprcCachedUserToken, $Token, [System.StringComparison]::Ordinal)
+    ) {
+        return $script:PprcCachedUserLogin
+    }
+
+    $currentUser = Invoke-GitHubRest -Path '/user' -Token $Token
+    if ($null -eq $currentUser -or [string]::IsNullOrWhiteSpace([string]$currentUser.login)) {
+        throw 'Unable to resolve authenticated GitHub user login from GET /user.'
+    }
+
+    $script:PprcCachedUserToken = $Token
+    $script:PprcCachedUserLogin = [string]$currentUser.login
+    return $script:PprcCachedUserLogin
 }
 
 function Get-PprcHeaderValue {
@@ -794,6 +833,268 @@ query ($owner: String!, $repo: String!, $number: Int!, $first: Int!, $after: Str
     return $result
 }
 
+function Resolve-PprcPushRemote {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$BaseFullName
+    )
+
+    $parts = $BaseFullName -split '/', 2
+    if ($parts.Count -ne 2 -or [string]::IsNullOrWhiteSpace($parts[0]) -or [string]::IsNullOrWhiteSpace($parts[1])) {
+        throw "Target base repository must be in 'owner/repo' format. Got '$BaseFullName'."
+    }
+
+    $remoteNames = @(Invoke-PprcNativeCommand -Command 'git' -Arguments @('remote') -FailureMessage 'Unable to list git remotes.' -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    if ($remoteNames.Count -eq 0) {
+        throw 'No git remotes are configured for this repository.'
+    }
+
+    $matching = @()
+    foreach ($remoteName in $remoteNames) {
+        $slug = $null
+        try {
+            $slug = Get-RepoSlug -RemoteName $remoteName -UsePushUrl
+        }
+        catch {
+            Write-Verbose "Skipping remote '$remoteName' for push target matching. Details: $($_.Exception.Message)"
+            continue
+        }
+
+        if ([string]::Equals($slug.Owner, $parts[0], [System.StringComparison]::OrdinalIgnoreCase) -and [string]::Equals($slug.Repo, $parts[1], [System.StringComparison]::OrdinalIgnoreCase)) {
+            $matching += [pscustomobject]@{
+                Name = $remoteName
+                FullName = $slug.FullName
+            }
+        }
+    }
+
+    if ($matching.Count -eq 0) {
+        throw "No remote points at '$BaseFullName'."
+    }
+
+    $originMatch = $matching | Where-Object { [string]::Equals($_.Name, 'origin', [System.StringComparison]::Ordinal) } | Select-Object -First 1
+    if ($null -ne $originMatch) {
+        return $originMatch.Name
+    }
+
+    if ($matching.Count -gt 1) {
+        $remoteList = ($matching.Name | Sort-Object) -join ','
+        throw "Ambiguous remotes: $remoteList target '$BaseFullName'."
+    }
+
+    return $matching[0].Name
+}
+
+function Invoke-PrPush {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [psobject]$TargetPr
+    )
+
+    [void](Test-BranchSafety -TargetPr $TargetPr)
+
+    $remoteName = Resolve-PprcPushRemote -BaseFullName ([string]$TargetPr.BaseFullName)
+    $refSpec = "HEAD:refs/heads/$([string]$TargetPr.HeadRefName)"
+
+    try {
+        [void](Invoke-PprcNativeCommand -Command 'git' -Arguments @('push', $remoteName, $refSpec) -FailureMessage "Failed to push $refSpec to '$remoteName'.")
+    }
+    catch {
+        $message = $_.Exception.Message
+        if ([string]::IsNullOrWhiteSpace($message)) {
+            $message = "$_"
+        }
+
+        if ($message -match '(?i)non-fast-forward|fetch first|\[rejected\]') {
+            throw "Push rejected as non-fast-forward. Run 'git pull --rebase' and retry. Never use '--force'."
+        }
+
+        throw
+    }
+
+    return [pscustomobject]@{
+        Remote = $remoteName
+        RefSpec = $refSpec
+        Pushed = $true
+    }
+}
+
+function Get-PprcThreadMarker {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$ThreadKey
+    )
+
+    return "<!-- pprc:thread:$ThreadKey -->"
+}
+
+function Add-PprcMarker {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$Body,
+
+        [Parameter(Mandatory)]
+        [string]$Marker
+    )
+
+    $trimmed = $Body.TrimEnd()
+    if ($trimmed.Contains($Marker)) {
+        return $trimmed
+    }
+
+    return "$trimmed`n`n$Marker"
+}
+
+function Test-PprcMarkerMatch {
+    [CmdletBinding()]
+    param(
+        [AllowNull()]
+        [string]$Body,
+
+        [Parameter(Mandatory)]
+        [string]$Marker
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Body)) {
+        return $false
+    }
+
+    return $Body.Contains($Marker)
+}
+
+function Add-PrReply {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [psobject]$TargetPr,
+
+        [Parameter(Mandatory)]
+        [psobject]$Thread,
+
+        [Parameter(Mandatory)]
+        [string]$Body,
+
+        [string]$Token = (Get-GitHubToken),
+
+        [string]$UserLogin
+    )
+
+    if ([string]::IsNullOrWhiteSpace($UserLogin)) {
+        $UserLogin = Get-PprcAuthenticatedUserLogin -Token $Token
+    }
+
+    $kind = [string]$Thread.kind
+    if ([string]::IsNullOrWhiteSpace($kind)) {
+        throw 'Thread.kind is required.'
+    }
+
+    $threadKey = [string]$Thread.rootId
+    if ([string]::IsNullOrWhiteSpace($threadKey)) {
+        throw 'Thread.rootId is required.'
+    }
+
+    $ownerRepo = [string]$TargetPr.BaseFullName -split '/', 2
+    if ($ownerRepo.Count -ne 2 -or [string]::IsNullOrWhiteSpace($ownerRepo[0]) -or [string]::IsNullOrWhiteSpace($ownerRepo[1])) {
+        throw "TargetPr.BaseFullName must be in 'owner/repo' format. Got '$($TargetPr.BaseFullName)'."
+    }
+
+    $encodedOwner = [uri]::EscapeDataString($ownerRepo[0])
+    $encodedRepo = [uri]::EscapeDataString($ownerRepo[1])
+    $prNumber = [int]$TargetPr.Number
+
+    $marker = Get-PprcThreadMarker -ThreadKey $threadKey
+    $bodyWithMarker = Add-PprcMarker -Body $Body -Marker $marker
+
+    if ([string]::Equals($kind, 'inline', [System.StringComparison]::OrdinalIgnoreCase)) {
+        $rootId = 0
+        if (-not [int]::TryParse($threadKey, [ref]$rootId)) {
+            throw "Inline thread rootId must be an integer. Got '$threadKey'."
+        }
+
+        $existingInline = Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/pulls/$prNumber/comments" -Query @{ per_page = 100 } -Paginate -Token $Token
+        $duplicateInline = @($existingInline | Where-Object {
+                $null -ne $_ -and
+                $null -ne $_.user -and
+                [string]::Equals([string]$_.user.login, $UserLogin, [System.StringComparison]::OrdinalIgnoreCase) -and
+                (Test-PprcMarkerMatch -Body ([string]$_.body) -Marker $marker)
+            } | Select-Object -First 1)
+
+        if ($duplicateInline.Count -gt 0) {
+            return [pscustomobject]@{
+                ThreadKey = $threadKey
+                Kind = 'inline'
+                Posted = $false
+                AlreadyHandled = $true
+                CommentId = [int]$duplicateInline[0].id
+                Marker = $marker
+            }
+        }
+
+        $createdInline = Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/pulls/$prNumber/comments" -Method 'POST' -Body @{
+            body = $bodyWithMarker
+            in_reply_to = [int]$rootId
+        } -Token $Token
+
+        if ($null -eq $createdInline -or $null -eq $createdInline.id) {
+            throw "GitHub did not return a comment id after posting inline reply for thread '$threadKey'."
+        }
+
+        return [pscustomobject]@{
+            ThreadKey = $threadKey
+            Kind = 'inline'
+            Posted = $true
+            AlreadyHandled = $false
+            CommentId = [int]$createdInline.id
+            Marker = $marker
+        }
+    }
+
+    $existingIssueComments = @()
+    try {
+        $existingIssueComments = @(Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/issues/$prNumber/comments" -Query @{ per_page = 100 } -Paginate -Token $Token)
+    }
+    catch {
+        Write-Verbose "Summary dedup check unavailable for thread '$threadKey'; continuing with post. Details: $($_.Exception.Message)"
+    }
+
+    $duplicateIssue = @($existingIssueComments | Where-Object {
+            $null -ne $_ -and
+            $null -ne $_.user -and
+            [string]::Equals([string]$_.user.login, $UserLogin, [System.StringComparison]::OrdinalIgnoreCase) -and
+            (Test-PprcMarkerMatch -Body ([string]$_.body) -Marker $marker)
+        } | Select-Object -First 1)
+    if ($duplicateIssue.Count -gt 0) {
+        return [pscustomobject]@{
+            ThreadKey = $threadKey
+            Kind = [string]$kind
+            Posted = $false
+            AlreadyHandled = $true
+            CommentId = [int]$duplicateIssue[0].id
+            Marker = $marker
+        }
+    }
+
+    $createdIssue = Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/issues/$prNumber/comments" -Method 'POST' -Body @{
+        body = $bodyWithMarker
+    } -Token $Token
+    if ($null -eq $createdIssue -or $null -eq $createdIssue.id) {
+        throw "GitHub did not return a comment id after posting summary reply for thread '$threadKey'."
+    }
+
+    return [pscustomobject]@{
+        ThreadKey = $threadKey
+        Kind = [string]$kind
+        Posted = $true
+        AlreadyHandled = $false
+        CommentId = [int]$createdIssue.id
+        Marker = $marker
+    }
+}
+
 Export-ModuleMember -Function @(
     'Get-GitHubToken',
     'Get-RepoSlug',
@@ -801,5 +1102,7 @@ Export-ModuleMember -Function @(
     'Invoke-GitHubGraphQL',
     'Resolve-TargetPr',
     'Test-BranchSafety',
-    'Get-PrReviewThreads'
+    'Get-PrReviewThreads',
+    'Invoke-PrPush',
+    'Add-PrReply'
 )
