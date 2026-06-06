@@ -1,4 +1,4 @@
-# skillz
+# skalary
 
 Plugin-based GitHub Copilot customizations for prompts, skills, and agents.
 
@@ -7,15 +7,15 @@ Plugin-based GitHub Copilot customizations for prompts, skills, and agents.
 Bootstrap scripts and registry into a target repository:
 
 ```powershell
-irm https://raw.githubusercontent.com/jIRI-san/skillz/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skillz/bootstrap.ps1 | iex
+irm https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1 | iex
 ```
 
-`bootstrap.ps1` downloads `scripts/skillz/*.ps1` and `registry.json` into `scripts/skillz/`, creates `.github/.skillz/`, and does not execute plugin payload.
+`bootstrap.ps1` downloads `scripts/skalary/*.ps1` and `registry.json` into `scripts/skalary/`, creates `.github/.skalary/`, and does not execute plugin payload.
 
 ### Review Guidance
 
 Before running the one-liner:
-1. Review `scripts/skillz/bootstrap.ps1` at the pinned ref.
+1. Review `scripts/skalary/bootstrap.ps1` at the pinned ref.
 2. Confirm the repo/ref pair is the source you trust.
 3. Prefer pinning immutable SHAs (not moving branches).
 
@@ -24,32 +24,32 @@ Before running the one-liner:
 Install a plugin (dependencies are resolved and installed automatically):
 
 ```powershell
-pwsh -NoProfile -File scripts/skillz/Install-Plugin.ps1 -Name ci
+pwsh -NoProfile -File scripts/skalary/Install-Plugin.ps1 -Name ci
 ```
 
 Update an installed plugin to the registry version:
 
 ```powershell
-pwsh -NoProfile -File scripts/skillz/Update-Plugin.ps1 -Name ci
+pwsh -NoProfile -File scripts/skalary/Update-Plugin.ps1 -Name ci
 ```
 
 Remove a plugin:
 
 ```powershell
-pwsh -NoProfile -File scripts/skillz/Remove-Plugin.ps1 -Name ci
+pwsh -NoProfile -File scripts/skalary/Remove-Plugin.ps1 -Name ci
 ```
 
 List registry plugins with install/modified/outdated state:
 
 ```powershell
-pwsh -NoProfile -File scripts/skillz/Get-Plugin.ps1
-pwsh -NoProfile -File scripts/skillz/Get-Plugin.ps1 -Installed
+pwsh -NoProfile -File scripts/skalary/Get-Plugin.ps1
+pwsh -NoProfile -File scripts/skalary/Get-Plugin.ps1 -Installed
 ```
 
 Search plugins by name/description/tags:
 
 ```powershell
-pwsh -NoProfile -File scripts/skillz/Find-Plugin.ps1 -Query review
+pwsh -NoProfile -File scripts/skalary/Find-Plugin.ps1 -Query review
 ```
 
 ## Security Note (`irm | iex`)
@@ -58,9 +58,9 @@ pwsh -NoProfile -File scripts/skillz/Find-Plugin.ps1 -Query review
 
 ## Plugin Catalog
 
-Generated from `registry.json` by `scripts/skillz/Build-Registry.ps1`.
+Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 
-<!-- BEGIN SKILLZ PLUGIN CATALOG -->
+<!-- BEGIN SKALARY PLUGIN CATALOG -->
 | Plugin | Version | Status | Dependencies | Files | Description |
 |--------|---------|--------|--------------|-------|-------------|
 | `autopilot` | 1.0.0 | partial | — | 1 | Autonomous plan execution agent payload for .github/agents. |
@@ -70,5 +70,5 @@ Generated from `registry.json` by `scripts/skillz/Build-Registry.ps1`.
 | `cr` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
 | `dr` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
 | `udn` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
-<!-- END SKILLZ PLUGIN CATALOG -->
+<!-- END SKALARY PLUGIN CATALOG -->
 

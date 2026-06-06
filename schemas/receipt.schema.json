@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jIRI-san/skillz/schemas/receipt.schema.json",
-  "title": "Skillz Plugin Receipt",
-  "description": "Per-plugin installation tracking stored in .github/.skillz/receipts/<name>.json.",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/receipt.schema.json",
+  "title": "Skalary Plugin Receipt",
+  "description": "Per-plugin installation tracking stored in .github/.skalary/receipts/<name>.json.",
   "type": "object",
   "additionalProperties": false,
   "required": ["name", "version", "source", "ref", "installedAt", "files"],

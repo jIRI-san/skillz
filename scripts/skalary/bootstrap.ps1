@@ -3,7 +3,7 @@
 param(
     [string]$RepoRoot = (Get-Location).Path,
 
-    [string]$Repository = 'jIRI-san/skillz',
+    [string]$Repository = 'jIRI-san/skalary',
 
     [string]$Ref = 'c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd'
 )
@@ -96,14 +96,14 @@ $scriptFiles = @(
 )
 
 $targetRoot = Resolve-TargetRoot -StartPath $RepoRoot
-$scriptsRoot = Join-Path $targetRoot 'scripts/skillz'
-$skillzStateRoot = Join-Path $targetRoot '.github/.skillz'
+$scriptsRoot = Join-Path $targetRoot 'scripts/skalary'
+$skalaryStateRoot = Join-Path $targetRoot '.github/.skalary'
 
 [void](New-Item -ItemType Directory -Path $scriptsRoot -Force)
-[void](New-Item -ItemType Directory -Path $skillzStateRoot -Force)
+[void](New-Item -ItemType Directory -Path $skalaryStateRoot -Force)
 
 foreach ($scriptFile in $scriptFiles) {
-    $relativeSourcePath = "scripts/skillz/$scriptFile"
+    $relativeSourcePath = "scripts/skalary/$scriptFile"
     $url = New-RawContentUrl -Repo $Repository -PinnedRef $Ref -RelativePath $relativeSourcePath
     $content = Get-RemoteContent -Url $url
     $targetPath = Join-Path $scriptsRoot $scriptFile
@@ -115,7 +115,7 @@ $registryUrl = New-RawContentUrl -Repo $Repository -PinnedRef $Ref -RelativePath
 $registryContent = Get-RemoteContent -Url $registryUrl
 Set-Content -LiteralPath (Join-Path $scriptsRoot 'registry.json') -Value $registryContent -Encoding utf8
 
-Write-Host "Bootstrapped skillz scripts to '$scriptsRoot' from '$Repository' at ref '$Ref'."
-Write-Host "Created skillz state directory '$skillzStateRoot'."
+Write-Host "Bootstrapped skalary scripts to '$scriptsRoot' from '$Repository' at ref '$Ref'."
+Write-Host "Created skalary state directory '$skalaryStateRoot'."
 Write-Host "Next: review downloaded scripts and run:"
-Write-Host "  pwsh -NoProfile -File scripts/skillz/Install-Plugin.ps1 -Name <plugin-name> -Repository $Repository -Ref $Ref"
+Write-Host "  pwsh -NoProfile -File scripts/skalary/Install-Plugin.ps1 -Name <plugin-name> -Repository $Repository -Ref $Ref"

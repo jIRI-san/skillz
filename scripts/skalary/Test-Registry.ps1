@@ -347,8 +347,8 @@ if (-not (Test-Path -LiteralPath $readmePath -PathType Leaf)) {
 }
 else {
     $readme = Get-Content -LiteralPath $readmePath -Raw
-    $beginMarker = '<!-- BEGIN SKILLZ PLUGIN CATALOG -->'
-    $endMarker = '<!-- END SKILLZ PLUGIN CATALOG -->'
+    $beginMarker = '<!-- BEGIN SKALARY PLUGIN CATALOG -->'
+    $endMarker = '<!-- END SKALARY PLUGIN CATALOG -->'
     $match = [regex]::Match(
         $readme,
         "(?s)$([regex]::Escape($beginMarker)).*?$([regex]::Escape($endMarker))"

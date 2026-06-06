@@ -1,10 +1,10 @@
 {
   "bootstrap": {
-    "oneLiner": "irm https://raw.githubusercontent.com/jIRI-san/skillz/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skillz/bootstrap.ps1 | iex",
+    "oneLiner": "irm https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1 | iex",
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
-    "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skillz/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skillz/bootstrap.ps1"
+    "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-06T14:11:07.9512414Z",
+  "generatedAt": "2026-06-06T17:10:31.0506163Z",
   "plugins": [
     {
       "author": "jIRI-san",

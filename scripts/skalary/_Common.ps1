@@ -338,7 +338,7 @@ function Get-PluginReceiptPath {
         [string]$PluginName
     )
 
-    $receiptsRoot = Join-Path $RepoRoot '.github/.skillz/receipts'
+    $receiptsRoot = Join-Path $RepoRoot '.github/.skalary/receipts'
     return Join-Path $receiptsRoot "$PluginName.json"
 }
 

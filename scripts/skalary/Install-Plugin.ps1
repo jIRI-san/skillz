@@ -74,7 +74,7 @@ function Get-ResolvedSourceContext {
         throw "Unable to resolve remote ref '$resolvedRef' in '$remote'."
     }
 
-    $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skillz-install-" + [System.Guid]::NewGuid().ToString('N'))
+    $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skalary-install-" + [System.Guid]::NewGuid().ToString('N'))
     [void](New-Item -ItemType Directory -Path $sourceTempPath -Force)
 
     if ($resolvedRef -eq 'HEAD') {
@@ -184,7 +184,7 @@ function Get-ReceiptOwnerMap {
     )
 
     $ownerByDest = @{}
-    $receiptsRoot = Join-Path $RepoRoot '.github/.skillz/receipts'
+    $receiptsRoot = Join-Path $RepoRoot '.github/.skalary/receipts'
     if (-not (Test-Path -LiteralPath $receiptsRoot -PathType Container)) {
         return $ownerByDest
     }
@@ -522,12 +522,12 @@ try {
         exit 0
     }
 
-    $skillzRoot = Join-Path $targetRepoRoot '.github/.skillz'
-    if (-not (Test-Path -LiteralPath $skillzRoot -PathType Container)) {
-        [void](New-Item -ItemType Directory -Path $skillzRoot -Force)
+    $skalaryRoot = Join-Path $targetRepoRoot '.github/.skalary'
+    if (-not (Test-Path -LiteralPath $skalaryRoot -PathType Container)) {
+        [void](New-Item -ItemType Directory -Path $skalaryRoot -Force)
     }
 
-    $operationRoot = Join-Path $skillzRoot ("tmp/install-" + [System.Guid]::NewGuid().ToString('N'))
+    $operationRoot = Join-Path $skalaryRoot ("tmp/install-" + [System.Guid]::NewGuid().ToString('N'))
     $stagedRoot = Join-Path $operationRoot 'staged'
     $backupRoot = Join-Path $operationRoot 'backups'
     [void](New-Item -ItemType Directory -Path $stagedRoot -Force)

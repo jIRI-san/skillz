@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jIRI-san/skillz/schemas/autopilot.schema.json",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/autopilot.schema.json",
   "title": "Autopilot Configuration",
   "description": "Per-project configuration for autonomous plan execution via GitHub Copilot CLI.",
   "type": "object",

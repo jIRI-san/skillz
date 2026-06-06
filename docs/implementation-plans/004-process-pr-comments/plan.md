@@ -3,7 +3,7 @@
 <!-- execution-mode: manual -->
 <!-- scope: phase -->
 
-> A new dogfooded plugin (`pprc`, skill `/process-pr-comments`) that pulls a pull request's review comments from GitHub, classifies each as **Fixed / Won't-fix / Needs-clarification**, optionally edits code + commits + pushes a fix, then posts a per-comment reply to the PR thread. **Both the code push and every reply are approved by a human before they take effect** (diff/commit approval before push; approve / edit / skip before each reply). GitHub access uses the **current user's auth**: `gh auth token` supplies the token once, then **all** GitHub calls — PR detection, comment fetch, replies, and the unresolved-thread GraphQL query — go directly to `api.github.com` via `Invoke-RestMethod`. The skill is **interactive-only** (no headless mode). Packaged per the **Plan 002** plugin-registry conventions and installed into skillz's own `.github/` (dogfood).
+> A new dogfooded plugin (`pprc`, skill `/process-pr-comments`) that pulls a pull request's review comments from GitHub, classifies each as **Fixed / Won't-fix / Needs-clarification**, optionally edits code + commits + pushes a fix, then posts a per-comment reply to the PR thread. **Both the code push and every reply are approved by a human before they take effect** (diff/commit approval before push; approve / edit / skip before each reply). GitHub access uses the **current user's auth**: `gh auth token` supplies the token once, then **all** GitHub calls — PR detection, comment fetch, replies, and the unresolved-thread GraphQL query — go directly to `api.github.com` via `Invoke-RestMethod`. The skill is **interactive-only** (no headless mode). Packaged per the **Plan 002** plugin-registry conventions and installed into skalary's own `.github/` (dogfood).
 
 ## Decisions
 
@@ -46,7 +46,7 @@
 | REQ-15 | Robust error handling for external failure modes | Distinct actionable errors for: `gh` missing/unauthed, detached HEAD (check out the PR branch), zero/ambiguous PR, no/ambiguous matching push remote, primary + secondary rate limits (`Retry-After`), non-fast-forward push (advise rebase, no force), null head repo, zero-comment no-op, partial-post resume | 1.2, 1.3, 2.1, 3.3, 3.6, 3.7, 4.1 |
 | REQ-16 | Pester tests (mocked) cover all paths | Pester 5 suite mocks `Invoke-RestMethod` (body+headers) + `gh` + `git`; covers token-missing/unauthed, PR none/one/ambiguous/fork, dotted-repo + SSH/HTTPS/`.git` parsing, multi-page REST + GraphQL pagination, unresolved filtering, thread-root reply target (incl. processing a reply item), reply payload shape (inline vs issue), branch-safety refusal + explicit refspec, dirty-worktree refusal, primary/secondary rate-limit abort, non-fast-forward push advice, redaction; all pass without live GitHub calls | 4.1 |
 | REQ-17 | Zero lint warnings + `#requires 7.0` | `Invoke-ScriptAnalyzer` reports zero warnings across `plugins/pprc/**` (and dogfood copies); every `.ps1`/`.psm1` declares `#requires -Version 7.0` | 4.2, 5.2 |
-| REQ-18 | Dogfood install + docs (gated on Plan 002) | `pprc` installs into skillz `.github/` via Plan 002 tooling; drift-check passes; `process-pr-comments` design note added; README catalog includes `pprc` | 5.1, 5.3 |
+| REQ-18 | Dogfood install + docs (gated on Plan 002) | `pprc` installs into skalary `.github/` via Plan 002 tooling; drift-check passes; `process-pr-comments` design note added; README catalog includes `pprc` | 5.1, 5.3 |
 | REQ-19 | Observability: structured progress logging (token-free) | Console output reports PR number+url, counts (fetched/unresolved/by-disposition), per-comment disposition + SHA + posted reply id; no token in any line | 3.7, 4.1 |
 
 ## Risks
@@ -107,7 +107,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [ ] 5.1 Package + register: validate `plugins/pprc/plugin.json` against `schemas/plugin.schema.json`; run `Build-Registry.ps1` to add `pprc` (with per-file sha256) to `registry.json` (REQ-13, REQ-18, RISK-9) [after: 4.2] `M`
-- [ ] 5.2 Install into skillz `.github/` via `Install-Plugin.ps1` (or `Sync-Dogfood.ps1`); verify dogfood drift-check passes and VS Code loads the `process-pr-comments` skill; re-run lint on dogfood copies (REQ-17, REQ-18, RISK-9) [after: 5.1] `M`
+- [ ] 5.2 Install into skalary `.github/` via `Install-Plugin.ps1` (or `Sync-Dogfood.ps1`); verify dogfood drift-check passes and VS Code loads the `process-pr-comments` skill; re-run lint on dogfood copies (REQ-17, REQ-18, RISK-9) [after: 5.1] `M`
   <details><summary>Details</summary>
 
   **002-absent fallback (independent of the 002-only `Build-Registry` step 5.1):** if Plan 002 registry tooling is unavailable, skip 5.1/5.2 and instead manually copy `plugins/pprc/**` into `.github/skills/process-pr-comments/**`, record the gap, and revisit once 002 ships.

@@ -41,7 +41,7 @@ function Get-ResolvedSourceContext {
             throw "Unable to resolve ref '$resolvedRef' in source repository '$sourceRepoRoot'."
         }
 
-        $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skillz-update-" + [System.Guid]::NewGuid().ToString('N'))
+        $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skalary-update-" + [System.Guid]::NewGuid().ToString('N'))
         [void](New-Item -ItemType Directory -Path $sourceTempPath -Force)
         git -C $sourceRepoRoot archive $resolvedSha | tar -xf - -C $sourceTempPath
         if ($LASTEXITCODE -ne 0) {
@@ -83,7 +83,7 @@ function Get-ResolvedSourceContext {
         throw "Unable to resolve remote ref '$resolvedRef' in '$remote'."
     }
 
-    $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skillz-update-" + [System.Guid]::NewGuid().ToString('N'))
+    $sourceTempPath = Join-Path ([System.IO.Path]::GetTempPath()) ("skalary-update-" + [System.Guid]::NewGuid().ToString('N'))
     [void](New-Item -ItemType Directory -Path $sourceTempPath -Force)
 
     if ($resolvedRef -eq 'HEAD') {

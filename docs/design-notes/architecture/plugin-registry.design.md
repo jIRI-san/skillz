@@ -1,13 +1,13 @@
 ---
-description: Plugin registry architecture for skillz — plugin manifests, generated registry, install/update/remove flows, integrity and confinement guarantees
+description: Plugin registry architecture for skalary — plugin manifests, generated registry, install/update/remove flows, integrity and confinement guarantees
 globs:
   - plugins/**
   - registry.json
-  - scripts/skillz/**
+  - scripts/skalary/**
   - schemas/plugin.schema.json
   - schemas/registry.schema.json
   - schemas/receipt.schema.json
-  - .github/.skillz/**
+  - .github/.skalary/**
 ---
 
 # Plugin Registry
@@ -19,8 +19,8 @@ The plugin registry is a source-first packaging system: `plugins/` is authoritat
 | Layer | Source of truth | Purpose | Files |
 |---|---|---|---|
 | Plugin source | `plugins/<name>/` | Authoring bundle with manifest + payload | `plugins/*/plugin.json`, payload files |
-| Registry index | `registry.json` | Generated install catalog with file hashes and bootstrap metadata | `scripts/skillz/Build-Registry.ps1` output |
-| Runtime state | `.github/.skillz/receipts/<name>.json` | Per-plugin installation tracking, merge-safe | install/update/remove verbs |
+| Registry index | `registry.json` | Generated install catalog with file hashes and bootstrap metadata | `scripts/skalary/Build-Registry.ps1` output |
+| Runtime state | `.github/.skalary/receipts/<name>.json` | Per-plugin installation tracking, merge-safe | install/update/remove verbs |
 | Dogfood target | `.github/**` | Installed copies used by local tooling | `Sync-Dogfood.ps1` |
 
 ## Schema Contracts
@@ -47,13 +47,13 @@ To prevent drift with evolving Copilot skill specs, plugin packaging keeps owner
 
 ## Dependency and Install Model
 
-Install/update behavior is implemented in `scripts/skillz/Install-Plugin.ps1` and `scripts/skillz/Update-Plugin.ps1` using shared helpers in `_Common.ps1`.
+Install/update behavior is implemented in `scripts/skalary/Install-Plugin.ps1` and `scripts/skalary/Update-Plugin.ps1` using shared helpers in `_Common.ps1`.
 
 | Area | Decision |
 |---|---|
 | Dependency resolution | Deterministic topological order, dedupe by plugin name, lexical tie-breaks, cycle detection before copy. |
 | Source coherence | One resolved SHA per operation; remote clone and local `-Source` both install from a single commit snapshot. |
-| Transactional apply | Stage files under `.github/.skillz/tmp/`, verify staged hashes, back up targets, atomic move, then write receipt. |
+| Transactional apply | Stage files under `.github/.skalary/tmp/`, verify staged hashes, back up targets, atomic move, then write receipt. |
 | Rollback | Any failure restores backups, removes staged files, writes no new receipt. |
 | `evals/` handling | Files under `evals/` are always excluded from installation. |
 
@@ -71,13 +71,13 @@ Install/update behavior is implemented in `scripts/skillz/Install-Plugin.ps1` an
 
 `autopilot` plugin payload is intentionally confined to `.github/agents/autopilot.agent.md` only.
 
-Autopilot infrastructure (`scripts/autopilot/**`, `.devcontainer/autopilot/**`, `.autopilot.json`, `schemas/autopilot.schema.json`) is a separate prerequisite provisioned by `scripts/skillz/Initialize-Autopilot.ps1` and not installed through the plugin file-copy path. This preserves `.github/` confinement while allowing `ci` to depend on `autopilot` agent payload.
+Autopilot infrastructure (`scripts/autopilot/**`, `.devcontainer/autopilot/**`, `.autopilot.json`, `schemas/autopilot.schema.json`) is a separate prerequisite provisioned by `scripts/skalary/Initialize-Autopilot.ps1` and not installed through the plugin file-copy path. This preserves `.github/` confinement while allowing `ci` to depend on `autopilot` agent payload.
 
 ## Dogfood Authority and Sync
 
 `plugins/` is authoritative. `.github/` is treated as installed output and can drift.
 
-`scripts/skillz/Sync-Dogfood.ps1` converges `.github/` back to `plugins/` sources, is idempotent, and supports `-WhatIf` for CI drift detection. Running sync to convergence produces the expected state for CI drift-check pass criteria (`.github/` byte-equivalent to plugin sources). Destination collision checks in sync mirror registry safety rules.
+`scripts/skalary/Sync-Dogfood.ps1` converges `.github/` back to `plugins/` sources, is idempotent, and supports `-WhatIf` for CI drift detection. Running sync to convergence produces the expected state for CI drift-check pass criteria (`.github/` byte-equivalent to plugin sources). Destination collision checks in sync mirror registry safety rules.
 
 ## Evals (Future) Contract
 

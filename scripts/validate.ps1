@@ -1,7 +1,7 @@
 #requires -Version 7.0
 <#
 .SYNOPSIS
-    Repository validation gate for the skillz customizations repo.
+    Repository validation gate for the skalary customizations repo.
 .DESCRIPTION
     Dependency-free verification used as both the autopilot `build` and `test`
     command (wired through package.json so it satisfies the autopilot config

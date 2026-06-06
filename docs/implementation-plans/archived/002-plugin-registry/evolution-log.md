@@ -11,7 +11,7 @@ Records design-review (DR) round history. Given to DR agents as context to preve
 - **#2 (Critical) supply-chain integrity** → `registry.json` embeds per-file sha256; install verifies staged files before move. (RISK-13, steps 3.1/4.5)
 - **#3 (High) bootstrap pinned ref** → one-liner pins immutable SHA/tag; `-Ref` param. (REQ-12, step 6.1)
 - **#4 (High) CRLF normalization** → clone with `core.autocrlf=false core.eol=lf`; cross-platform hash test. (RISK-14, steps 4.1/4.4/7.1)
-- **#5 (High) atomic move** → transactional: stage on target volume `.github/.skillz/tmp/`, backup, atomic renames, success marker. (RISK-10, step 4.3)
+- **#5 (High) atomic move** → transactional: stage on target volume `.github/.skalary/tmp/`, backup, atomic renames, success marker. (RISK-10, step 4.3)
 - **#6 (High) transitive rollback scope** → all-or-nothing across full dependency set; rollback removes newly-installed deps. (REQ-11, step 4.3)
 - **#7 (High) shared dest ownership** → registry-wide dest-uniqueness rule + runtime ownership map; ref-counting declined as overengineering (uniqueness suffices). (RISK-12, step 3.3)
 - **#8 (High) receipt/disk consistency on skip** → per-file outcome state; version advanced only if all updated, else `degraded`. (REQ-7, step 5.1)

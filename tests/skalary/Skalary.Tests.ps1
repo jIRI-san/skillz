@@ -3,7 +3,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Describe 'skillz plugin registry scripts' {
+Describe 'skalary plugin registry scripts' {
     BeforeAll {
         $projectRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path
         $tempRepos = [System.Collections.Generic.List[string]]::new()
@@ -12,21 +12,21 @@ Describe 'skillz plugin registry scripts' {
             [CmdletBinding()]
             param()
 
-            $path = Join-Path ([System.IO.Path]::GetTempPath()) ("skillz-tests-" + [System.Guid]::NewGuid().ToString('N'))
+            $path = Join-Path ([System.IO.Path]::GetTempPath()) ("skalary-tests-" + [System.Guid]::NewGuid().ToString('N'))
             git clone --quiet $projectRoot $path | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to clone test fixture repository to '$path'."
             }
 
-            git -C $path config user.name 'skillz-tests' | Out-Null
-            git -C $path config user.email 'skillz-tests@example.com' | Out-Null
-            git -C $path remote set-url origin 'https://github.com/jIRI-san/skillz.git' | Out-Null
+            git -C $path config user.name 'skalary-tests' | Out-Null
+            git -C $path config user.email 'skalary-tests@example.com' | Out-Null
+            git -C $path remote set-url origin 'https://github.com/jIRI-san/skalary.git' | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 throw "Failed to configure git identity for '$path'."
             }
 
             # Keep fixture repos aligned with uncommitted local script changes under test.
-            Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts/skillz') -Destination (Join-Path $path 'scripts') -Recurse -Force
+            Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts/skalary') -Destination (Join-Path $path 'scripts') -Recurse -Force
 
             $tempRepos.Add($path)
             return $path
@@ -44,7 +44,7 @@ Describe 'skillz plugin registry scripts' {
                 [string[]]$Arguments = @()
             )
 
-            $scriptPath = Join-Path $RepoRoot "scripts/skillz/$ScriptName"
+            $scriptPath = Join-Path $RepoRoot "scripts/skalary/$ScriptName"
             if (-not (Test-Path -LiteralPath $scriptPath -PathType Leaf)) {
                 throw "Script not found: $scriptPath"
             }
@@ -64,7 +64,7 @@ Describe 'skillz plugin registry scripts' {
             }
         }
 
-        function Invoke-SkillzScript {
+        function Invoke-SkalaryScript {
             [CmdletBinding()]
             param(
                 [Parameter(Mandatory)]
@@ -76,7 +76,7 @@ Describe 'skillz plugin registry scripts' {
                 [hashtable]$Parameters = @{}
             )
 
-            $scriptPath = Join-Path $RepoRoot "scripts/skillz/$ScriptName"
+            $scriptPath = Join-Path $RepoRoot "scripts/skalary/$ScriptName"
             Push-Location -LiteralPath $RepoRoot
             try {
                 & $scriptPath -RepoRoot $RepoRoot @Parameters
@@ -107,7 +107,7 @@ Describe 'skillz plugin registry scripts' {
                 name = $Name
                 version = '1.0.0'
                 description = "test plugin $Name"
-                author = 'skillz-tests'
+                author = 'skalary-tests'
                 license = 'MIT'
                 tags = @('test')
                 dependencies = $Dependencies
@@ -148,7 +148,7 @@ Describe 'skillz plugin registry scripts' {
         Test-Path -LiteralPath (Join-Path $target '.github/agents/cr.agent.md') | Should -BeTrue
         Test-Path -LiteralPath (Join-Path $target '.github/agents/autopilot.agent.md') | Should -BeTrue
 
-        $receipts = Get-ChildItem -LiteralPath (Join-Path $target '.github/.skillz/receipts') -File -Filter '*.json' | Sort-Object Name
+        $receipts = Get-ChildItem -LiteralPath (Join-Path $target '.github/.skalary/receipts') -File -Filter '*.json' | Sort-Object Name
         @($receipts.Name) | Should -Be @('autopilot.json', 'ci.json', 'cr.json')
     }
 
@@ -165,7 +165,7 @@ Describe 'skillz plugin registry scripts' {
         New-PluginManifest -Root $source -Name 'right' -Dependencies @('leaf')
         New-PluginManifest -Root $source -Name 'root' -Dependencies @('left', 'right')
 
-        Invoke-SkillzScript -RepoRoot $source -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $source -ScriptName 'Build-Registry.ps1'
         git -C $source add plugins registry.json README.md
         if ($LASTEXITCODE -ne 0) {
             throw "git add failed in '$source' (exit $LASTEXITCODE)."
@@ -178,7 +178,7 @@ Describe 'skillz plugin registry scripts' {
         $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'root', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
-        $receipts = Get-ChildItem -LiteralPath (Join-Path $target '.github/.skillz/receipts') -File -Filter '*.json'
+        $receipts = Get-ChildItem -LiteralPath (Join-Path $target '.github/.skalary/receipts') -File -Filter '*.json'
         $receipts.Count | Should -Be 4
         Test-Path -LiteralPath (Join-Path $target '.github/test/leaf.txt') | Should -BeTrue
     }
@@ -246,11 +246,11 @@ Describe 'skillz plugin registry scripts' {
             (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash | Should -Be $beforeHashes[$dest]
         }
 
-        $receiptsRoot = Join-Path $target '.github/.skillz/receipts'
+        $receiptsRoot = Join-Path $target '.github/.skalary/receipts'
         if (Test-Path -LiteralPath $receiptsRoot -PathType Container) {
             (Get-ChildItem -LiteralPath $receiptsRoot -File -Filter '*.json').Count | Should -Be 0
         }
-        $tmpRoot = Join-Path $target '.github/.skillz/tmp'
+        $tmpRoot = Join-Path $target '.github/.skalary/tmp'
         if (Test-Path -LiteralPath $tmpRoot -PathType Container) {
             (Get-ChildItem -LiteralPath $tmpRoot -Directory -Filter 'install-*').Count | Should -Be 0
         }
@@ -275,7 +275,7 @@ Describe 'skillz plugin registry scripts' {
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.version = '1.0.1'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
-        Invoke-SkillzScript -RepoRoot $updatedSource -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $updatedSource -ScriptName 'Build-Registry.ps1'
         git -C $updatedSource add plugins/cr registry.json README.md
         if ($LASTEXITCODE -ne 0) {
             throw "git add failed in '$updatedSource' (exit $LASTEXITCODE)."
@@ -288,7 +288,7 @@ Describe 'skillz plugin registry scripts' {
         $update = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Update-Plugin.ps1' -Arguments @('-Name', 'cr', '-Source', $updatedSource, '-Ref', 'HEAD')
         $update.ExitCode | Should -Be 0
 
-        $receipt = Get-Content -LiteralPath (Join-Path $target '.github/.skillz/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
+        $receipt = Get-Content -LiteralPath (Join-Path $target '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
         [bool]$receipt.degraded | Should -BeTrue
         [string]$receipt.version | Should -Be '1.0.0'
         @($receipt.files | Where-Object { [string]$_.outcome -eq 'skipped-modified' }).Count | Should -BeGreaterThan 0
@@ -302,7 +302,7 @@ Describe 'skillz plugin registry scripts' {
         $install.ExitCode | Should -Be 0
 
         {
-            Invoke-SkillzScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cr' }
+            Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cr' }
         } | Should -Throw -ExpectedMessage "*installed dependent plugin(s): ci*"
     }
 
@@ -316,7 +316,7 @@ Describe 'skillz plugin registry scripts' {
         $installedPath = Join-Path $target '.github/skills/cip/SKILL.md'
         Set-Content -LiteralPath $installedPath -Value "changed locally`n" -Encoding utf8
 
-        Invoke-SkillzScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cip' }
+        Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cip' }
         Test-Path -LiteralPath $installedPath | Should -BeTrue
     }
 
@@ -327,19 +327,19 @@ Describe 'skillz plugin registry scripts' {
         $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cdn', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
-        $plugins = Invoke-SkillzScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1'
+        $plugins = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1'
         $cdn = @($plugins | Where-Object { [string]$_.name -eq 'cdn' } | Select-Object -First 1)
         $cdn.Count | Should -Be 1
         [bool]$cdn[0].installed | Should -BeTrue
         [bool]$cdn[0].modified | Should -BeFalse
 
         Set-Content -LiteralPath (Join-Path $target '.github/prompts/cdn.prompt.md') -Value "mutated`n" -Encoding utf8
-        $pluginsAfter = Invoke-SkillzScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1' -Parameters @{ Installed = $true }
+        $pluginsAfter = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1' -Parameters @{ Installed = $true }
         $cdnAfter = @($pluginsAfter | Where-Object { [string]$_.name -eq 'cdn' } | Select-Object -First 1)
         $cdnAfter.Count | Should -Be 1
         [bool]$cdnAfter[0].modified | Should -BeTrue
 
-        $search = Invoke-SkillzScript -RepoRoot $target -ScriptName 'Find-Plugin.ps1' -Parameters @{ Query = 'review' }
+        $search = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Find-Plugin.ps1' -Parameters @{ Query = 'review' }
         @($search.name) | Should -Contain 'cr'
         @($search.name) | Should -Contain 'dr'
     }
@@ -349,11 +349,11 @@ Describe 'skillz plugin registry scripts' {
         $registryPath = Join-Path $repo 'registry.json'
         $readmePath = Join-Path $repo 'README.md'
 
-        Invoke-SkillzScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
         $registryHash1 = (Get-FileHash -LiteralPath $registryPath -Algorithm SHA256).Hash
         $readmeHash1 = (Get-FileHash -LiteralPath $readmePath -Algorithm SHA256).Hash
 
-        Invoke-SkillzScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
         $registryHash2 = (Get-FileHash -LiteralPath $registryPath -Algorithm SHA256).Hash
         $readmeHash2 = (Get-FileHash -LiteralPath $readmePath -Algorithm SHA256).Hash
 
@@ -368,7 +368,7 @@ Describe 'skillz plugin registry scripts' {
         $manifest.files[0].dest = 'prompts/udn.prompt.md'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
 
-        Invoke-SkillzScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
         $result = Invoke-ScriptProcess -RepoRoot $repo -ScriptName 'Test-Registry.ps1'
         $result.ExitCode | Should -Not -Be 0
         $result.Output | Should -Match 'Destination collision'
@@ -389,7 +389,7 @@ Describe 'skillz plugin registry scripts' {
         $manifest.files[0].dest = $Dest
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
 
-        Invoke-SkillzScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
+        Invoke-SkalaryScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
         $result = Invoke-ScriptProcess -RepoRoot $repo -ScriptName 'Test-Registry.ps1'
         $result.ExitCode | Should -Not -Be 0
         $result.Output | Should -Match "invalid destination path '$([regex]::Escape($Dest))'"
@@ -405,8 +405,8 @@ Describe 'skillz plugin registry scripts' {
         $localInstall.ExitCode | Should -Be 0
         $remoteInstall.ExitCode | Should -Be 0
 
-        $localReceipt = Get-Content -LiteralPath (Join-Path $targetLocal '.github/.skillz/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
-        $remoteReceipt = Get-Content -LiteralPath (Join-Path $targetRemote '.github/.skillz/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
+        $localReceipt = Get-Content -LiteralPath (Join-Path $targetLocal '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
+        $remoteReceipt = Get-Content -LiteralPath (Join-Path $targetRemote '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
 
         [string]$localReceipt.ref | Should -Be ([string]$remoteReceipt.ref)
 

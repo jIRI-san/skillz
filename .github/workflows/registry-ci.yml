@@ -36,27 +36,27 @@ jobs:
         shell: pwsh
         run: |
           Import-Module PSScriptAnalyzer
-          Invoke-ScriptAnalyzer -Path scripts/skillz -Settings PSScriptAnalyzerSettings.psd1 -Recurse
+          Invoke-ScriptAnalyzer -Path scripts/skalary -Settings PSScriptAnalyzerSettings.psd1 -Recurse
 
       - name: Pester
         shell: pwsh
         run: |
           Import-Module Pester
-          $result = Invoke-Pester -Path tests/skillz/Skillz.Tests.ps1 -Output Detailed -PassThru
+          $result = Invoke-Pester -Path tests/skalary/Skalary.Tests.ps1 -Output Detailed -PassThru
           if ($result.FailedCount -gt 0) {
             throw "Pester failed with $($result.FailedCount) failing test(s)."
           }
 
       - name: Validate registry
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/skillz/Test-Registry.ps1
+        run: pwsh -NoProfile -File scripts/skalary/Test-Registry.ps1
 
       - name: Dogfood drift check
         shell: pwsh
-        run: pwsh -NoProfile -File scripts/skillz/Sync-Dogfood.ps1 -WhatIf
+        run: pwsh -NoProfile -File scripts/skalary/Sync-Dogfood.ps1 -WhatIf
 
       - name: README and registry generated output is up to date
         shell: pwsh
         run: |
-          pwsh -NoProfile -File scripts/skillz/Build-Registry.ps1
+          pwsh -NoProfile -File scripts/skalary/Build-Registry.ps1
           git diff --exit-code -- registry.json README.md

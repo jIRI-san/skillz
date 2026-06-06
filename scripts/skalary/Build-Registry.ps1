@@ -59,7 +59,7 @@ function New-BootstrapMetadata {
     )
 
     $repository = Resolve-OriginRepository
-    $url = "https://raw.githubusercontent.com/$($repository.Owner)/$($repository.Repo)/$Ref/scripts/skillz/bootstrap.ps1"
+    $url = "https://raw.githubusercontent.com/$($repository.Owner)/$($repository.Repo)/$Ref/scripts/skalary/bootstrap.ps1"
     return [pscustomobject]@{
         oneLiner = "irm $url | iex"
         ref = $Ref
@@ -166,8 +166,8 @@ function Update-ReadmeCatalog {
         $Registry
     )
 
-    $beginMarker = '<!-- BEGIN SKILLZ PLUGIN CATALOG -->'
-    $endMarker = '<!-- END SKILLZ PLUGIN CATALOG -->'
+    $beginMarker = '<!-- BEGIN SKALARY PLUGIN CATALOG -->'
+    $endMarker = '<!-- END SKALARY PLUGIN CATALOG -->'
     $catalogTable = New-ReadmeCatalogTable -Registry $Registry
     $catalogBlock = @(
         $beginMarker,
@@ -179,7 +179,7 @@ function Update-ReadmeCatalog {
         Get-Content -LiteralPath $ReadmePath -Raw
     }
     else {
-        "# skillz`n"
+        "# skalary`n"
     }
 
     if ($readmeContent.Contains($beginMarker) -and $readmeContent.Contains($endMarker)) {

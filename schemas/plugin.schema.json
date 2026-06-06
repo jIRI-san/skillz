@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jIRI-san/skillz/schemas/plugin.schema.json",
-  "title": "Skillz Plugin Manifest",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/plugin.schema.json",
+  "title": "Skalary Plugin Manifest",
   "description": "Manifest for a single plugin bundle under plugins/<name>/plugin.json.",
   "type": "object",
   "additionalProperties": false,

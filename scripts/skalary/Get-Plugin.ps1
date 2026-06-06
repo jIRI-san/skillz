@@ -19,7 +19,7 @@ function Get-ReceiptMap {
     )
 
     $map = @{}
-    $receiptsRoot = Join-Path $RepoRootPath '.github/.skillz/receipts'
+    $receiptsRoot = Join-Path $RepoRootPath '.github/.skalary/receipts'
     if (-not (Test-Path -LiteralPath $receiptsRoot -PathType Container)) {
         return $map
     }

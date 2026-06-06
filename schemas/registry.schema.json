@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/jIRI-san/skillz/schemas/registry.schema.json",
-  "title": "Skillz Plugin Registry",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/registry.schema.json",
+  "title": "Skalary Plugin Registry",
   "description": "Generated plugin catalog with file hashes.",
   "type": "object",
   "additionalProperties": false,
