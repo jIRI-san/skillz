@@ -185,7 +185,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [x] 7.1 Pester suite (`tests/skillz/`) against a temp fixture repo: install(+transitive deps, diamond graph exactly-once, all-or-nothing rollback), update (modified-file skip, degraded marking), remove (dependent-block + hash guard), list/search, build idempotency, `Test-Registry` rule coverage, dest-collision rejection, path-traversal rejection (`..`/absolute/UNC/drive-relative/ADS), registry-hash mismatch abort, cross-platform hash-equality; lint clean (REQ-17, REQ-13, REQ-14, REQ-20, RISK-3, RISK-6, RISK-10, RISK-12, RISK-13, RISK-14) [after: 5.5, 6.1] `L`
-- [ ] 7.2 `.github/workflows/registry-ci.yml`: PSScriptAnalyzer + Pester + `Test-Registry` + dogfood drift-check (`.github/` == `plugins/` via `Sync-Dogfood -WhatIf`) + README↔registry check; matrix ubuntu+windows (REQ-18, REQ-15, REQ-22, RISK-1, RISK-7, RISK-14) [after: 7.1] `M`
+- [x] 7.2 `.github/workflows/registry-ci.yml`: PSScriptAnalyzer + Pester + `Test-Registry` + dogfood drift-check (`.github/` == `plugins/` via `Sync-Dogfood -WhatIf`) + README↔registry check; matrix ubuntu+windows (REQ-18, REQ-15, REQ-22, RISK-1, RISK-7, RISK-14) [after: 7.1] `M`
 
 ## Phase 8: Docs
 
