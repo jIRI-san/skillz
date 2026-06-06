@@ -1,4 +1,4 @@
-# 002: Plugin Registry + PowerShell Management
+# 002: Plugin Registry + PowerShell Management [DONE]
 
 <!-- execution-mode: container-autopilot -->
 <!-- scope: plan -->
@@ -130,69 +130,69 @@
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 1.1 Create `plugins/` root + `scripts/skillz/` root; add `scripts/skillz/_Common.ps1` (`#requires -Version 7.0`; helpers: repo-root resolve, `.github/`-confinement path guard, sha256 helper, semver parse/compare, JSON read/write with stable key order) (REQ-1, REQ-14, RISK-3) `M`
-- [ ] 1.2 Add `schemas/plugin.schema.json` (name/version/description/author/license/tags/dependencies/`files[]` as `{src,dest}` objects/optional `status`/reserved `evals`), `schemas/registry.schema.json` (incl. per-file `sha256`), and `schemas/receipt.schema.json` (required `ref` SHA, per-file `{dest,sha256,outcome}`, optional `degraded`, reserved `evalStatus`) (REQ-1, REQ-16, RISK-2, RISK-9) `M`
-- [ ] 1.3 Extend `.editorconfig` + `PSScriptAnalyzerSettings.psd1` to cover `scripts/skillz/**`; verify `Invoke-ScriptAnalyzer` clean (REQ-20) `S`
+- [x] 1.1 Create `plugins/` root + `scripts/skillz/` root; add `scripts/skillz/_Common.ps1` (`#requires -Version 7.0`; helpers: repo-root resolve, `.github/`-confinement path guard, sha256 helper, semver parse/compare, JSON read/write with stable key order) (REQ-1, REQ-14, RISK-3) `M`
+- [x] 1.2 Add `schemas/plugin.schema.json` (name/version/description/author/license/tags/dependencies/`files[]` as `{src,dest}` objects/optional `status`/reserved `evals`), `schemas/registry.schema.json` (incl. per-file `sha256`), and `schemas/receipt.schema.json` (required `ref` SHA, per-file `{dest,sha256,outcome}`, optional `degraded`, reserved `evalStatus`) (REQ-1, REQ-16, RISK-2, RISK-9) `M`
+- [x] 1.3 Extend `.editorconfig` + `PSScriptAnalyzerSettings.psd1` to cover `scripts/skillz/**`; verify `Invoke-ScriptAnalyzer` clean (REQ-20) `S`
 
 ## Phase 2: Migrate Customizations into `plugins/`
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 2.1a Author the simple single/few-file plugins (`cr`, `dr`, `cdn`, `udn`): `plugin.json` (with explicit `files[]` `{src,dest}`) + mirror-structured files copied (not moved) from current `.github/`; verify each source sha256 == original (REQ-1, REQ-2, RISK-1) [after: 1.2] `L`
-- [ ] 2.1b Author the skill/agent plugins (`cip`, `ci`, `autopilot`): `cip`+`ci` SKILL.md (+`cip` assets) with dependency edges (`cip→dr`, `ci→cr,autopilot`); `autopilot` `plugin.json` declares ONLY `agents/autopilot.agent.md` as installed payload with `status:partial` until Plan 001 ships (REQ-1, REQ-2, REQ-21, RISK-1, RISK-11) [after: 2.1a] `M`
-- [ ] 2.2 Validate every `plugin.json` against `schemas/plugin.schema.json`; confirm dependency edges resolve and registry-wide dest uniqueness holds (REQ-1, REQ-2, RISK-12) [after: 2.1b] `M`
-- [ ] 2.3 Confirm `.github/` still holds working copies identical to `plugins/` sources (dogfood baseline); record the dogfood set (`cr`,`dr`,`cip`,`ci`,`cdn`,`udn`,`autopilot`) (REQ-15, REQ-22, RISK-1) [after: 2.1b] `S`
+- [x] 2.1a Author the simple single/few-file plugins (`cr`, `dr`, `cdn`, `udn`): `plugin.json` (with explicit `files[]` `{src,dest}`) + mirror-structured files copied (not moved) from current `.github/`; verify each source sha256 == original (REQ-1, REQ-2, RISK-1) [after: 1.2] `L`
+- [x] 2.1b Author the skill/agent plugins (`cip`, `ci`, `autopilot`): `cip`+`ci` SKILL.md (+`cip` assets) with dependency edges (`cip→dr`, `ci→cr,autopilot`); `autopilot` `plugin.json` declares ONLY `agents/autopilot.agent.md` as installed payload with `status:partial` until Plan 001 ships (REQ-1, REQ-2, REQ-21, RISK-1, RISK-11) [after: 2.1a] `M`
+- [x] 2.2 Validate every `plugin.json` against `schemas/plugin.schema.json`; confirm dependency edges resolve and registry-wide dest uniqueness holds (REQ-1, REQ-2, RISK-12) [after: 2.1b] `M`
+- [x] 2.3 Confirm `.github/` still holds working copies identical to `plugins/` sources (dogfood baseline); record the dogfood set (`cr`,`dr`,`cip`,`ci`,`cdn`,`udn`,`autopilot`) (REQ-15, REQ-22, RISK-1) [after: 2.1b] `S`
 
 ## Phase 3: Registry Index Generation
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 3.1 `scripts/skillz/Build-Registry.ps1`: scan `plugins/*/plugin.json` → generate `registry.json` (incl. **per-file sha256**, reserved `evals` summary, `status`); generate the pinned bootstrap one-liner ref; stable ordering; idempotent (REQ-3, REQ-16, RISK-7, RISK-13) [after: 2.2] `M`
-- [ ] 3.2 Extend `Build-Registry.ps1` to (re)generate the README catalog table between markers from `registry.json`; idempotent (REQ-3, RISK-7) [after: 3.1] `M`
-- [ ] 3.3 `scripts/skillz/Test-Registry.ps1`: enforce name+description, semver, dependency resolution (missing+cyclic), **registry-wide dest uniqueness**, registry↔disk drift, **embedded sha256 match**, full-path-resolution dest guard (reject `..`/absolute/UNC/drive-relative/ADS), README↔registry match; `status:partial` exempt from file-existence failure; warn-only evals-present check (REQ-13, REQ-14, REQ-16, RISK-3, RISK-6, RISK-7, RISK-12) [after: 3.2] `L`
-- [ ] 3.4 `scripts/skillz/Sync-Dogfood.ps1`: regenerate `.github/` dogfood copies from authoritative `plugins/` sources; idempotent; convergence makes the drift-check pass (REQ-22, RISK-1) [after: 3.1] `M`
+- [x] 3.1 `scripts/skillz/Build-Registry.ps1`: scan `plugins/*/plugin.json` → generate `registry.json` (incl. **per-file sha256**, reserved `evals` summary, `status`); generate the pinned bootstrap one-liner ref; stable ordering; idempotent (REQ-3, REQ-16, RISK-7, RISK-13) [after: 2.2] `M`
+- [x] 3.2 Extend `Build-Registry.ps1` to (re)generate the README catalog table between markers from `registry.json`; idempotent (REQ-3, RISK-7) [after: 3.1] `M`
+- [x] 3.3 `scripts/skillz/Test-Registry.ps1`: enforce name+description, semver, dependency resolution (missing+cyclic), **registry-wide dest uniqueness**, registry↔disk drift, **embedded sha256 match**, full-path-resolution dest guard (reject `..`/absolute/UNC/drive-relative/ADS), README↔registry match; `status:partial` exempt from file-existence failure; warn-only evals-present check (REQ-13, REQ-14, REQ-16, RISK-3, RISK-6, RISK-7, RISK-12) [after: 3.2] `L`
+- [x] 3.4 `scripts/skillz/Sync-Dogfood.ps1`: regenerate `.github/` dogfood copies from authoritative `plugins/` sources; idempotent; convergence makes the drift-check pass (REQ-22, RISK-1) [after: 3.1] `M`
 
 ## Phase 4: Install + Dependency Resolution
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 4.1 `scripts/skillz/Install-Plugin.ps1` (source acquisition only): resolve a single commit SHA; remote shallow-clone-to-temp (`-c core.autocrlf=false -c core.eol=lf --depth 1`) default, `-Source <path>` override; locate plugin in `registry.json`; `finally` temp cleanup (REQ-4, REQ-5, RISK-4, RISK-14) [after: 3.3] `M`
-- [ ] 4.2 Dependency resolver in `_Common.ps1`: dedupe by name, topological order with stable lexical tie-breaks, visited-set cycle detection; no-op when already-installed at desired version+hash; pre-validate full graph before any copy; missing/cyclic → abort (REQ-11, RISK-6) [after: 4.1] `M`
-- [ ] 4.3 Transactional copy engine: build ownership map from receipts (reject cross-plugin dest collision); stage ALL files for the full dependency set into `.github/.skillz/tmp/` (target volume); verify each staged hash against `registry.json`; back up existing targets; atomic per-file renames in deterministic order; success marker; write receipts (ref + per-file `{dest,sha256,outcome}`, reserved `evalStatus`); **exclude `evals/`** (REQ-4, REQ-6, REQ-14, REQ-16, RISK-5, RISK-8, RISK-10, RISK-12, RISK-13) [after: 4.2] `L`
-- [ ] 4.4 Wire remote fetch coherence: clone at the resolved SHA, copy needed plugin dirs, cleanup temp in `finally`; record SHA in receipt; assert remote-vs-local byte equivalence at same commit (REQ-5, RISK-14) [after: 4.1] `M`
-- [ ] 4.5 Security hardening + rollback: full-path-resolution dest guard (`..`/absolute/UNC/drive-relative/ADS); verify staged payload against `registry.json` hashes before move; never dot-source/`iex` plugin content; on any failure restore backups, remove staged files, write no receipt (REQ-14, RISK-3, RISK-10, RISK-13) [after: 4.3] `M`
-- [ ] 4.6 Install-phase lint pass: `Invoke-ScriptAnalyzer` zero warnings (REQ-20) [after: 4.5] `S`
-- [ ] 4.7 `scripts/skillz/Initialize-Autopilot.ps1`: provision autopilot infra (from Plan 001) OUTSIDE the confined install path; `ci` skill preflight invokes/checks it; idempotent; clear error if Plan 001 infra absent (REQ-21, RISK-11) [after: 4.5] `M`
+- [x] 4.1 `scripts/skillz/Install-Plugin.ps1` (source acquisition only): resolve a single commit SHA; remote shallow-clone-to-temp (`-c core.autocrlf=false -c core.eol=lf --depth 1`) default, `-Source <path>` override; locate plugin in `registry.json`; `finally` temp cleanup (REQ-4, REQ-5, RISK-4, RISK-14) [after: 3.3] `M`
+- [x] 4.2 Dependency resolver in `_Common.ps1`: dedupe by name, topological order with stable lexical tie-breaks, visited-set cycle detection; no-op when already-installed at desired version+hash; pre-validate full graph before any copy; missing/cyclic → abort (REQ-11, RISK-6) [after: 4.1] `M`
+- [x] 4.3 Transactional copy engine: build ownership map from receipts (reject cross-plugin dest collision); stage ALL files for the full dependency set into `.github/.skillz/tmp/` (target volume); verify each staged hash against `registry.json`; back up existing targets; atomic per-file renames in deterministic order; success marker; write receipts (ref + per-file `{dest,sha256,outcome}`, reserved `evalStatus`); **exclude `evals/`** (REQ-4, REQ-6, REQ-14, REQ-16, RISK-5, RISK-8, RISK-10, RISK-12, RISK-13) [after: 4.2] `L`
+- [x] 4.4 Wire remote fetch coherence: clone at the resolved SHA, copy needed plugin dirs, cleanup temp in `finally`; record SHA in receipt; assert remote-vs-local byte equivalence at same commit (REQ-5, RISK-14) [after: 4.1] `M`
+- [x] 4.5 Security hardening + rollback: full-path-resolution dest guard (`..`/absolute/UNC/drive-relative/ADS); verify staged payload against `registry.json` hashes before move; never dot-source/`iex` plugin content; on any failure restore backups, remove staged files, write no receipt (REQ-14, RISK-3, RISK-10, RISK-13) [after: 4.3] `M`
+- [x] 4.6 Install-phase lint pass: `Invoke-ScriptAnalyzer` zero warnings (REQ-20) [after: 4.5] `S`
+- [x] 4.7 `scripts/skillz/Initialize-Autopilot.ps1`: provision autopilot infra (from Plan 001) OUTSIDE the confined install path; `ci` skill preflight invokes/checks it; idempotent; clear error if Plan 001 infra absent (REQ-21, RISK-11) [after: 4.5] `M`
 
 ## Phase 5: Update / Remove / List / Search
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 5.1 `scripts/skillz/Update-Plugin.ps1`: resolve single SHA; compare receipt version vs registry; verify existing file hashes (record `skipped-modified` with actual hash unless `-Force`); replace updated files; advance version only if all files updated else mark receipt `degraded`; refresh receipt `ref` (REQ-7, REQ-14, RISK-5) [after: 4.6] `M`
-- [ ] 5.2 `scripts/skillz/Remove-Plugin.ps1`: delete only receipt-listed files whose sha256 matches (warn+keep modified unless `-Force`); refuse if a dependent installed plugin needs it (unless `-Force`); prune empty dirs; delete receipt; never touch unlisted files (REQ-8, REQ-14, RISK-5) [after: 4.6] `M`
-- [ ] 5.3 `scripts/skillz/Get-Plugin.ps1`: list registry plugins with version + installed state (from receipts) + **modified** flag (disk vs receipt hash) + **outdated** flag (receipt vs registry version); `-Installed` filter (REQ-9, REQ-6) [after: 4.6] `M`
-- [ ] 5.4 `scripts/skillz/Find-Plugin.ps1`: case-insensitive search over name/description/tags in `registry.json`; return matches with metadata (REQ-10) [after: 3.2] `S` <!-- parallelizable with Phase 4: only reads registry.json -->
-- [ ] 5.5 Verbs lint pass: `Invoke-ScriptAnalyzer` zero warnings across update/remove/list/search (REQ-20) [after: 5.1, 5.2, 5.3, 5.4] `S`
+- [x] 5.1 `scripts/skillz/Update-Plugin.ps1`: resolve single SHA; compare receipt version vs registry; verify existing file hashes (record `skipped-modified` with actual hash unless `-Force`); replace updated files; advance version only if all files updated else mark receipt `degraded`; refresh receipt `ref` (REQ-7, REQ-14, RISK-5) [after: 4.6] `M`
+- [x] 5.2 `scripts/skillz/Remove-Plugin.ps1`: delete only receipt-listed files whose sha256 matches (warn+keep modified unless `-Force`); refuse if a dependent installed plugin needs it (unless `-Force`); prune empty dirs; delete receipt; never touch unlisted files (REQ-8, REQ-14, RISK-5) [after: 4.6] `M`
+- [x] 5.3 `scripts/skillz/Get-Plugin.ps1`: list registry plugins with version + installed state (from receipts) + **modified** flag (disk vs receipt hash) + **outdated** flag (receipt vs registry version); `-Installed` filter (REQ-9, REQ-6) [after: 4.6] `M`
+- [x] 5.4 `scripts/skillz/Find-Plugin.ps1`: case-insensitive search over name/description/tags in `registry.json`; return matches with metadata (REQ-10) [after: 3.2] `S` <!-- parallelizable with Phase 4: only reads registry.json -->
+- [x] 5.5 Verbs lint pass: `Invoke-ScriptAnalyzer` zero warnings across update/remove/list/search (REQ-20) [after: 5.1, 5.2, 5.3, 5.4] `S`
 
 ## Phase 6: Bootstrap
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 6.1 `scripts/skillz/bootstrap.ps1`: `#requires -Version 7.0`; `-Ref` param (default = pinned tag from `Build-Registry`); fetch verb scripts + `registry.json` from the pinned ref into consuming repo's `scripts/skillz/`; create `.github/.skillz/`; print next-step guidance; execute no plugin payload (REQ-12, RISK-4, RISK-8, RISK-13) [after: 4.6] `M`
+- [x] 6.1 `scripts/skillz/bootstrap.ps1`: `#requires -Version 7.0`; `-Ref` param (default = pinned tag from `Build-Registry`); fetch verb scripts + `registry.json` from the pinned ref into consuming repo's `scripts/skillz/`; create `.github/.skillz/`; print next-step guidance; execute no plugin payload (REQ-12, RISK-4, RISK-8, RISK-13) [after: 4.6] `M`
 
 ## Phase 7: Tests + CI
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 7.1 Pester suite (`tests/skillz/`) against a temp fixture repo: install(+transitive deps, diamond graph exactly-once, all-or-nothing rollback), update (modified-file skip, degraded marking), remove (dependent-block + hash guard), list/search, build idempotency, `Test-Registry` rule coverage, dest-collision rejection, path-traversal rejection (`..`/absolute/UNC/drive-relative/ADS), registry-hash mismatch abort, cross-platform hash-equality; lint clean (REQ-17, REQ-13, REQ-14, REQ-20, RISK-3, RISK-6, RISK-10, RISK-12, RISK-13, RISK-14) [after: 5.5, 6.1] `L`
-- [ ] 7.2 `.github/workflows/registry-ci.yml`: PSScriptAnalyzer + Pester + `Test-Registry` + dogfood drift-check (`.github/` == `plugins/` via `Sync-Dogfood -WhatIf`) + README↔registry check; matrix ubuntu+windows (REQ-18, REQ-15, REQ-22, RISK-1, RISK-7, RISK-14) [after: 7.1] `M`
+- [x] 7.1 Pester suite (`tests/skillz/`) against a temp fixture repo: install(+transitive deps, diamond graph exactly-once, all-or-nothing rollback), update (modified-file skip, degraded marking), remove (dependent-block + hash guard), list/search, build idempotency, `Test-Registry` rule coverage, dest-collision rejection, path-traversal rejection (`..`/absolute/UNC/drive-relative/ADS), registry-hash mismatch abort, cross-platform hash-equality; lint clean (REQ-17, REQ-13, REQ-14, REQ-20, RISK-3, RISK-6, RISK-10, RISK-12, RISK-13, RISK-14) [after: 5.5, 6.1] `L`
+- [x] 7.2 `.github/workflows/registry-ci.yml`: PSScriptAnalyzer + Pester + `Test-Registry` + dogfood drift-check (`.github/` == `plugins/` via `Sync-Dogfood -WhatIf`) + README↔registry check; matrix ubuntu+windows (REQ-18, REQ-15, REQ-22, RISK-1, RISK-7, RISK-14) [after: 7.1] `M`
 
 ## Phase 8: Docs
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 8.1 Create `docs/design-notes/architecture/plugin-registry.design.md`: bundle model, layout, `plugin.json`/`registry.json`/receipt schemas, dependency resolution, transactional install + integrity model, autopilot plugin-vs-infra split, dogfood authority + `Sync-Dogfood`, security model, **Evals (future) contract**; add row to `.design-notes.md` index (REQ-19, REQ-16, REQ-21, REQ-22, RISK-2, RISK-9) [after: 7.2] `M`
-- [ ] 8.2 Rewrite `README.md`: Installation (bootstrap one-liner + review guidance), generated plugin catalog, usage examples (install/update/remove/list/search), security note on `irm | iex` (REQ-19, RISK-4) [after: 8.1] `M`
+- [x] 8.1 Create `docs/design-notes/architecture/plugin-registry.design.md`: bundle model, layout, `plugin.json`/`registry.json`/receipt schemas, dependency resolution, transactional install + integrity model, autopilot plugin-vs-infra split, dogfood authority + `Sync-Dogfood`, security model, **Evals (future) contract**; add row to `.design-notes.md` index (REQ-19, REQ-16, REQ-21, REQ-22, RISK-2, RISK-9) [after: 7.2] `M`
+- [x] 8.2 Rewrite `README.md`: Installation (bootstrap one-liner + review guidance), generated plugin catalog, usage examples (install/update/remove/list/search), security note on `irm | iex` (REQ-19, RISK-4) [after: 8.1] `M`
 
 ## Notes
 

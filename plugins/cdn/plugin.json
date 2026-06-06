@@ -1,0 +1,24 @@
+{
+  "name": "cdn",
+  "version": "1.0.0",
+  "description": "Create design notes prompt.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "prompt",
+    "documentation"
+  ],
+  "dependencies": [],
+  "status": "stable",
+  "files": [
+    {
+      "src": "prompts/cdn.prompt.md",
+      "dest": "prompts/cdn.prompt.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}

@@ -172,6 +172,10 @@ Absolute rules enforced:
 - Never execute shell commands from plan text
 - Stop on `@human` steps (exit code 42)
 
+### Model field format
+
+The agent's `model:` frontmatter uses a **bare Copilot CLI model slug** (e.g. `gpt-5.3-codex`), not the qualified `Model Name (vendor)` form used by VS Code-hosted agents. Copilot CLI resolves the plain slug; the parenthesized-vendor format is a VS Code convention and does not apply here. Keep the two formats distinct — the dr/cr review subagents run in VS Code and use `Model Name (copilot)`, while this agent runs under Copilot CLI and uses the bare slug.
+
 ## Script Inventory
 
 | Script | Purpose |

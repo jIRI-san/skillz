@@ -1,0 +1,30 @@
+{
+  "name": "cip",
+  "version": "1.0.0",
+  "description": "Implementation plan generation skill for coding workflows.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "skill",
+    "planning"
+  ],
+  "dependencies": [
+    "dr"
+  ],
+  "status": "stable",
+  "files": [
+    {
+      "src": "skills/cip/SKILL.md",
+      "dest": "skills/cip/SKILL.md"
+    },
+    {
+      "src": "skills/cip/assets/plan-template.md",
+      "dest": "skills/cip/assets/plan-template.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}

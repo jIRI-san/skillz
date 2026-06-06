@@ -1,3 +1,9 @@
+# Force LF for all text files so registry sha256 hashes are byte-identical
+# across platforms. Build-Registry hashes working-tree content; without this,
+# Windows checkouts (autocrlf) would produce CRLF hashes that never match the
+# canonical LF blobs that installs and CI clone.
+* text=auto eol=lf
+
 # Shell scripts must use LF — they run inside the Linux autopilot container.
 *.sh text eol=lf
 scripts/autopilot/container-entrypoint.sh text eol=lf

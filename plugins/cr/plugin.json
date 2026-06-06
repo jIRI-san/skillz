@@ -1,0 +1,65 @@
+{
+  "name": "cr",
+  "version": "1.0.0",
+  "description": "Code review orchestrator with specialist subagents and git diff helpers.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "review",
+    "agent",
+    "prompt"
+  ],
+  "dependencies": [],
+  "status": "stable",
+  "files": [
+    {
+      "src": "prompts/cr.prompt.md",
+      "dest": "prompts/cr.prompt.md"
+    },
+    {
+      "src": "agents/cr.agent.md",
+      "dest": "agents/cr.agent.md"
+    },
+    {
+      "src": "agents/cr-opus.agent.md",
+      "dest": "agents/cr-opus.agent.md"
+    },
+    {
+      "src": "agents/cr-codex.agent.md",
+      "dest": "agents/cr-codex.agent.md"
+    },
+    {
+      "src": "agents/cr-gemini.agent.md",
+      "dest": "agents/cr-gemini.agent.md"
+    },
+    {
+      "src": "agents/scripts/get-diff-branch.ps1",
+      "dest": "agents/scripts/get-diff-branch.ps1"
+    },
+    {
+      "src": "agents/scripts/get-diff-commits.ps1",
+      "dest": "agents/scripts/get-diff-commits.ps1"
+    },
+    {
+      "src": "agents/scripts/get-diff-files.ps1",
+      "dest": "agents/scripts/get-diff-files.ps1"
+    },
+    {
+      "src": "agents/scripts/get-diff-paths.ps1",
+      "dest": "agents/scripts/get-diff-paths.ps1"
+    },
+    {
+      "src": "agents/scripts/get-diff-smart-default.ps1",
+      "dest": "agents/scripts/get-diff-smart-default.ps1"
+    },
+    {
+      "src": "agents/scripts/get-diff-uncommitted.ps1",
+      "dest": "agents/scripts/get-diff-uncommitted.ps1"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}

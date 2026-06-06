@@ -43,7 +43,7 @@ This approach:
 
 **New design note** — use `/cdn <name>` or follow the steps in `docs/design-notes/.design-notes.md`. No change to `copilot-instructions.md` required.
 
-**New prompt** — create `.github/prompts/<name>.prompt.md` with YAML frontmatter (`name`, `description`, `mode: agent`).
+**New prompt** — create `.github/prompts/<name>.prompt.md` with YAML frontmatter (`name`, `description`, `agent: agent`). The `agent` key selects which agent runs the prompt; use `agent: agent` for the default agent, or a custom agent name (e.g. `agent: cr`) to route the prompt to it.
 
 **New skill** — create `.github/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`, `user-invocable`, `disable-model-invocation`). Add bundled assets under `assets/`. Use skills for multi-step workflows; use prompts for single focused tasks.
 
@@ -66,6 +66,8 @@ Both `dr` and `cr` use an orchestrator + three specialist subagent pattern. The 
 All three subagents perform a **comprehensive review** across every important dimension — correctness, security, performance, consistency, dead/commented-out code, duplication (flagged when the same logic appears 3+ times), code style, and adherence to project patterns. The emphasis column above reflects where each model tends to shine, not a hard boundary.
 
 > The concrete model identifier lives in the `model:` field of each `*.agent.md` file. If an identifier doesn't match your Copilot subscription, update it there. Format: `"Model Name (copilot)"`.
+>
+> This qualified `Model Name (vendor)` format applies to **VS Code-hosted agents** (dr/cr and their subagents). The `autopilot` agent runs under **Copilot CLI**, which expects a bare model slug instead (e.g. `gpt-5.3-codex`) — see [autopilot-execution.design.md](../architecture/autopilot-execution.design.md). Do not normalize the two to a single format.
 
 **Batching threshold:** > 15 changed files triggers batch mode for `cr`; > 200 lines triggers batch mode for `dr`. Batches are split by subsystem (mapped from design note globs) to keep related files together and avoid false findings from split context.
 

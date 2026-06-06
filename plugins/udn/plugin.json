@@ -1,0 +1,24 @@
+{
+  "name": "udn",
+  "version": "1.0.0",
+  "description": "Update design notes prompt.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "prompt",
+    "documentation"
+  ],
+  "dependencies": [],
+  "status": "stable",
+  "files": [
+    {
+      "src": "prompts/udn.prompt.md",
+      "dest": "prompts/udn.prompt.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}
