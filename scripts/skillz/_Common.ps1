@@ -323,3 +323,165 @@ function Write-JsonFileStable {
     Set-Content -LiteralPath $Path -Value "$json`n" -Encoding utf8
 }
 
+function Get-PluginReceiptPath {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory)]
+        [string]$PluginName
+    )
+
+    $receiptsRoot = Join-Path $RepoRoot '.github/.skillz/receipts'
+    return Join-Path $receiptsRoot "$PluginName.json"
+}
+
+function Read-PluginReceipt {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory)]
+        [string]$PluginName
+    )
+
+    $receiptPath = Get-PluginReceiptPath -RepoRoot $RepoRoot -PluginName $PluginName
+    if (-not (Test-Path -LiteralPath $receiptPath -PathType Leaf)) {
+        return $null
+    }
+
+    return Read-JsonFile -Path $receiptPath
+}
+
+function Test-PluginReceiptUpToDate {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory)]
+        $Plugin
+    )
+
+    $receipt = Read-PluginReceipt -RepoRoot $RepoRoot -PluginName ([string]$Plugin.name)
+    if ($null -eq $receipt) {
+        return $false
+    }
+
+    if ([string]$receipt.version -ne [string]$Plugin.version) {
+        return $false
+    }
+
+    $receiptFiles = @($receipt.files)
+    if ($receiptFiles.Count -eq 0) {
+        return $false
+    }
+
+    $receiptByDest = @{}
+    foreach ($receiptFile in $receiptFiles) {
+        $dest = [string]$receiptFile.dest
+        if (-not [string]::IsNullOrWhiteSpace($dest)) {
+            $receiptByDest[$dest] = $receiptFile
+        }
+    }
+
+    foreach ($pluginFile in @($Plugin.files)) {
+        $src = [string]$pluginFile.src
+        if ($src -match '^evals(?:/|$)') {
+            continue
+        }
+
+        $dest = [string]$pluginFile.dest
+        if (-not $receiptByDest.ContainsKey($dest)) {
+            return $false
+        }
+
+        if ([string]$receiptByDest[$dest].sha256 -ne [string]$pluginFile.sha256) {
+            return $false
+        }
+
+        $targetPath = Resolve-GithubConstrainedPath -RepoRoot $RepoRoot -RelativePath $dest
+        if (-not (Test-Path -LiteralPath $targetPath -PathType Leaf)) {
+            return $false
+        }
+        if ((Get-FileSha256 -Path $targetPath) -ne [string]$pluginFile.sha256) {
+            return $false
+        }
+    }
+
+    return $true
+}
+
+function Resolve-PluginDependencyOrder {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [hashtable]$PluginsByName,
+
+        [Parameter(Mandatory)]
+        [string]$RootPluginName,
+
+        [Parameter(Mandatory)]
+        [string]$RepoRoot
+    )
+
+    if (-not $PluginsByName.ContainsKey($RootPluginName)) {
+        throw "Plugin '$RootPluginName' is not present in registry.json."
+    }
+
+    $stateByName = @{}
+    $topologicalNames = [System.Collections.Generic.List[string]]::new()
+
+    function Search-DependencyNode {
+        [CmdletBinding()]
+        param(
+            [Parameter(Mandatory)]
+            [string]$Name,
+
+            [string[]]$Stack
+        )
+
+        if (-not $PluginsByName.ContainsKey($Name)) {
+            $parentName = if ($Stack.Count -gt 0) { $Stack[$Stack.Count - 1] } else { $RootPluginName }
+            throw "Plugin '$parentName' depends on missing plugin '$Name'."
+        }
+
+        $state = if ($stateByName.ContainsKey($Name)) { [int]$stateByName[$Name] } else { 0 }
+        if ($state -eq 1) {
+            $cycle = @($Stack + $Name) -join ' -> '
+            throw "Dependency cycle detected: $cycle"
+        }
+        if ($state -eq 2) {
+            return
+        }
+
+        $stateByName[$Name] = 1
+        $plugin = $PluginsByName[$Name]
+        $dependencies = @($plugin.dependencies | ForEach-Object { [string]$_ } | Sort-Object)
+        foreach ($dependencyName in $dependencies) {
+            Search-DependencyNode -Name $dependencyName -Stack ($Stack + $Name)
+        }
+
+        $stateByName[$Name] = 2
+        $topologicalNames.Add($Name)
+    }
+
+    Search-DependencyNode -Name $RootPluginName -Stack @()
+
+    $ordered = @()
+    $pending = @()
+    foreach ($name in $topologicalNames) {
+        $plugin = $PluginsByName[$name]
+        $ordered += , $plugin
+        if (-not (Test-PluginReceiptUpToDate -RepoRoot $RepoRoot -Plugin $plugin)) {
+            $pending += , $plugin
+        }
+    }
+
+    return [pscustomobject]@{
+        Ordered = $ordered
+        Pending = $pending
+    }
+}
