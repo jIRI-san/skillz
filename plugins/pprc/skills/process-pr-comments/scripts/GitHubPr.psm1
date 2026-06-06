@@ -555,9 +555,251 @@ query ($threadId: ID!, $first: Int!, $after: String) {
     }
 }
 
+function Get-PprcCurrentBranchName {
+    [CmdletBinding()]
+    param()
+
+    $branch = Invoke-PprcNativeCommand -Command 'git' -Arguments @('rev-parse', '--abbrev-ref', 'HEAD') -FailureMessage 'Unable to resolve the current git branch.'
+    if ([string]::Equals($branch.Trim(), 'HEAD', [System.StringComparison]::Ordinal)) {
+        throw 'detached HEAD; check out the PR branch first'
+    }
+
+    [void](& git symbolic-ref -q HEAD 2>$null)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'detached HEAD; check out the PR branch first'
+    }
+
+    return $branch.Trim()
+}
+
+function Resolve-TargetPr {
+    [CmdletBinding()]
+    param(
+        [string]$Token = (Get-GitHubToken)
+    )
+
+    $currentBranch = Get-PprcCurrentBranchName
+    $repo = Get-RepoSlug
+    $owner = [uri]::EscapeDataString($repo.Owner)
+    $name = [uri]::EscapeDataString($repo.Repo)
+
+    $openPrs = Invoke-GitHubRest -Path "/repos/$owner/$name/pulls" -Query @{ state = 'open' } -Paginate -Token $Token
+    $matchingPrs = @($openPrs | Where-Object {
+            $_.PSObject.Properties.Name -contains 'head' -and
+            $null -ne $_.head -and
+            $_.head.PSObject.Properties.Name -contains 'ref' -and
+            [string]::Equals([string]$_.head.ref, $currentBranch, [System.StringComparison]::Ordinal)
+        })
+
+    if ($matchingPrs.Count -eq 0) {
+        throw "No open pull request in $($repo.FullName) matches branch '$currentBranch'. Ensure the branch has an open PR."
+    }
+
+    if ($matchingPrs.Count -gt 1) {
+        throw "Multiple open pull requests in $($repo.FullName) match branch '$currentBranch'. Narrow the branch or close duplicates."
+    }
+
+    $target = $matchingPrs[0]
+    if ($null -eq $target.head.repo) {
+        throw "Pull request #$($target.number) has no head repository metadata (possibly a deleted fork)."
+    }
+
+    $baseFullName = [string]$repo.FullName
+    if ($null -ne $target.base -and $null -ne $target.base.repo -and -not [string]::IsNullOrWhiteSpace([string]$target.base.repo.full_name)) {
+        $baseFullName = [string]$target.base.repo.full_name
+    }
+
+    $headFullName = [string]$target.head.repo.full_name
+    $isCrossRepository = -not [string]::Equals($headFullName, $baseFullName, [System.StringComparison]::OrdinalIgnoreCase)
+
+    $result = [pscustomobject]@{
+        PSTypeName = 'Pprc.TargetPr'
+        Number = [int]$target.number
+        Url = [string]$target.html_url
+        BaseFullName = $baseFullName
+        HeadFullName = $headFullName
+        HeadRefName = [string]$target.head.ref
+        IsCrossRepository = [bool]$isCrossRepository
+        CurrentBranch = $currentBranch
+    }
+
+    return $result
+}
+
+function Test-BranchSafety {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [psobject]$TargetPr
+    )
+
+    if ($null -eq $TargetPr) {
+        throw 'TargetPr is required for branch safety checks.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace([string]$TargetPr.HeadFullName)) {
+        throw "Pull request #$($TargetPr.Number) has no head repository metadata (possibly a deleted fork)."
+    }
+
+    if ([bool]$TargetPr.IsCrossRepository) {
+        throw "Refusing push: PR #$($TargetPr.Number) is cross-repository ($($TargetPr.HeadFullName) -> $($TargetPr.BaseFullName))."
+    }
+
+    $currentBranch = Get-PprcCurrentBranchName
+    if (-not [string]::Equals($currentBranch, [string]$TargetPr.HeadRefName, [System.StringComparison]::Ordinal)) {
+        throw "Refusing push: local branch '$currentBranch' does not match PR head '$($TargetPr.HeadRefName)'."
+    }
+
+    return $true
+}
+
+function Get-PrReviewThreads {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Function returns a keyed set of multiple review threads for one PR.')]
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [psobject]$TargetPr,
+
+        [string]$Token = (Get-GitHubToken)
+    )
+
+    $ownerRepo = $TargetPr.BaseFullName -split '/', 2
+    if ($ownerRepo.Count -ne 2 -or [string]::IsNullOrWhiteSpace($ownerRepo[0]) -or [string]::IsNullOrWhiteSpace($ownerRepo[1])) {
+        throw "TargetPr.BaseFullName must be in 'owner/repo' format. Got '$($TargetPr.BaseFullName)'."
+    }
+
+    $owner = $ownerRepo[0]
+    $repo = $ownerRepo[1]
+    $encodedOwner = [uri]::EscapeDataString($owner)
+    $encodedRepo = [uri]::EscapeDataString($repo)
+
+    $threadsQuery = @'
+query ($owner: String!, $repo: String!, $number: Int!, $first: Int!, $after: String) {
+  repository(owner: $owner, name: $repo) {
+    pullRequest(number: $number) {
+      reviewThreads(first: $first, after: $after) {
+        nodes {
+          id
+          isResolved
+          comments(first: $first) {
+            nodes {
+              databaseId
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+      }
+    }
+  }
+}
+'@
+
+    $graphqlData = Invoke-GitHubGraphQL -Query $threadsQuery -Variables @{
+        owner = $owner
+        repo = $repo
+        number = [int]$TargetPr.Number
+    } -PaginateReviewThreads -DrainThreadComments -Token $Token
+
+    $threadByCommentId = @{}
+    $threadIsResolved = @{}
+    foreach ($thread in @($graphqlData.reviewThreads)) {
+        if ($null -eq $thread -or [string]::IsNullOrWhiteSpace([string]$thread.id)) {
+            continue
+        }
+
+        $threadId = [string]$thread.id
+        $threadIsResolved[$threadId] = [bool]$thread.isResolved
+        foreach ($comment in @($thread.comments.nodes)) {
+            if ($null -eq $comment -or $null -eq $comment.databaseId) {
+                continue
+            }
+
+            $threadByCommentId[[string]$comment.databaseId] = $threadId
+        }
+    }
+
+    $inlineComments = Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/pulls/$([int]$TargetPr.Number)/comments" -Query @{ per_page = 100 } -Paginate -Token $Token
+    $reviews = Invoke-GitHubRest -Path "/repos/$encodedOwner/$encodedRepo/pulls/$([int]$TargetPr.Number)/reviews" -Query @{ per_page = 100 } -Paginate -Token $Token
+
+    $commentsByThread = @{}
+    foreach ($comment in @($inlineComments)) {
+        if ($null -eq $comment -or $null -eq $comment.id) {
+            continue
+        }
+
+        $threadId = $threadByCommentId[[string]$comment.id]
+        if ([string]::IsNullOrWhiteSpace([string]$threadId)) {
+            continue
+        }
+
+        if (-not $commentsByThread.ContainsKey($threadId)) {
+            $commentsByThread[$threadId] = @()
+        }
+        $commentsByThread[$threadId] += $comment
+    }
+
+    $result = [ordered]@{}
+    foreach ($threadId in $commentsByThread.Keys) {
+        if ($threadIsResolved[$threadId]) {
+            continue
+        }
+
+        $root = @($commentsByThread[$threadId] | Where-Object { $null -eq $_.in_reply_to_id } | Select-Object -First 1)
+        if ($root.Count -eq 0) {
+            throw "Unable to determine root comment for review thread '$threadId'."
+        }
+
+        $rootComment = $root[0]
+        $rootId = [string]$rootComment.id
+        $result[$rootId] = [pscustomobject]@{
+            rootId = [int]$rootComment.id
+            kind = 'inline'
+            path = [string]$rootComment.path
+            line = if ($null -eq $rootComment.line) { $null } else { [int]$rootComment.line }
+            author = [string]$rootComment.user.login
+            body = [string]$rootComment.body
+            threadResolved = $false
+        }
+    }
+
+    foreach ($review in @($reviews)) {
+        if (
+            $null -eq $review -or
+            $null -eq $review.id -or
+            [string]::Equals([string]$review.state, 'PENDING', [System.StringComparison]::OrdinalIgnoreCase) -or
+            [string]::IsNullOrWhiteSpace([string]$review.body)
+        ) {
+            continue
+        }
+
+        $summaryKey = "summary-$([string]$review.id)"
+        $result[$summaryKey] = [pscustomobject]@{
+            rootId = $summaryKey
+            kind = 'summary'
+            path = $null
+            line = $null
+            author = [string]$review.user.login
+            body = [string]$review.body
+            threadResolved = $false
+        }
+    }
+
+    return $result
+}
+
 Export-ModuleMember -Function @(
     'Get-GitHubToken',
     'Get-RepoSlug',
     'Invoke-GitHubRest',
-    'Invoke-GitHubGraphQL'
+    'Invoke-GitHubGraphQL',
+    'Resolve-TargetPr',
+    'Test-BranchSafety',
+    'Get-PrReviewThreads'
 )
