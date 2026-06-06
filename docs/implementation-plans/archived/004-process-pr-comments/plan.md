@@ -1,4 +1,4 @@
-# 004: Process PR Comments Plugin (`pprc`)
+# 004: Process PR Comments Plugin (`pprc`) [DONE]
 
 <!-- execution-mode: manual -->
 <!-- scope: phase -->
