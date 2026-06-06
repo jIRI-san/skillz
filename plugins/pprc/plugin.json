@@ -1,0 +1,24 @@
+{
+  "name": "pprc",
+  "version": "1.0.0",
+  "description": "Process PR comments skill for classifying, fixing, and replying to review feedback.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "github",
+    "pr",
+    "review",
+    "skill"
+  ],
+  "dependencies": [],
+  "files": [
+    {
+      "src": "skills/process-pr-comments/SKILL.md",
+      "dest": "skills/process-pr-comments/SKILL.md"
+    },
+    {
+      "src": "skills/process-pr-comments/scripts/GitHubPr.psm1",
+      "dest": "skills/process-pr-comments/scripts/GitHubPr.psm1"
+    }
+  ]
+}
