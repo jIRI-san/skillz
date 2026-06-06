@@ -6,7 +6,7 @@ globs:
 
 # Copilot Customizations
 
-All customizations are **workspace-local** — everything lives under `.github/` in this repo. No user-level files are created or modified.
+Customization artifacts are **workspace-local** and centered in `.github/`. The plugin eval harness is the intentional adjacent exception (`scripts/skalary/Test-Evals.ps1`, `plugins/*/evals/**`). No user-level files are created or modified.
 
 ## File Inventory
 
@@ -29,6 +29,7 @@ All customizations are **workspace-local** — everything lives under `.github/`
 | `.github/agents/scripts/get-diff-*.ps1` | Helper scripts | Git diff helpers used by `cr` for discovery (branch, commits, files, paths, smart default, uncommitted) |
 | `.github/skills/cip/SKILL.md` | Skill (`/cip`) | Create Implementation Plan — requirements interview, phased plan with step tracking, iterative `dr` review, saves to `docs/implementation-plans/` |
 | `.github/skills/ci/SKILL.md` | Skill (`/ci`) | Continue Implementation — executes a plan step-by-step, manages git worktrees, build/test iteration, `cr` review, explicit commit gate |
+| `scripts/skalary/Test-Evals.ps1` + `plugins/*/evals/**` | Eval harness | Two-tier plugin eval runner (`npm run eval`) for structural + opt-in LLM evals |
 
 ## Design Note Loading Strategy
 
@@ -116,3 +117,7 @@ All three subagents perform a **comprehensive review** across every important di
 ```
 
 See [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the autonomous (host/container/sandbox) execution infrastructure that backs the `ci` skill's autopilot modes.
+
+## Plugin Eval Workflow
+
+Plugin payload checks are run with `npm run eval`, which calls `scripts/skalary/Test-Evals.ps1`. Structural checks always run; LLM checks require `-IncludeLlm` and are intentionally out of the CI gate (`npm test`/`validate.ps1`).

@@ -79,9 +79,9 @@ Autopilot infrastructure (`scripts/autopilot/**`, `.devcontainer/autopilot/**`, 
 
 `scripts/skalary/Sync-Dogfood.ps1` converges `.github/` back to `plugins/` sources, is idempotent, and supports `-WhatIf` for CI drift detection. Running sync to convergence produces the expected state for CI drift-check pass criteria (`.github/` byte-equivalent to plugin sources). Destination collision checks in sync mirror registry safety rules.
 
-## Evals (Future) Contract
+## Evals Contract
 
-Plan 002 reserves eval seams without introducing a harness:
+Plan 005 implements the eval harness as **report-only** and keeps registry/receipt seams reserved:
 
 | Surface | Reserved contract |
 |---|---|
@@ -90,4 +90,8 @@ Plan 002 reserves eval seams without introducing a harness:
 | Receipt | Reserved `evalStatus` field. |
 | Validation | `Test-Registry.ps1` emits warn-only informational eval checks. |
 
-These fields are compatibility seams for Plan 003 and are not used for enforcement in Plan 002.
+The harness writes `.eval-report.json` (and optional `.eval-artifacts/*`) only. It does **not** populate `plugin.json` `evals.status` / `lastRun`, `registry.json` `evals.status`, or receipt `evalStatus`.
+
+Known issue (DR2-#15): structural evals now exist for all plugins, but `registry.json` may still report `evals.status: "none"` because the seam remains reserved. Treat that field as non-authoritative until registry writeback is explicitly implemented.
+
+See [plugin-evals.design.md](./plugin-evals.design.md) for harness behavior, backend isolation, and judge contracts.
