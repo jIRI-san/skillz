@@ -191,8 +191,8 @@
 
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
-- [ ] 8.1 Create `docs/design-notes/architecture/plugin-registry.design.md`: bundle model, layout, `plugin.json`/`registry.json`/receipt schemas, dependency resolution, transactional install + integrity model, autopilot plugin-vs-infra split, dogfood authority + `Sync-Dogfood`, security model, **Evals (future) contract**; add row to `.design-notes.md` index (REQ-19, REQ-16, REQ-21, REQ-22, RISK-2, RISK-9) [after: 7.2] `M`
-- [ ] 8.2 Rewrite `README.md`: Installation (bootstrap one-liner + review guidance), generated plugin catalog, usage examples (install/update/remove/list/search), security note on `irm | iex` (REQ-19, RISK-4) [after: 8.1] `M`
+- [x] 8.1 Create `docs/design-notes/architecture/plugin-registry.design.md`: bundle model, layout, `plugin.json`/`registry.json`/receipt schemas, dependency resolution, transactional install + integrity model, autopilot plugin-vs-infra split, dogfood authority + `Sync-Dogfood`, security model, **Evals (future) contract**; add row to `.design-notes.md` index (REQ-19, REQ-16, REQ-21, REQ-22, RISK-2, RISK-9) [after: 7.2] `M`
+- [~] 8.2 Rewrite `README.md`: Installation (bootstrap one-liner + review guidance), generated plugin catalog, usage examples (install/update/remove/list/search), security note on `irm | iex` (REQ-19, RISK-4) [after: 8.1] `M`
 
 ## Notes
 
