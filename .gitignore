@@ -1,2 +1,7 @@
 # Autopilot transient artifacts (never committed)
 .autopilot-halt
+
+# Eval harness local outputs/config
+.eval-report.json
+.eval.config.json
+.eval-artifacts/
