@@ -256,7 +256,25 @@ if ($null -ne $existingRegistry -and $existingRegistry.PSObject.Properties.Name 
         plugins = $existingRegistry.plugins
     }
     if ((Get-ComparableJson -InputObject $existingBody) -eq (Get-ComparableJson -InputObject $registryBody)) {
-        $generatedAt = [string]$existingRegistry.generatedAt
+        # Preserve the prior timestamp, but normalize to canonical round-trip ISO.
+        # ConvertFrom-Json may parse the ISO string into a [datetime] (platform/
+        # version dependent); a bare [string] cast would then re-render it in the
+        # host culture and churn the registry-up-to-date CI gate.
+        $existingGeneratedAt = $existingRegistry.generatedAt
+        $parsedGeneratedAt = [datetime]::MinValue
+        if ($existingGeneratedAt -is [datetime]) {
+            $generatedAt = ([datetime]$existingGeneratedAt).ToUniversalTime().ToString('o')
+        }
+        elseif ([datetime]::TryParse(
+                [string]$existingGeneratedAt,
+                [cultureinfo]::InvariantCulture,
+                [System.Globalization.DateTimeStyles]::RoundtripKind,
+                [ref]$parsedGeneratedAt)) {
+            $generatedAt = $parsedGeneratedAt.ToUniversalTime().ToString('o')
+        }
+        else {
+            $generatedAt = [string]$existingGeneratedAt
+        }
     }
 }
 
