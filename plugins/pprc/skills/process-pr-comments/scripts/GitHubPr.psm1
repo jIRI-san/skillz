@@ -233,6 +233,7 @@ function Get-PprcNextLink {
 }
 
 function New-PprcGitHubUri {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseShouldProcessForStateChangingFunctions', '', Justification = 'Function only composes a URI string and performs no state changes.')]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -265,6 +266,7 @@ function New-PprcGitHubUri {
 }
 
 function Throw-PprcRateLimitError {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Internal helper naming aligns with pprc error helper convention.')]
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
@@ -422,12 +424,16 @@ function Invoke-PprcGraphQLError {
         $Data
     )
 
-    if ($null -eq $Errors -or $Errors.Count -eq 0) {
+    $normalizedErrors = @($Errors | Where-Object { $null -ne $_ })
+    if ($normalizedErrors.Count -eq 0) {
         return
     }
 
-    $rateError = $Errors | Where-Object {
-        $_.PSObject.Properties.Name -contains 'type' -and $_.type -eq 'RATE_LIMITED'
+    $rateError = $normalizedErrors | Where-Object {
+        $null -ne $_ -and
+        $null -ne $_.PSObject -and
+        $_.PSObject.Properties.Name -contains 'type' -and
+        $_.type -eq 'RATE_LIMITED'
     } | Select-Object -First 1
     if ($null -ne $rateError) {
         $resetAt = $null
@@ -451,7 +457,13 @@ function Invoke-PprcGraphQLError {
         throw "GitHub GraphQL rate limit reached. Reset at $resetLocal (local time)."
     }
 
-    $messages = @($Errors | ForEach-Object { $_.message } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $messages = @($normalizedErrors | ForEach-Object {
+            if ($null -eq $_ -or $null -eq $_.PSObject -or $_.PSObject.Properties.Name -notcontains 'message') {
+                return
+            }
+
+            $_.message
+        } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     if ($messages.Count -eq 0) {
         throw 'GitHub GraphQL request failed.'
     }
@@ -692,6 +704,31 @@ function Test-BranchSafety {
     return $true
 }
 
+function Get-PprcDirtyWorktreeEntry {
+    [CmdletBinding()]
+    param()
+
+    $status = Invoke-PprcNativeCommand -Command 'git' -Arguments @('--no-pager', 'status', '--porcelain') -FailureMessage 'Unable to inspect git worktree status.'
+    if ([string]::IsNullOrWhiteSpace($status)) {
+        return @()
+    }
+
+    return @($status -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+}
+
+function Assert-PprcCleanWorktree {
+    [CmdletBinding()]
+    param()
+
+    $dirtyEntries = @(Get-PprcDirtyWorktreeEntry)
+    if ($dirtyEntries.Count -gt 0) {
+        $details = $dirtyEntries -join ', '
+        throw "Refusing automated fix commits: worktree has pre-existing uncommitted changes ($details). Commit/stash first or isolate explicitly."
+    }
+
+    return $true
+}
+
 function Get-PrReviewThreads {
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'Function returns a keyed set of multiple review threads for one PR.')]
     [CmdletBinding()]
@@ -845,7 +882,7 @@ function Resolve-PprcPushRemote {
         throw "Target base repository must be in 'owner/repo' format. Got '$BaseFullName'."
     }
 
-    $remoteNames = @(Invoke-PprcNativeCommand -Command 'git' -Arguments @('remote') -FailureMessage 'Unable to list git remotes.' -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $remoteNames = @((Invoke-PprcNativeCommand -Command 'git' -Arguments @('remote') -FailureMessage 'Unable to list git remotes.') -split '\r?\n' | ForEach-Object { $_.Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     if ($remoteNames.Count -eq 0) {
         throw 'No git remotes are configured for this repository.'
     }
