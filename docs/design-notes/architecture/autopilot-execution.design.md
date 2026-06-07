@@ -3,6 +3,7 @@ description: Autonomous plan execution via Copilot CLI — host/container/sandbo
 globs:
   - plugins/autopilot/scripts/**
   - plugins/autopilot/devcontainer/**
+  - plugins/autopilot/agents/autopilot.agent.md
   - .github/agents/autopilot.agent.md
   - .autopilot.json
   - .autopilot.host.json

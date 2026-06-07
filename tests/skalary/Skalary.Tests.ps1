@@ -352,7 +352,7 @@ Describe 'skalary plugin registry scripts' {
         @($search.name) | Should -Contain 'design-review'
     }
 
-    It 'keeps Build-Registry idempotent across repeated runs' {
+    It 'Skalary.Registry.NoDrift keeps Build-Registry idempotent across repeated runs' {
         $repo = New-RepoClone
         $registryPath = Join-Path $repo 'registry.json'
         $readmePath = Join-Path $repo 'README.md'

@@ -65,7 +65,8 @@ function Sanitize-LedgerText {
     $sanitized = [regex]::Replace($sanitized, '[\u0000-\u001F\u007F]', ' ')
     $sanitized = [regex]::Replace($sanitized, '(?i)src\s*:', 'src-')
     $sanitized = [regex]::Replace($sanitized, '(?i)sev\s*:', 'sev-')
-    $sanitized = [regex]::Replace($sanitized, '[(),#]', ' ')
+    $sanitized = [regex]::Replace($sanitized, '(?i)\[recurrence\s*:\s*\d+\]', ' recurrence- ')
+    $sanitized = [regex]::Replace($sanitized, '[(),#\[\]]', ' ')
     $sanitized = [regex]::Replace($sanitized, '\s+', ' ').Trim()
     if ([string]::IsNullOrWhiteSpace($sanitized)) {
         throw 'Entry text is empty after sanitization.'
@@ -193,6 +194,30 @@ function Invoke-WithLedgerLock {
         if (-not $hasLock) {
             throw "Timed out acquiring ledger lock '$mutexName'."
         }
+
+        function Set-FileAtomically {
+            [CmdletBinding()]
+            param(
+                [Parameter(Mandatory)]
+                [string]$Path,
+                [Parameter(Mandatory)]
+                [AllowEmptyString()]
+                [string]$Content
+            )
+
+            $targetDirectory = [System.IO.Path]::GetDirectoryName($Path)
+            $tempPath = Join-Path $targetDirectory ([System.IO.Path]::GetRandomFileName())
+            try {
+                New-Item -ItemType File -Path $tempPath -Force | Out-Null
+                Set-Content -LiteralPath $tempPath -Value $Content -Encoding utf8NoBOM
+                Move-Item -LiteralPath $tempPath -Destination $Path -Force
+            }
+            finally {
+                if (Test-Path -LiteralPath $tempPath -PathType Leaf) {
+                    Remove-Item -LiteralPath $tempPath -Force
+                }
+            }
+        }
         return & $Action
     }
     finally {
@@ -239,16 +264,7 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
         $existingContent = if ($lines.Count -eq 0) { '' } else { ($lines -join "`n") + "`n" }
         $canonicalContent = if ($orderedLines.Count -eq 0) { '' } else { ($orderedLines -join "`n") + "`n" }
         if ($existingContent -ne $canonicalContent) {
-            $tempPath = [System.IO.Path]::GetTempFileName()
-            try {
-                Set-Content -LiteralPath $tempPath -Value $canonicalContent -Encoding utf8NoBOM
-                Move-Item -LiteralPath $tempPath -Destination $ledgerPath -Force
-            }
-            finally {
-                if (Test-Path -LiteralPath $tempPath -PathType Leaf) {
-                    Remove-Item -LiteralPath $tempPath -Force
-                }
-            }
+            Set-FileAtomically -Path $ledgerPath -Content $canonicalContent
         }
         return [pscustomobject]@{
             Added = $false
@@ -270,17 +286,7 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
     $ordered = Get-DeterministicOrder -Records (@($records) + $newRecord)
     $updatedLines = @($ordered | ForEach-Object { $_.Line })
     $content = if ($updatedLines.Count -eq 0) { '' } else { ($updatedLines -join "`n") + "`n" }
-
-    $tempPath = [System.IO.Path]::GetTempFileName()
-    try {
-        Set-Content -LiteralPath $tempPath -Value $content -Encoding utf8NoBOM
-        Move-Item -LiteralPath $tempPath -Destination $ledgerPath -Force
-    }
-    finally {
-        if (Test-Path -LiteralPath $tempPath -PathType Leaf) {
-            Remove-Item -LiteralPath $tempPath -Force
-        }
-    }
+    Set-FileAtomically -Path $ledgerPath -Content $content
 
     return [pscustomobject]@{
         Added = $true
