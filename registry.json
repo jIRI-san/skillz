@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T15:36:02.7998798Z",
+  "generatedAt": "2026-06-07T17:02:23.7800024Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -46,7 +46,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/container-entrypoint.sh",
-          "sha256": "7478590dc70a8b869734813506548c7504d3024e7ae4b2ae9d65f87145bcd7cd",
+          "sha256": "e292411bd943b84bdb8cefa3fc567e3be2cf58126c1e05664f10d133777c5f2f",
           "src": "scripts/container-entrypoint.sh"
         },
         {
@@ -66,12 +66,12 @@
         },
         {
           "dest": "skills/autopilot/scripts/launch-host.ps1",
-          "sha256": "583b235d4242f9a17c36c47e9ca10515d099a9ac396407f08373e95ca2ad140e",
+          "sha256": "2b9a8f0596e2e512b0ddbd299f23ff3812c7c4974f39a354ec2ca285db599db3",
           "src": "scripts/launch-host.ps1"
         },
         {
           "dest": "skills/autopilot/scripts/launch-sandbox.ps1",
-          "sha256": "055bda44002786856a5237b020a07cd20a48e06b09953b0d026bb1e0bb1bb932",
+          "sha256": "10ff0e2000a1cc84263264145ab7174281c4e81778606eb6dbb8e248dc1eb992",
           "src": "scripts/launch-sandbox.ps1"
         },
         {

@@ -79,10 +79,15 @@ finally {
 }
 
 # --- Phase detection ---
+# Parse the actual phase numbers from the headings so plans that start at
+# Phase 0 (or skip numbers) are executed faithfully. A blind 1..count loop
+# would skip Phase 0 and chase a nonexistent trailing phase.
 $planContent = Get-Content $fullPlanPath -Raw
 $phaseMatches = [regex]::Matches($planContent, '## Phase (\d+)')
-$totalPhases = $phaseMatches.Count
-Write-Host "Plan has $totalPhases phases."
+$phaseNumbers = @($phaseMatches | ForEach-Object { [int]$_.Groups[1].Value })
+$totalPhases = $phaseNumbers.Count
+$phaseList = $phaseNumbers -join ', '
+Write-Host "Plan has $totalPhases phases (numbers: $phaseList)."
 
 # --- Per-phase execution loop ---
 function ConvertTo-CmdQuotedToken {
@@ -237,13 +242,15 @@ $hostCommand = Resolve-HostCommand
 Write-Host "Using Copilot launcher: $($hostCommand.Path) [$($hostCommand.Type)]"
 
 $phasesExecuted = 0
-for ($phase = 1; $phase -le $totalPhases; $phase++) {
+foreach ($phase in $phaseNumbers) {
     # Re-read plan to check current phase status
     $currentPlan = Get-Content $fullPlanPath -Raw
 
     # Simple heuristic: check if phase has uncompleted steps
-    # Look for "- [ ]" or "- [~]" between this phase heading and the next
-    $phasePattern = "## Phase ${phase}" + '.*?(?=## Phase ' + "$($phase + 1)" + '|## Known Constraints|$)'
+    # Look for "- [ ]" or "- [~]" between this phase heading and the next.
+    # The \b after the number prevents "Phase 1" matching "Phase 12"; the
+    # generic "## Phase \d+" boundary handles non-contiguous numbering.
+    $phasePattern = "## Phase ${phase}\b" + '.*?(?=## Phase \d+|## Known Constraints|$)'
     $phaseSection = [regex]::Match($currentPlan, $phasePattern, [System.Text.RegularExpressions.RegexOptions]::Singleline)
 
     if (-not $phaseSection.Success) { continue }

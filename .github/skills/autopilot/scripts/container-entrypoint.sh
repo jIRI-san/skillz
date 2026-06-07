@@ -71,14 +71,18 @@ if [ ! -f "${PLAN_PATH}" ]; then
     exit 1
 fi
 
-# Count phases by looking for "## Phase" headings
-PHASE_COUNT=$(grep -c '^## Phase' "${PLAN_PATH}" || echo "0")
-echo "Found ${PHASE_COUNT} phases in plan."
+# Parse the actual phase numbers from "## Phase N" headings so plans that
+# start at Phase 0 (or skip numbers) are executed faithfully. Iterating a
+# blind `seq 1..count` would skip Phase 0 and chase a nonexistent trailing
+# phase. Matches the host launcher (launch-host.ps1) behaviour.
+PHASE_NUMS=$(grep -oE '^## Phase [0-9]+' "${PLAN_PATH}" | grep -oE '[0-9]+' || true)
+PHASE_COUNT=$(printf '%s\n' "${PHASE_NUMS}" | grep -c '[0-9]' || echo "0")
+echo "Found ${PHASE_COUNT} phases in plan (numbers: $(echo ${PHASE_NUMS} | tr '\n' ' '))."
 
 # Per-phase copilot invocations
-for PHASE_NUM in $(seq 1 "${PHASE_COUNT}"); do
+for PHASE_NUM in ${PHASE_NUMS}; do
     echo ""
-    echo "=== Phase ${PHASE_NUM} of ${PHASE_COUNT} ==="
+    echo "=== Phase ${PHASE_NUM} (of ${PHASE_COUNT} total) ==="
 
     # Check if phase has uncompleted steps
     if ! grep -q '^\- \[ \]\|^\- \[\~\]' "${PLAN_PATH}"; then
