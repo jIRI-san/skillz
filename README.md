@@ -52,6 +52,10 @@ Search plugins by name/description/tags:
 pwsh -NoProfile -File scripts/skalary/Find-Plugin.ps1 -Query review
 ```
 
+### Plugin-specific prerequisites
+
+- `pprc` (`process-pr-comments`): requires GitHub CLI (`gh`) installed and authenticated for the current user (`gh auth login`), because the plugin resolves auth exclusively via `gh auth token`.
+
 ## Security Note (`irm | iex`)
 
 `irm ... | iex` executes downloaded content in-process. This repository mitigates risk by pinning to immutable refs and keeping bootstrap behavior minimal, but you should still inspect the script before execution and use only trusted refs.
@@ -69,6 +73,7 @@ Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 | `cip` | 1.0.0 | stable | dr | 2 | Implementation plan generation skill for coding workflows. |
 | `cr` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
 | `dr` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
+| `pprc` | 1.0.0 | stable | — | 2 | Process PR comments skill for classifying, fixing, and replying to review feedback. |
 | `udn` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
 <!-- END SKALARY PLUGIN CATALOG -->
 
