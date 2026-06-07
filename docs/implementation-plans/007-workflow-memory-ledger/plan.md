@@ -131,7 +131,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 <!-- Points: 1+1+1 = 3 -->
 
-- [ ] 3.1 Add `cr-log.md` persistence per mode + per-phase init/commit-by-name (stable header + `No entries for this phase.` placeholder) to `ci`/autopilot: interactive `ci`→`@cr` report+triage; autopilot→`code-review`/`rubber-duck` (`src:code-review`); standalone `cr` persists nothing. No durable ledger write here. (REQ-7, REQ-9, REQ-6, RISK-7, RISK-11) [after: 0.1] `S`
+- [x] 3.1 Add `cr-log.md` persistence per mode + per-phase init/commit-by-name (stable header + `No entries for this phase.` placeholder) to `ci`/autopilot: interactive `ci`→`@cr` report+triage; autopilot→`code-review`/`rubber-duck` (`src:code-review`); standalone `cr` persists nothing. No durable ledger write here. (REQ-7, REQ-9, REQ-6, RISK-7, RISK-11) [after: 0.1] `S`
 - [ ] 3.2 Add `learnings.md` capture (triggers + hard cap + trigger-type/source-step) + per-phase init/commit-by-name with placeholder to `ci`/autopilot crosscheck guide: append only on rework>1 / plan-contradicting surprise / reusable pattern; hard per-plan cap with overflow→summary. (REQ-7, REQ-9, REQ-6, RISK-2, RISK-11) [after: 0.1] `S`
 - [ ] 3.3 Wire `cip`/`dr` capture into 006's `drafting-guide.md`/`dr-guide.md`: record interview decisions + notable/recurring `dr` findings to a **delimited `## Capture` section** of `evolution-log.md` (own schema, separate from DR-history); init/commit the section by name with a placeholder. (REQ-8, REQ-9, REQ-6, RISK-11) [after: 0.1] `S`
 

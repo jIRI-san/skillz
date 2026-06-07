@@ -25,17 +25,33 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
    - **Exception: conditional Finalization step** → do not stop immediately. Run finalization flow: enforce `archival-gate`, then either complete autonomously or escalate with draft PR + marker + exit 42.
    - `[discovery]` → treat as exploratory. Acceptance criteria are softer; iterate until the step's intent is satisfied rather than a strict pass/fail.
 8. **Mark in-progress** — change `- [ ]` to `- [~]` for the current step.
-9. **Pre-execution validation** — run the committed `.autopilot.json` test command (`npm test` in this repo). It is the deterministic evidence-runner and executes `validate-plan` before any other checks. If this fails, stop and fix integrity issues before writing code.
-10. **Implement** — write the code/files for this step. Follow design notes in `docs/design-notes/`. Make only changes necessary for this step.
+9. **Initialize ephemeral logs by name** — in the selected plan folder, ensure `cr-log.md` exists for the active phase with a stable header and an explicit empty-state line:
+
+   ```text
+   ## CR Capture
+   Phase: <N>
+
+   No entries for this phase.
+   ```
+
+   Stage/commit this file by explicit name when changed (never wildcard staging). Mid-run capture is ephemeral only; do not write `docs/review-ledger/*` here.
+10. **Pre-execution validation** — run the committed `.autopilot.json` test command (`npm test` in this repo). It is the deterministic evidence-runner and executes `validate-plan` before any other checks. If this fails, stop and fix integrity issues before writing code.
+11. **Implement** — write the code/files for this step. Follow design notes in `docs/design-notes/`. Make only changes necessary for this step.
    - **Try the simplest approach first.** If the plan specifies a complex solution but a simpler one might work, try the simple one. Only escalate to complexity when the simple approach demonstrably fails.
    - **Tests must encode invariants, not snapshots.** Assert the meaningful property (e.g. "cells grow outward from center") not an incidental observation (e.g. "all center-row cells have height 42px"). If a test would break from a valid future change to an unrelated aspect, it's asserting the wrong thing.
-11. **Build** — run the build command from `.autopilot.json` `build` field. Fix errors and retry up to `maxIterationsPerStep` times.
-12. **Test** — run the test command from `.autopilot.json` `test` field. If a relevant test filter can be identified from the changed subsystem (e.g. `--filter Category=Scheduling`), use it for faster feedback. Otherwise run all tests. Fix failures and retry.
-13. **Format** — run the formatter (e.g. `dotnet format`). Stage any formatting changes.
-14. **Validate acceptance criteria** — look up the REQ-N IDs referenced by this step. Verify each acceptance criterion is satisfied.
-15. **Update design notes** — if this step's changes affect patterns, APIs, or conventions documented in `docs/design-notes/`, update the relevant design notes to reflect the new state. Include updated notes in the commit.
-16. **Code review** — invoke the built-in `code-review` subagent on this step's uncommitted changes. It will surface bugs, security vulns, race conditions, memory leaks, and logic errors. For any findings it reports, fix them and re-run build/test.
-17. **Emit review hints for Rubber Duck** — output the following block verbatim so the `rubber-duck` subagent has project-specific context for its second opinion:
+12. **Build** — run the build command from `.autopilot.json` `build` field. Fix errors and retry up to `maxIterationsPerStep` times.
+13. **Test** — run the test command from `.autopilot.json` `test` field. If a relevant test filter can be identified from the changed subsystem (e.g. `--filter Category=Scheduling`), use it for faster feedback. Otherwise run all tests. Fix failures and retry.
+14. **Format** — run the formatter (e.g. `dotnet format`). Stage any formatting changes.
+15. **Validate acceptance criteria** — look up the REQ-N IDs referenced by this step. Verify each acceptance criterion is satisfied.
+16. **Update design notes** — if this step's changes affect patterns, APIs, or conventions documented in `docs/design-notes/`, update the relevant design notes to reflect the new state. Include updated notes in the commit.
+17. **Code review** — invoke the built-in `code-review` subagent on this step's uncommitted changes. Persist `code-review`/`rubber-duck` findings to `cr-log.md` using `src:code-review` and this entry shape:
+
+   ```text
+   - [<source-step>] [src:code-review] [sev:<Critical|High|Med|Low>] <one-line finding or triage note>
+   ```
+
+   It will surface bugs, security vulns, race conditions, memory leaks, and logic errors. For any findings it reports, fix them and re-run build/test.
+18. **Emit review hints for Rubber Duck** — output the following block verbatim so the `rubber-duck` subagent has project-specific context for its second opinion:
 
     ```
     @rubber-duck review-hints:
@@ -47,9 +63,9 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
     - Style: naming/file-organization inconsistencies vs surrounding code, dead code, commented-out code, duplication (>3 occurrences → extract)
     ```
 
-18. **Fix loop** — if build/test/acceptance/code-review fails, fix and retry. Maximum iterations from config.
-19. **Commit** — stage ONLY the files you directly modified: `git add <file1> <file2> ...`. Include the plan file (with `[x]` mark) in the same commit for atomicity. Commit message: `feat(<scope>): <step title> [plan-NNN step X.Y]`
-20. **Loop or stop** — move to next `[ ]` step in this phase. If all steps in this phase are done, proceed to Phase Completion.
+19. **Fix loop** — if build/test/acceptance/code-review fails, fix and retry. Maximum iterations from config.
+20. **Commit** — stage ONLY the files you directly modified: `git add <file1> <file2> ...`. Include the plan file (with `[x]` mark) in the same commit for atomicity. Commit message: `feat(<scope>): <step title> [plan-NNN step X.Y]`
+21. **Loop or stop** — move to next `[ ]` step in this phase. If all steps in this phase are done, proceed to Phase Completion.
 
 ## On Phase Completion
 

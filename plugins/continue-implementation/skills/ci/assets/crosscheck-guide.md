@@ -71,3 +71,28 @@ pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -Pl
 ```
 
 It validates 006 behavior contracts through public script paths (including pass/fail `file:` probes, evidence vocabulary contracts, Rule 5 wording, and the `test:unit` gate). If it exits non-zero, stop execution immediately.
+
+## Ephemeral capture: `cr-log.md` (mid-run only)
+
+During plan execution, capture review findings in the plan folder `cr-log.md` as ephemeral state (not durable ledger state):
+
+- Interactive `ci`: persist `@cr` report + triage notes.
+- Autopilot: persist `code-review`/`rubber-duck` findings with `src:code-review`.
+- Standalone `cr`: persists nothing.
+
+Per phase, initialize `cr-log.md` by name with a stable header and an explicit empty marker:
+
+```text
+## CR Capture
+Phase: <N>
+
+No entries for this phase.
+```
+
+When entries exist, replace the placeholder with one entry per capture:
+
+```text
+- [<source-step>] [src:code-review] [sev:<Critical|High|Med|Low>] <one-line finding or triage note>
+```
+
+Stage and commit the log by explicit filename when it changes. Do not write `docs/review-ledger/*` during this mid-run capture step.

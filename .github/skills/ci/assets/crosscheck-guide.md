@@ -61,3 +61,28 @@ Before archive/PR completion, require:
 - This step wires the gate only; run `PlanCrosscheck` blocking target resolution only at true plan finalization (after all phases).
 
 If the gate is not satisfied, block archival/completion.
+
+## Ephemeral capture: `cr-log.md` (mid-run only)
+
+During plan execution, capture review findings in the plan folder `cr-log.md` as ephemeral state (not durable ledger state):
+
+- Interactive `ci`: persist `@cr` report + triage notes.
+- Autopilot: persist `code-review`/`rubber-duck` findings with `src:code-review`.
+- Standalone `cr`: persists nothing.
+
+Per phase, initialize `cr-log.md` by name with a stable header and an explicit empty marker:
+
+```text
+## CR Capture
+Phase: <N>
+
+No entries for this phase.
+```
+
+When entries exist, replace the placeholder with one entry per capture:
+
+```text
+- [<source-step>] [src:code-review] [sev:<Critical|High|Med|Low>] <one-line finding or triage note>
+```
+
+Stage and commit the log by explicit filename when it changes. Do not write `docs/review-ledger/*` during this mid-run capture step.
