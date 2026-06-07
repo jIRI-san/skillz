@@ -104,10 +104,10 @@
 | RISK-12 | Adding files without `plugin.json` `files[]` breaks dogfood byte-equivalence | Medium | Medium | REQ-23 verification rebuilds registry + `Sync-Dogfood -WhatIf` + `Test-Registry`; each new file added to its manifest in the creating step | 5.2, 5.3 |
 
 ## Phase 1: Skill restructuring (orchestrator + assets, state anchor, preservation)
-<!-- worktree: (recorded by /ci when worktree is created) -->
+<!-- worktree: feature/006-plan-workflow-hardening -->
 <!-- Points: 2+3+2 = 7 → over 6 cap (advisory); cohesive cip/ci restructure -->
 
-- [ ] 1.1 Extract `cip` interview content to `plugins/cip/skills/cip/assets/interview-guide.md` (full question bank verbatim from SKILL.md Step 3 + gates `no-tbd`, `evidence` ≥1 typed marker/REQ, `pre-draft`); add `assets/dr-guide.md` (DR procedure from Step 6). (REQ-1, REQ-6, REQ-7, RISK-1, RISK-3) `M`
+- [x] 1.1 Extract `cip` interview content to `plugins/cip/skills/cip/assets/interview-guide.md` (full question bank verbatim from SKILL.md Step 3 + gates `no-tbd`, `evidence` ≥1 typed marker/REQ, `pre-draft`); add `assets/dr-guide.md` (DR procedure from Step 6). (REQ-1, REQ-6, REQ-7, RISK-1, RISK-3) `M`
 - [ ] 1.2 Slim `plugins/cip/skills/cip/SKILL.md` to a thin orchestrator (each step names the asset to read; inline `non-negotiable` summary + preservation checklist); add `assets/drafting-guide.md` (`20KB`/`35KB` size limits, `decisions/` extraction, `phase-budget`, `evidence` legend); write/update `<!-- cip-stage: ... -->`; invoke `Test-Plan.ps1` after drafting/each DR round. (REQ-1, REQ-3, REQ-4, REQ-5, REQ-22, RISK-1, RISK-10) [after: 1.1] `L`
 - [ ] 1.3 Slim `plugins/ci/skills/ci/SKILL.md` to a thin orchestrator; extract `assets/execution-guide.md` (implement/build/test/CR) and `assets/crosscheck-guide.md` (`evidence.md`, `archival-gate`, phase/plan crosscheck); always emit the progress snapshot. (REQ-2, REQ-3, RISK-1) [after: 1.1] `M`
 
