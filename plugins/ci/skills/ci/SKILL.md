@@ -47,6 +47,14 @@ Next pending:   Step C.D — title
 
 ## Step 5: Implement (`./assets/execution-guide.md`)
 
+Before implementing a step, run:
+
+```powershell
+npm run validate-plan
+```
+
+If validation reports blocking failures, do not start execution until they are fixed.
+
 Use the execution asset for implementation/build/test/code-review/commit loop.
 
 ## Step 6: Crosscheck and completion (`./assets/crosscheck-guide.md`)
@@ -56,4 +64,3 @@ Use the crosscheck asset for:
 - Plan crosscheck
 - Evidence receipt (`evidence.md`)
 - `archival-gate` checks before completion
-

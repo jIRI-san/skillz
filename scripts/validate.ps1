@@ -52,6 +52,18 @@ foreach ($file in $jsonFiles) {
 }
 Write-Host "  Parsed $($jsonFiles.Count) JSON file(s)."
 
+Write-Host '== Validating implementation plans (Draft stage) =='
+$planValidator = Join-Path $repoRoot 'scripts/skalary/Test-Plan.ps1'
+$planPaths = Get-ChildItem -LiteralPath (Join-Path $repoRoot 'docs/implementation-plans') -Recurse -File -Filter 'plan.md' |
+    Sort-Object FullName
+foreach ($plan in $planPaths) {
+    & $planValidator -PlanPath $plan.FullName -RepoRoot $repoRoot -Stage Draft
+    if ($LASTEXITCODE -ne 0) {
+        $errors.Add("$($plan.FullName): Test-Plan failed at Draft stage.")
+    }
+}
+Write-Host "  Checked $($planPaths.Count) plan file(s)."
+
 if ($errors.Count -gt 0) {
     Write-Host ''
     Write-Host "VALIDATION FAILED ($($errors.Count) error(s)):" -ForegroundColor Red
