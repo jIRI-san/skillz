@@ -1,4 +1,4 @@
-# 003: Autopilot Plugin Consolidation
+# 003: Autopilot Plugin Consolidation [DONE]
 
 <!-- execution-mode: manual -->
 <!-- scope: phase -->
