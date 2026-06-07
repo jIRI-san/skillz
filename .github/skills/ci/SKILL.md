@@ -33,9 +33,20 @@ Next pending:   Step C.D — title
 
 ## Step 3: Determine execution mode and branch/worktree
 
-1. Detect or ask for execution mode (approve, autopilot, or autonomous runtime options when available).
-2. Validate or create the expected branch/worktree naming.
-3. Record `<!-- worktree: <branch> -->` in the current phase when first running in that worktree.
+1. **Read the plan's declared execution mode.** Parse the plan header for `<!-- execution-mode: manual | host-autopilot | container-autopilot -->` and `<!-- scope: step | phase | plan -->`. This marker is a *runtime* selector, not a pacing hint — `*-autopilot` means the plan is meant to run autonomously (host or container), not interactively with approvals.
+2. **Map the marker to a mode and present the selection.** Always use `vscode_askQuestions`, with the plan-declared mode marked recommended:
+   | Plan marker | Recommended mode |
+   |---|---|
+   | `manual` or absent | **Approve** (interactive, approve each step) |
+   | `host-autopilot` | **Autonomous → Host autopilot** |
+   | `container-autopilot` | **Autonomous → Container autopilot** |
+   | `sandbox-autopilot` | **Autonomous → Sandbox autopilot** |
+
+   Never silently downgrade an `*-autopilot` plan to interactive Approve. When the plan declares an autopilot mode and the session is interactive, ask the user to confirm the declared runtime (Container/Host) or pick another — do not just proceed interactively.
+3. **Hand off to the autopilot launcher when an autonomous mode is chosen.** Read `.github/skills/autopilot/SKILL.md` by path and follow its bootstrap + sub-menu + launcher steps. The declared `container-autopilot`/`host-autopilot` marker pre-selects the matching runtime in the autopilot sub-menu. After launch, exit the `/ci` flow.
+4. **Suppression:** if `AUTOPILOT_CONTAINER=true` (already running inside the autopilot container), skip the autonomous handoff and execute in-place regardless of the marker.
+5. For interactive (Approve) execution: validate or create the expected branch/worktree naming.
+6. Record `<!-- worktree: <branch> -->` in the current phase when first running in that worktree.
 
 ## Step 4: Pick next eligible step
 

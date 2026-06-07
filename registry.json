@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T14:16:20.7122015Z",
+  "generatedAt": "2026-06-07T15:13:24.1752351Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -213,7 +213,7 @@
         },
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "9af63aa20cc70b8d303f74ee84660bedb178bb108a286b2340a4f8bf889f2da9",
+          "sha256": "113cfebb65e5cb0580479c557197a749b9130d7b8d4beb268761a78e79953ee2",
           "src": "skills/ci/SKILL.md"
         }
       ],
@@ -375,7 +375,7 @@
         },
         {
           "dest": "skills/process-pr-comments/SKILL.md",
-          "sha256": "e18aa9812049184131957f51ba735678caa4a64a836074cfbee2f2d0538d6bf6",
+          "sha256": "a7602814fda705d3f918d01fe48326a738f7562497a453b0f310da61d01c5ee2",
           "src": "skills/process-pr-comments/SKILL.md"
         }
       ],
