@@ -13,7 +13,7 @@ if ($null -eq $pesterModule) {
     exit 0
 }
 
-$testPath = Join-Path $RepoRoot 'tests/skalary'
+$testPath = Join-Path $RepoRoot 'tests'
 if (-not (Test-Path -LiteralPath $testPath -PathType Container)) {
     throw "Unit test path not found: $testPath"
 }
