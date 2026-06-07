@@ -239,7 +239,24 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
         }
     }
 
-    if ($records.Where({ $_.IdempotenceKey -eq $idempotenceKey }).Count -gt 0) {
+    $existingIdempotenceMatches = @($records.Where({ $_.IdempotenceKey -eq $idempotenceKey }))
+    if ($existingIdempotenceMatches.Count -gt 0) {
+        $orderedExisting = Get-DeterministicOrder -Records $records
+        $orderedLines = @($orderedExisting | ForEach-Object { $_.Line })
+        $existingContent = if ($lines.Count -eq 0) { '' } else { ($lines -join "`n") + "`n" }
+        $canonicalContent = if ($orderedLines.Count -eq 0) { '' } else { ($orderedLines -join "`n") + "`n" }
+        if ($existingContent -ne $canonicalContent) {
+            $tempPath = [System.IO.Path]::GetTempFileName()
+            try {
+                Set-Content -LiteralPath $tempPath -Value $canonicalContent -Encoding utf8NoBOM
+                Move-Item -LiteralPath $tempPath -Destination $ledgerPath -Force
+            }
+            finally {
+                if (Test-Path -LiteralPath $tempPath -PathType Leaf) {
+                    Remove-Item -LiteralPath $tempPath -Force
+                }
+            }
+        }
         return [pscustomobject]@{
             Added = $false
             Reason = 'idempotence-duplicate'
