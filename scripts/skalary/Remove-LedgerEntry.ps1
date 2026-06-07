@@ -26,6 +26,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+$maxEntryLength = 220
 $mutexWaitSeconds = 30
 
 $effectiveMatch = if ($PSCmdlet.ParameterSetName -eq 'Encoded') {
@@ -44,13 +45,18 @@ function Normalize-LedgerLesson {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$Text
+        [string]$Text,
+        [Parameter(Mandatory)]
+        [int]$MaxLength
     )
 
     $normalized = $Text.Normalize([System.Text.NormalizationForm]::FormC).ToLowerInvariant()
     $normalized = [regex]::Replace($normalized, '\s+', ' ').Trim()
     $normalized = [regex]::Replace($normalized, '\s*([,.:;!?])\s*', '$1 ')
     $normalized = [regex]::Replace($normalized, '\s+', ' ').Trim()
+    if ($normalized.Length -gt $MaxLength) {
+        $normalized = $normalized.Substring(0, $MaxLength).Trim()
+    }
     return $normalized
 }
 
@@ -92,7 +98,7 @@ function ConvertTo-LedgerRecord {
 
     $lesson = [string]$Matches.lesson
     $lessonForKey = [regex]::Replace($lesson, '\s*\[recurrence:\d+\]\s*$', '').Trim()
-    $normalizedLesson = Normalize-LedgerLesson -Text $lessonForKey
+    $normalizedLesson = Normalize-LedgerLesson -Text $lessonForKey -MaxLength $maxEntryLength
     $sortedTags = if ($tagList.Count -eq 0) { '' } else { ($tagList -join '|') }
     $recurrenceKey = "$Category|$normalizedLesson|$sortedTags"
 
@@ -143,8 +149,10 @@ function Set-FileAtomically {
         [string]$Content
     )
 
-    $tempPath = [System.IO.Path]::GetTempFileName()
+    $targetDirectory = [System.IO.Path]::GetDirectoryName($Path)
+    $tempPath = Join-Path $targetDirectory ([System.IO.Path]::GetRandomFileName())
     try {
+        New-Item -ItemType File -Path $tempPath -Force | Out-Null
         Set-Content -LiteralPath $tempPath -Value $Content -Encoding utf8NoBOM
         Move-Item -LiteralPath $tempPath -Destination $Path -Force
     }

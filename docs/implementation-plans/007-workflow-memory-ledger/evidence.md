@@ -12,7 +12,7 @@ Phase 1 Crosscheck:
 ✓ REQ-14 — file:scripts/skalary/Add-LedgerEntry.ps1#contains:PSScriptRoot — passed — 271068b
 
 Phase 2 Crosscheck:
-✓ REQ-5 — test:Remove-LedgerEntry.FullLineEquality — passed — deeb583
-✓ REQ-5 — test:Remove-LedgerEntry.RejectsBadCategory — passed — deeb583
-✓ REQ-5 — test:Remove-LedgerEntry.RetentionGuard — passed — deeb583
-✓ REQ-5 — test:Remove-LedgerEntry.NoSubstringOverDelete — passed — deeb583
+✓ REQ-5 — test:Remove-LedgerEntry.FullLineEquality — passed — 7d651a9
+✓ REQ-5 — test:Remove-LedgerEntry.RejectsBadCategory — passed — 7d651a9
+✓ REQ-5 — test:Remove-LedgerEntry.RetentionGuard — passed — 7d651a9
+✓ REQ-5 — test:Remove-LedgerEntry.NoSubstringOverDelete — passed — 7d651a9
