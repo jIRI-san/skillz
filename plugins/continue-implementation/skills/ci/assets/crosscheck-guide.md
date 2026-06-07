@@ -72,6 +72,24 @@ pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -Pl
 
 It validates 006 behavior contracts through public script paths (including pass/fail `file:` probes, evidence vocabulary contracts, Rule 5 wording, and the `test:unit` gate). If it exits non-zero, stop execution immediately.
 
+## `ledger-consult` (before a CR round)
+
+Before launching a CR round (`@cr`, `code-review`, or `rubber-duck`), consult only the relevant category files from `docs/review-ledger/`:
+
+- `security.md` for auth/trust-boundary/injection/secret/ACL concerns
+- `performance.md` for latency/throughput/allocation/N+1 concerns
+- `error-handling.md` for retry/timeout/fail-loud/exception-flow concerns
+- `consistency.md` for contract drift/naming parity/duplication concerns
+- `plan-structure.md` for dependency gates/phase order/evidence-flow concerns
+- `testing.md` for flaky/missing/weak evidence coverage concerns
+- `observability.md` for logs/metrics/tracing/audit concerns
+
+Rules:
+- Exclude `docs/review-ledger/.archive/` from all consult reads.
+- Read only categories implied by the current step's REQ/RISK scope.
+- Optional narrowing: within selected files, filter by relevant `#tag` values.
+- This is on-demand context only; do not auto-load all ledger files by default.
+
 ## Ephemeral capture: `cr-log.md` (mid-run only)
 
 During plan execution, capture review findings in the plan folder `cr-log.md` as ephemeral state (not durable ledger state):

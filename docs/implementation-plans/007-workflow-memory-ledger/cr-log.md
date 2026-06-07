@@ -1,4 +1,4 @@
 ## CR Capture
 Phase: 4
 
-No entries for this phase.
+- [4.2] [src:code-review] [sev:Med] Added pre-CR ledger-consult guidance to Step 5 execution flow so consult happens before `@cr`.

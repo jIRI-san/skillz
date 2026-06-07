@@ -24,13 +24,14 @@
 4. Build using project command.
 5. Test using project command (use a relevant subset only when safe and obvious).
 6. Validate step acceptance criteria tied to referenced `REQ-N` rows.
-7. Run `@cr` on step scope and apply clear, non-ambiguous fixes.
-8. Persist `@cr` findings + triage to `cr-log.md` using:
+7. Before a CR round, run `ledger-consult` by reading only relevant `docs/review-ledger/*.md` category files (security/performance/error-handling/consistency/plan-structure/testing/observability), excluding `docs/review-ledger/.archive/` and optionally filtering by `#tag`.
+8. Run `@cr` on step scope and apply clear, non-ambiguous fixes.
+9. Persist `@cr` findings + triage to `cr-log.md` using:
 
    ```text
    - [<source-step>] [src:code-review] [sev:<Critical|High|Med|Low>] <one-line finding or triage note>
    ```
-9. Append to `learnings.md` only on triggers (`rework>1`, `plan-contradiction`, `reusable-pattern`) using:
+10. Append to `learnings.md` only on triggers (`rework>1`, `plan-contradiction`, `reusable-pattern`) using:
 
    ```text
    - [<source-step>] [trigger:<rework>1|plan-contradiction|reusable-pattern>] <one-line learning>
@@ -43,8 +44,8 @@
    ```text
    - [<source-step>] [trigger:overflow-summary] Folded <N> additional learnings into this summary.
    ```
-10. Re-run build/test when changes are made.
-11. Mark step `[x]` and commit atomically with plan update.
+11. Re-run build/test when changes are made.
+12. Mark step `[x]` and commit atomically with plan update.
 
 ## Guardrails
 
