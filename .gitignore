@@ -1,2 +1,3 @@
 # Autopilot transient artifacts (never committed)
 .autopilot-halt
+.autopilot-finalize-needed
