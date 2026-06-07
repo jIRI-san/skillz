@@ -1,2 +1,5 @@
 # Autopilot transient artifacts (never committed)
 .autopilot-halt
+
+# Plugin install runtime state (receipts, tmp staging) — never committed
+.github/.skalary/
