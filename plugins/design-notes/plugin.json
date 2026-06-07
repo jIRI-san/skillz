@@ -1,0 +1,37 @@
+{
+  "name": "design-notes",
+  "version": "1.0.0",
+  "description": "Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run.",
+  "author": "jIRI-san",
+  "license": "MIT",
+  "tags": [
+    "prompt",
+    "documentation",
+    "design-notes"
+  ],
+  "dependencies": [],
+  "status": "stable",
+  "files": [
+    {
+      "src": "prompts/cdn.prompt.md",
+      "dest": "prompts/cdn.prompt.md"
+    },
+    {
+      "src": "prompts/udn.prompt.md",
+      "dest": "prompts/udn.prompt.md"
+    },
+    {
+      "src": "prompts/design-notes/assets/design-notes-index.seed.md",
+      "dest": "prompts/design-notes/assets/design-notes-index.seed.md"
+    },
+    {
+      "src": "prompts/design-notes/assets/design-note-writing-style.seed.md",
+      "dest": "prompts/design-notes/assets/design-note-writing-style.seed.md"
+    }
+  ],
+  "evals": {
+    "path": "evals/",
+    "status": "none",
+    "lastRun": null
+  }
+}

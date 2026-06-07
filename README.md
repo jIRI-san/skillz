@@ -70,12 +70,12 @@ Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 | `autopilot` | 1.1.0 | partial | — | 18 | Self-contained autopilot plugin payload for agent, skill, scripts, schemas, and devcontainer. |
 | `code-review` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
 | `continue-implementation` | 1.0.0 | stable | autopilot, code-review | 3 | Code implementation workflow skill with autonomous execution guidance. |
-| `create-design-notes` | 1.0.0 | stable | — | 1 | Create design notes prompt. |
 | `create-implementation-plan` | 1.0.0 | stable | design-review | 5 | Implementation plan generation skill for coding workflows. |
+| `design-notes` | 1.0.0 | stable | — | 4 | Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run. |
 | `design-review` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
 | `process-pr-comments` | 1.0.0 | stable | — | 2 | Process PR comments skill for classifying, fixing, and replying to review feedback. |
-| `update-design-notes` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
 <!-- END SKALARY PLUGIN CATALOG -->
+
 
 
 

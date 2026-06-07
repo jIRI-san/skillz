@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T13:16:10.8637682Z",
+  "generatedAt": "2026-06-07T13:46:49.9415851Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -229,29 +229,6 @@
     },
     {
       "author": "jIRI-san",
-      "dependencies": [],
-      "description": "Create design notes prompt.",
-      "evals": {
-        "status": "none"
-      },
-      "files": [
-        {
-          "dest": "prompts/cdn.prompt.md",
-          "sha256": "e8b8c8e98e45736b08c62ec1f8e8ca35a286bd780850274890c95599f66b571a",
-          "src": "prompts/cdn.prompt.md"
-        }
-      ],
-      "license": "MIT",
-      "name": "create-design-notes",
-      "status": "stable",
-      "tags": [
-        "documentation",
-        "prompt"
-      ],
-      "version": "1.0.0"
-    },
-    {
-      "author": "jIRI-san",
       "dependencies": [
         "design-review"
       ],
@@ -292,6 +269,45 @@
       "tags": [
         "planning",
         "skill"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "author": "jIRI-san",
+      "dependencies": [],
+      "description": "Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run.",
+      "evals": {
+        "status": "none"
+      },
+      "files": [
+        {
+          "dest": "prompts/cdn.prompt.md",
+          "sha256": "1c35a3662ade7722ae89e8322802d2a5ea2bd7518fc9973f394a6c8b112a1017",
+          "src": "prompts/cdn.prompt.md"
+        },
+        {
+          "dest": "prompts/design-notes/assets/design-note-writing-style.seed.md",
+          "sha256": "b48f49bfd89cdbdac90e0b90c5a0ac47b11662ed26c2dc3376cdda97c692f913",
+          "src": "prompts/design-notes/assets/design-note-writing-style.seed.md"
+        },
+        {
+          "dest": "prompts/design-notes/assets/design-notes-index.seed.md",
+          "sha256": "40070a4a0651ea12b517309c443c3000cc0b2fe2de1e692f925e3bc44ee15a92",
+          "src": "prompts/design-notes/assets/design-notes-index.seed.md"
+        },
+        {
+          "dest": "prompts/udn.prompt.md",
+          "sha256": "41f862af03fca73a4e93dd10f6dbf23f9e5da9777fbf1ef863a3d744637b666f",
+          "src": "prompts/udn.prompt.md"
+        }
+      ],
+      "license": "MIT",
+      "name": "design-notes",
+      "status": "stable",
+      "tags": [
+        "design-notes",
+        "documentation",
+        "prompt"
       ],
       "version": "1.0.0"
     },
@@ -366,29 +382,6 @@
         "pr",
         "review",
         "skill"
-      ],
-      "version": "1.0.0"
-    },
-    {
-      "author": "jIRI-san",
-      "dependencies": [],
-      "description": "Update design notes prompt.",
-      "evals": {
-        "status": "none"
-      },
-      "files": [
-        {
-          "dest": "prompts/udn.prompt.md",
-          "sha256": "c1d09004a2513725de8a2dee84a102c2a19bf8a39ece531f4d3529bc0e616b9a",
-          "src": "prompts/udn.prompt.md"
-        }
-      ],
-      "license": "MIT",
-      "name": "update-design-notes",
-      "status": "stable",
-      "tags": [
-        "documentation",
-        "prompt"
       ],
       "version": "1.0.0"
     }

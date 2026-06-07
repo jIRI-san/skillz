@@ -13,8 +13,10 @@ Customization artifacts are **workspace-local** and centered in `.github/`. The 
 | File | Type | Purpose |
 |---|---|---|
 | `.github/copilot-instructions.md` | Workspace Instructions | Always-on project context; single `<instruction>` entry loads `.design-notes.md` as the discovery layer for all contextual design notes |
-| `.github/prompts/cdn.prompt.md` | Prompt (`/cdn`) | Creates a new design note file from a name argument |
-| `.github/prompts/udn.prompt.md` | Prompt (`/udn`) | Updates design notes from the current chat session |
+| `.github/prompts/cdn.prompt.md` | Prompt (`/cdn`) | Creates a new design note file from a name argument; bootstraps the `docs/design-notes/` scaffold on first run if missing |
+| `.github/prompts/udn.prompt.md` | Prompt (`/udn`) | Updates design notes from the current chat session; bootstraps the `docs/design-notes/` scaffold on first run if missing |
+| `.github/prompts/design-notes/assets/design-notes-index.seed.md` | Seed asset | Generic `.design-notes.md` index copied to `docs/design-notes/.design-notes.md` during first-run bootstrap |
+| `.github/prompts/design-notes/assets/design-note-writing-style.seed.md` | Seed asset | Writing-style guide copied to `docs/design-notes/project/design-note-writing-style.design.md` during first-run bootstrap |
 | `.github/prompts/cr.prompt.md` | Prompt (`/cr`) | Code review entry point |
 | `.github/prompts/dr.prompt.md` | Prompt (`/dr`) | Design review entry point |
 | `.github/agents/dr.agent.md` | Agent (`dr`) | Design review orchestrator — reviews a plan using three specialist models |
@@ -121,6 +123,14 @@ All three subagents perform a **comprehensive review** across every important di
 ```
 
 See [autopilot-skill.design.md](../architecture/autopilot-skill.design.md) for the autopilot skill (`/ci` Autonomous handoff, first-run bootstrap, custom host command) and [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the host/container/sandbox execution infrastructure that backs the `ci` skill's autopilot modes.
+
+## Design-Notes Bootstrap (`design-notes` plugin)
+
+The `/cdn` and `/udn` prompts ship together in a single `design-notes` plugin (the former standalone `create-design-notes` / `update-design-notes` plugins were consolidated into it). The plugin also ships two seed assets installed alongside the prompts under `.github/prompts/design-notes/assets/`.
+
+Because the installer is hard-confined to `.github/` (it cannot write to `docs/`), the `docs/design-notes/` scaffold is bootstrapped **on first prompt use**, not at install time — the only hook available. Each prompt's Step 0 checks whether `docs/design-notes/.design-notes.md` exists; if missing, it scaffolds `docs/design-notes/` + `docs/design-notes/project/` and copies the two seeds (index → `.design-notes.md`, writing-style → `project/design-note-writing-style.design.md`), never overwriting existing files. In a repo that already has design notes (like this one), Step 0 is a no-op.
+
+The writing-style seed mirrors this repo's `docs/design-notes/project/design-note-writing-style.design.md`; keep them in sync when the canonical guide changes.
 
 ## Plugin Eval Workflow
 

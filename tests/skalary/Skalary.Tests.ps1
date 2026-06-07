@@ -332,18 +332,18 @@ Describe 'skalary plugin registry scripts' {
         $source = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'create-design-notes', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'design-notes', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         $plugins = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1'
-        $cdn = @($plugins | Where-Object { [string]$_.name -eq 'create-design-notes' } | Select-Object -First 1)
+        $cdn = @($plugins | Where-Object { [string]$_.name -eq 'design-notes' } | Select-Object -First 1)
         $cdn.Count | Should -Be 1
         [bool]$cdn[0].installed | Should -BeTrue
         [bool]$cdn[0].modified | Should -BeFalse
 
         Set-Content -LiteralPath (Join-Path $target '.github/prompts/cdn.prompt.md') -Value "mutated`n" -Encoding utf8
         $pluginsAfter = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1' -Parameters @{ Installed = $true }
-        $cdnAfter = @($pluginsAfter | Where-Object { [string]$_.name -eq 'create-design-notes' } | Select-Object -First 1)
+        $cdnAfter = @($pluginsAfter | Where-Object { [string]$_.name -eq 'design-notes' } | Select-Object -First 1)
         $cdnAfter.Count | Should -Be 1
         [bool]$cdnAfter[0].modified | Should -BeTrue
 
@@ -371,7 +371,7 @@ Describe 'skalary plugin registry scripts' {
 
     It 'fails Test-Registry on destination collisions' {
         $repo = New-RepoClone
-        $manifestPath = Join-Path $repo 'plugins/create-design-notes/plugin.json'
+        $manifestPath = Join-Path $repo 'plugins/design-notes/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.files[0].dest = 'prompts/udn.prompt.md'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
@@ -392,7 +392,7 @@ Describe 'skalary plugin registry scripts' {
         param($Dest)
 
         $repo = New-RepoClone
-        $manifestPath = Join-Path $repo 'plugins/create-design-notes/plugin.json'
+        $manifestPath = Join-Path $repo 'plugins/design-notes/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.files[0].dest = $Dest
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
