@@ -35,12 +35,17 @@ Write results to the plan folder `evidence.md` using:
 ✓/✗ REQ-N — <evidence> — <result> — <commit>
 ```
 
+Receipt rules:
+- Rebuild `evidence.md` on each phase/plan crosscheck run (do not append to stale results from old commits).
+- Emit one line per required marker; if a marker is not executed, emit `✗ ... — unrun`.
+- Use the current `HEAD` commit SHA in every emitted line.
+
 ## Phase crosscheck
 
 1. Collect REQ IDs referenced by steps in the current phase.
 2. Validate each acceptance criterion against implementation + typed evidence checks (`test:`/`file:`/`review:`).
 3. Append one receipt line per marker to `evidence.md` with the current commit SHA.
-3. Fail phase completion if blocking criteria are unsatisfied.
+4. Fail phase completion if blocking criteria are unsatisfied.
 
 ## Plan crosscheck
 
@@ -52,6 +57,7 @@ Write results to the plan folder `evidence.md` using:
 
 Before archive/PR completion, require:
 - `evidence.md` exists and is current.
-- No unrun or failing required evidence (`✗`) remains unless explicitly deferred in Decisions.
+- No unrun or failing required evidence (`✗`) remains unless explicitly deferred in Decisions (defer by REQ ID with rationale).
+- This step wires the gate only; run `PlanCrosscheck` blocking target resolution only at true plan finalization (after all phases).
 
 If the gate is not satisfied, block archival/completion.
