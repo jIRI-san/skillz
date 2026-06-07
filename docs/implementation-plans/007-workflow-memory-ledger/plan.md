@@ -124,8 +124,8 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 <!-- Points: 2+2 = 4 -->
 
-- [ ] 2.1 Create `scripts/skalary/Remove-LedgerEntry.ps1` (`-Category -Match <normalized-line>`, **full-line `[string]::Equals(...,Ordinal)`**, regex disabled; same `-Category` ValidateSet + repo-confined resolution as `Add`): delete under the same lock; **move to `.archive/`** (not hard-delete); retention guard (never prune current-plan or above-active-recurrence-threshold; target prior-plan `/udn`-flagged obsolete entries); emit a visible diff. (REQ-5, RISK-6, RISK-8) [after: 1.2] `M`
-- [ ] 2.2 Add `tests/skalary/Remove-LedgerEntry.Tests.ps1` (full-line equality; rejects bad category; retention guard refuses current-plan even when matched; `.archive/` excluded from readers; no substring over-deletion) wired into `npm run test:unit`. (REQ-5, RISK-6) [after: 2.1] `M`
+- [x] 2.1 Create `scripts/skalary/Remove-LedgerEntry.ps1` (`-Category -Match <normalized-line>`, **full-line `[string]::Equals(...,Ordinal)`**, regex disabled; same `-Category` ValidateSet + repo-confined resolution as `Add`): delete under the same lock; **move to `.archive/`** (not hard-delete); retention guard (never prune current-plan or above-active-recurrence-threshold; target prior-plan `/udn`-flagged obsolete entries); emit a visible diff. (REQ-5, RISK-6, RISK-8) [after: 1.2] `M`
+- [x] 2.2 Add `tests/skalary/Remove-LedgerEntry.Tests.ps1` (full-line equality; rejects bad category; retention guard refuses current-plan even when matched; `.archive/` excluded from readers; no substring over-deletion) wired into `npm run test:unit`. (REQ-5, RISK-6) [after: 2.1] `M`
 
 ## Phase 3: Ephemeral capture mid-run (committed per phase)
 <!-- worktree: (recorded by /ci when worktree is created) -->
