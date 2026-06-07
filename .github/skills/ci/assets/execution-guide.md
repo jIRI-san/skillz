@@ -13,17 +13,38 @@
 
    No entries for this phase.
    ```
-3. Build using project command.
-4. Test using project command (use a relevant subset only when safe and obvious).
-5. Validate step acceptance criteria tied to referenced `REQ-N` rows.
-6. Run `@cr` on step scope and apply clear, non-ambiguous fixes.
-7. Persist `@cr` findings + triage to `cr-log.md` using:
+3. Initialize `learnings.md` in the selected plan folder by name for the active phase (append this section if missing; do not truncate prior phases):
+
+   ```text
+   ## Learnings Capture
+   Phase: <N>
+
+   No entries for this phase.
+   ```
+4. Build using project command.
+5. Test using project command (use a relevant subset only when safe and obvious).
+6. Validate step acceptance criteria tied to referenced `REQ-N` rows.
+7. Run `@cr` on step scope and apply clear, non-ambiguous fixes.
+8. Persist `@cr` findings + triage to `cr-log.md` using:
 
    ```text
    - [<source-step>] [src:code-review] [sev:<Critical|High|Med|Low>] <one-line finding or triage note>
    ```
-8. Re-run build/test when changes are made.
-9. Mark step `[x]` and commit atomically with plan update.
+9. Append to `learnings.md` only on triggers (`rework>1`, `plan-contradiction`, `reusable-pattern`) using:
+
+   ```text
+   - [<source-step>] [trigger:<rework>1|plan-contradiction|reusable-pattern>] <one-line learning>
+   ```
+
+   Replace the current phase placeholder (`No entries for this phase.`) when writing the first real entry.
+
+   Cap learnings at 10 entries per plan across all phase sections; if exceeded, write one overflow summary:
+
+   ```text
+   - [<source-step>] [trigger:overflow-summary] Folded <N> additional learnings into this summary.
+   ```
+10. Re-run build/test when changes are made.
+11. Mark step `[x]` and commit atomically with plan update.
 
 ## Guardrails
 

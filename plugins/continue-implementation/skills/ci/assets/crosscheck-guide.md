@@ -96,3 +96,36 @@ When entries exist, replace the placeholder with one entry per capture:
 ```
 
 Stage and commit the log by explicit filename when it changes. Do not write `docs/review-ledger/*` during this mid-run capture step.
+
+## Ephemeral capture: `learnings.md` (trigger-based, mid-run only)
+
+Capture learnings in the plan folder `learnings.md` only when one of these triggers fires:
+
+- `rework>1`: more than one fix/retry iteration was needed.
+- `plan-contradiction`: a run-time surprise contradicted the current plan.
+- `reusable-pattern`: a pattern emerged that should be reused in future steps/plans.
+
+Per phase, initialize `learnings.md` by name by appending a new phase section if missing (do not truncate prior phases):
+
+```text
+## Learnings Capture
+Phase: <N>
+
+No entries for this phase.
+```
+
+Entry shape (must include trigger-type and source-step):
+
+```text
+- [<source-step>] [trigger:<rework>1|plan-contradiction|reusable-pattern>] <one-line learning>
+```
+
+When appending the first real entry for a phase, replace that phase's `No entries for this phase.` line.
+
+Enforce a hard per-plan cap of 10 learning entries across all phase sections in `learnings.md`. If new learnings exceed the cap, append one overflow summary entry and stop appending individual entries:
+
+```text
+- [<source-step>] [trigger:overflow-summary] Folded <N> additional learnings into this summary.
+```
+
+Stage and commit the log by explicit filename when it changes. Do not write `docs/review-ledger/*` during this mid-run capture step.

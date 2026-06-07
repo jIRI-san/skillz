@@ -25,7 +25,7 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
    - **Exception: conditional Finalization step** → do not stop immediately. Run finalization flow: enforce `archival-gate`, then either complete autonomously or escalate with draft PR + marker + exit 42.
    - `[discovery]` → treat as exploratory. Acceptance criteria are softer; iterate until the step's intent is satisfied rather than a strict pass/fail.
 8. **Mark in-progress** — change `- [ ]` to `- [~]` for the current step.
-9. **Initialize ephemeral logs by name** — in the selected plan folder, ensure `cr-log.md` exists for the active phase with a stable header and an explicit empty-state line:
+9. **Initialize ephemeral logs by name** — in the selected plan folder, ensure `cr-log.md` and `learnings.md` exist for the active phase with stable headers and explicit empty-state lines. For `learnings.md`, append a new phase section if missing (do not truncate prior phases):
 
    ```text
    ## CR Capture
@@ -34,11 +34,31 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
    No entries for this phase.
    ```
 
-   Stage/commit this file by explicit name when changed (never wildcard staging). Mid-run capture is ephemeral only; do not write `docs/review-ledger/*` here.
+   ```text
+   ## Learnings Capture
+   Phase: <N>
+
+   No entries for this phase.
+   ```
+
+   Stage/commit these files by explicit name when changed (never wildcard staging). Mid-run capture is ephemeral only; do not write `docs/review-ledger/*` here.
 10. **Pre-execution validation** — run the committed `.autopilot.json` test command (`npm test` in this repo). It is the deterministic evidence-runner and executes `validate-plan` before any other checks. If this fails, stop and fix integrity issues before writing code.
 11. **Implement** — write the code/files for this step. Follow design notes in `docs/design-notes/`. Make only changes necessary for this step.
    - **Try the simplest approach first.** If the plan specifies a complex solution but a simpler one might work, try the simple one. Only escalate to complexity when the simple approach demonstrably fails.
    - **Tests must encode invariants, not snapshots.** Assert the meaningful property (e.g. "cells grow outward from center") not an incidental observation (e.g. "all center-row cells have height 42px"). If a test would break from a valid future change to an unrelated aspect, it's asserting the wrong thing.
+   - **Learning capture trigger:** append to `learnings.md` only when one trigger fires — `rework>1`, `plan-contradiction`, or `reusable-pattern` — and include trigger type + source step:
+
+     ```text
+     - [<source-step>] [trigger:<rework>1|plan-contradiction|reusable-pattern>] <one-line learning>
+     ```
+
+     Replace the current phase placeholder (`No entries for this phase.`) when writing the first real entry.
+
+     Enforce a hard per-plan cap of 10 entries across all phase sections. If exceeded, append one overflow summary and stop appending individual entries:
+
+     ```text
+     - [<source-step>] [trigger:overflow-summary] Folded <N> additional learnings into this summary.
+     ```
 12. **Build** — run the build command from `.autopilot.json` `build` field. Fix errors and retry up to `maxIterationsPerStep` times.
 13. **Test** — run the test command from `.autopilot.json` `test` field. If a relevant test filter can be identified from the changed subsystem (e.g. `--filter Category=Scheduling`), use it for faster feedback. Otherwise run all tests. Fix failures and retry.
 14. **Format** — run the formatter (e.g. `dotnet format`). Stage any formatting changes.
