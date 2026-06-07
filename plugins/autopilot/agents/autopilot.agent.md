@@ -139,10 +139,10 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
 2. **archival-gate** — read `evidence.md` and refuse archival/PR on any `✗` or `unrun` REQ marker unless explicitly deferred in Decisions (REQ ID + rationale). If the gate is not satisfied, do not archive.
 
 3. **Harvest finalization (canonical)**:
-   - Run this block only when repo infra exists:
-     - `if (Test-Path scripts/skalary/Add-LedgerEntry.ps1)` and `if (Test-Path scripts/skalary/Remove-LedgerEntry.ps1)` and `if (Test-Path docs/review-ledger)`.
-     - Also require `Test-Path docs/review-ledger/.archive` and required category files (at minimum `security.md` + `testing.md`) before invoking ledger scripts.
-     - If checks fail, skip harvest and follow the existing branch policy without infra scripts: autonomous completion may continue standard archive/push/PR; `@human` completion must still use draft-PR + marker + exit 42 (no archive).
+   - Run append-harvest when append infra exists:
+     - `if (Test-Path scripts/skalary/Add-LedgerEntry.ps1)` and `if (Test-Path docs/review-ledger)`.
+     - Also require `Test-Path docs/review-ledger/security.md` and `Test-Path docs/review-ledger/testing.md` before invoking `Add`.
+     - If append infra is missing, skip append harvest and follow existing branch policy without infra scripts: autonomous completion may continue standard archive/push/PR; `@human` completion must still use draft-PR + marker + exit 42 (no archive).
    - **Fail-loud contract for ephemeral logs by name**:
      - Require `evolution-log.md` to contain `## Capture`.
      - Require `cr-log.md` and `learnings.md` to contain either a phase section or `No entries for this phase.`.
@@ -160,10 +160,11 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
      - Stage updated ledger files by explicit name under `docs/review-ledger/` and commit before deciding branch outcome.
      - No-op handling: if harvest produces no staged ledger delta (idempotent duplicate run), skip the append commit and continue to branch selection.
    - **Branch after append-harvest commit:**
-     - **Autonomous branch:** `git push origin <current-branch>` -> archive commit -> `git push origin <current-branch>` -> `gh pr create`.
-     - **Escalation branch (`@human`):** `git push origin <current-branch>` -> run prune + `/udn` reconciliation -> commit prune/design-note edits -> `git push origin <current-branch>` -> `gh pr create --draft --head <branch> --label "@human"` -> write `.autopilot-finalize-needed` marker -> exit 42. Never archive on this branch.
+     - **Autonomous branch:** `git push origin <current-branch>` -> archive commit -> **required post-archive `git push origin <current-branch>`** -> `gh pr create`.
+     - **Escalation branch (`@human`):** `git push origin <current-branch>` -> run `/udn` reconciliation first -> derive full-line prune candidates -> run prune -> commit prune/design-note edits -> `git push origin <current-branch>` -> `gh pr create --draft --head <branch> --label "@human"` -> write `.autopilot-finalize-needed` marker -> exit 42. Never archive on this branch.
      - `/udn` contract in autopilot finalization: run deterministic reconciliation prompts/checks; if ambiguity remains, keep the draft PR path + marker + exit 42 instead of autonomous archival.
    - **Prune scope in escalation only:**
+     - Prune preconditions: `Test-Path scripts/skalary/Remove-LedgerEntry.ps1` and `Test-Path docs/review-ledger/.archive`; if missing, skip prune and continue direct draft-PR escalation path.
      - Call `Remove-LedgerEntry.ps1` via argument arrays (`ArgumentList`), never a shell string.
      - Always pass required `Remove` arguments: `-Category`, `-CurrentPlan`, and full-line candidate match payload (`-Match` or `-MatchBase64`).
      - Prune only prior-plan entries flagged obsolete/superseded by `/udn`; retention guards remain enforced by script.

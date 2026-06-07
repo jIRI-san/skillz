@@ -11,3 +11,4 @@ Phase: 5
 - [5.2] [src:code-review] [sev:High] Infra-missing fallback now preserves conditional `@human` escalation semantics (draft PR + marker + exit 42, no archive) instead of silently allowing archive flow.
 - [5.2] [src:code-review] [sev:High] `/ci` mirror fallback now matches canonical branch semantics so missing infra cannot bypass required `@human` draft escalation behavior.
 - [5.2] [src:code-review] [sev:High] Harvest prune contract now requires `Remove-LedgerEntry` mandatory arguments (`-Category`, `-CurrentPlan`) and no-op append handling, with mirror parity in both plugin and `.github` assets.
+- [5.2] [src:code-review] [sev:High] Finalization ordering now explicitly requires post-archive push before PR creation and `/udn`-before-Remove candidate derivation with prune preconditions.
