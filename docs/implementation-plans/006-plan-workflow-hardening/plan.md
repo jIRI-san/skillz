@@ -125,7 +125,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 <!-- Points: 2+2 = 4 -->
 
-- [ ] 3.1 Add evidence verification to `ci`/autopilot crosscheck guide: `test:<TestId>` (run named Pester test), `file:<path>#<assertion>` (delegate to the dot-sourceable `PlanEvidence` callable from 2.2 — a real pre-approvable script, not in-chat), `review:cr|dr` (finding-class absent). Runs at phase/plan crosschecks; cheap+deterministic. (REQ-17, RISK-3) [after: 1.3, 2.2] `M`
+- [x] 3.1 Add evidence verification to `ci`/autopilot crosscheck guide: `test:<TestId>` (run named Pester test), `file:<path>#<assertion>` (delegate to the dot-sourceable `PlanEvidence` callable from 2.2 — a real pre-approvable script, not in-chat), `review:cr|dr` (finding-class absent). Runs at phase/plan crosschecks; cheap+deterministic. (REQ-17, RISK-3) [after: 1.3, 2.2] `M`
 - [ ] 3.2 Add `evidence.md` receipt + completion gate: crosschecks write `✓/✗ REQ-N — <evidence> — <result> — <commit>`; gate refuses completion on any `✗`/unrun unless deferred in Decisions. This step only **wires** the gate (a `file:…#contains:archival-gate` check); `-Stage PlanCrosscheck` (blocking target resolution) is **executed only at true plan finalization after Phase 5** — never when 3.2 lands, else it self-blocks on unbuilt Phase 4/5 targets (round-3 #5). (REQ-17, REQ-18, RISK-4) [after: 3.1] `M`
 
 ## Phase 4: Autopilot loop coherence + finalization

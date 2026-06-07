@@ -51,12 +51,17 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
 
 ## On Phase Completion
 
-1. **Phase crosscheck** — verify all REQ-N IDs referenced by steps in this phase are satisfied:
+1. **Phase crosscheck** — verify all REQ-N IDs referenced by steps in this phase are satisfied and write/update the plan-folder `evidence.md` receipt:
    ```
    Phase N Crosscheck:
-   ✓ REQ-1 — criterion — covered by TestX / implemented in File.cs
-   ✗ REQ-3 — criterion — NOT satisfied: [reason]
+   ✓ REQ-1 — test:TestId — passed — <commit>
+   ✗ REQ-3 — file:path#assertion — failed: [reason] — <commit>
    ```
+   Evidence rules at crosscheck:
+   - `test:<TestId>`: run the named Pester test only; missing or failing test = fail.
+   - `file:<path>#<assertion>`: verify through `scripts/skalary/Test-Plan.ps1 -EvidenceMarker ...` (PlanEvidence callable), never in-chat parsing.
+   - `review:cr|dr`: require a review result proving the claimed finding class is absent; no review result = unrun evidence.
+   - If `evidence.md` changed during crosscheck, stage and commit it before phase push so receipt state is durable across invocations.
    If any criterion fails, fix, re-run build/test, and commit the fix before proceeding.
 
 2. **Push** — `git push origin <current-branch>` (regular push, never force-push).
@@ -65,16 +70,17 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
 
 ## On Plan Completion
 
-1. **Plan-level crosscheck** — verify every REQ-N and RISK-N from the plan:
+1. **Plan-level crosscheck** — verify every REQ-N and RISK-N from the plan, re-run typed evidence checks, and append final receipt lines to `evidence.md`:
    ```
    Plan NNN Final Crosscheck:
    Requirements: X/Y satisfied
-   ✓ REQ-1 — criterion — satisfied
+   ✓ REQ-1 — test:TestId — passed — <commit>
    ✗ REQ-4 — criterion — gap: [detail]
    Risks: A/B mitigated
    ✓ RISK-1 — mitigated by step 2.1
    ✗ RISK-2 — not addressed: [detail]
    ```
+   `PlanCrosscheck` stage (blocking target resolution) runs only at true finalization.
    If any requirement or risk is unresolved, attempt to fix. If unfixable autonomously, note it in the PR body.
 
 2. **Archive plan** — mark the plan done and move it:
