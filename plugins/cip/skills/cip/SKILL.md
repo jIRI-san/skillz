@@ -13,7 +13,7 @@ context: fork
 
 > **Interaction rule:** Every question that offers predefined choices (e.g. plan selection, new/resume, yes/no confirmations, continue/stop) **must** use the `vscode_askQuestions` tool with `options` — never plain-text prompts. Free-form questions (e.g. interview topics, open-ended design input) can remain as regular text.
 
-## Non-negotiable planning summary
+## non-negotiable planning summary
 
 - Resolve architecture decisions before drafting; no silent TBDs.
 - Keep steps checklist-style, specific, and implementation-oriented.
