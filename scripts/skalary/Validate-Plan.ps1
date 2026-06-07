@@ -15,9 +15,9 @@ function Resolve-DefaultPlanPath {
         [string]$Root
     )
 
-    $plans = Get-ChildItem -LiteralPath (Join-Path $Root 'docs/implementation-plans') -File -Recurse -Filter 'plan.md' |
+    $plans = @(Get-ChildItem -LiteralPath (Join-Path $Root 'docs/implementation-plans') -File -Recurse -Filter 'plan.md' |
         Where-Object { $_.FullName -notmatch '/archived/' } |
-        Sort-Object FullName
+        Sort-Object FullName)
     if ($plans.Count -eq 0) {
         throw 'No plan.md files found in docs/implementation-plans/.'
     }
