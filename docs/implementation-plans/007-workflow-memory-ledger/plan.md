@@ -110,7 +110,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 <!-- Points: 1 = 1 -->
 
-- [ ] 0.1 Add `tests/skalary/Dependency.Tests.ps1` (`Skalary.Dependency.Plan006Present`) **and** an off-container non-Pester check both asserting 006 **behaviorally** (resolve the `file:` evaluator via the public path — `Get-Command`/module export OR `(Get-Command Test-Plan).Parameters.ContainsKey('VerifyEvidence')` — + probe a known pass/fail; assert the guides, amended Rule 5, evidence vocab, `test:unit` gate). Wire the non-Pester check into the autopilot runner plan-start hook + the `/ci` harvest entry as a **hard start-gate** (hard-fail/exit if 006 absent), independent of skip-on-absent `test:unit`. (REQ-13, RISK-3) `S`
+- [x] 0.1 Add `tests/skalary/Dependency.Tests.ps1` (`Skalary.Dependency.Plan006Present`) **and** an off-container non-Pester check both asserting 006 **behaviorally** (resolve the `file:` evaluator via the public path — `Get-Command`/module export OR `(Get-Command Test-Plan).Parameters.ContainsKey('VerifyEvidence')` — + probe a known pass/fail; assert the guides, amended Rule 5, evidence vocab, `test:unit` gate). Wire the non-Pester check into the autopilot runner plan-start hook + the `/ci` harvest entry as a **hard start-gate** (hard-fail/exit if 006 absent), independent of skip-on-absent `test:unit`. (REQ-13, RISK-3) `S`
 
 ## Phase 1: Ledger store + append script + tests
 <!-- worktree: (recorded by /ci when worktree is created) -->

@@ -61,3 +61,13 @@ Before archive/PR completion, require:
 - This step wires the gate only; run `PlanCrosscheck` blocking target resolution only at true plan finalization (after all phases).
 
 If the gate is not satisfied, block archival/completion.
+
+## Dependency preflight (hard start-gate)
+
+For plans declaring `<!-- depends-on: 006 -->`, run this deterministic non-Pester check at plan start and again immediately before any interactive harvest/finalization branch:
+
+```powershell
+pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -PlanPath <selected-plan-path>
+```
+
+It validates 006 behavior contracts through public script paths (including pass/fail `file:` probes, evidence vocabulary contracts, Rule 5 wording, and the `test:unit` gate). If it exits non-zero, stop execution immediately.

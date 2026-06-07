@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T15:13:24.1752351Z",
+  "generatedAt": "2026-06-07T17:20:48.5976185Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -38,6 +38,16 @@
           "dest": "skills/autopilot/devcontainer/Dockerfile",
           "sha256": "2acb5fb9a9cdeeb4ef16c7d90b63cd72e32bde811d4be001f4302d9ea0490971",
           "src": "devcontainer/Dockerfile"
+        },
+        {
+          "dest": "skills/autopilot/schemas/autopilot.host.schema.json",
+          "sha256": "03c4007e638b12bbe2da1a00af0f7272856b1c1d5661c53f2679e2e24f97125b",
+          "src": "schemas/autopilot.host.schema.json"
+        },
+        {
+          "dest": "skills/autopilot/schemas/autopilot.schema.json",
+          "sha256": "3656d07d02bce46d51315104700283f9f8d9fa452d7c03cbdcb6b0a3a9c065f3",
+          "src": "schemas/autopilot.schema.json"
         },
         {
           "dest": "skills/autopilot/scripts/clean-sandbox-cache.ps1",
@@ -76,7 +86,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/launch.ps1",
-          "sha256": "2e1b8338c4c6ee405b9f101fd747f1c677d296dc81f63ed98e67587942498010",
+          "sha256": "2a0e2de630669b62649422d8a2357c95566954c52fc5583005d11c9a45cc06a6",
           "src": "scripts/launch.ps1"
         },
         {
@@ -88,16 +98,6 @@
           "dest": "skills/autopilot/scripts/validate-auth.ps1",
           "sha256": "6c4f4744600cdfb8bacad1e4fe52b5965a3e3837d540d0451253e74a3042d874",
           "src": "scripts/validate-auth.ps1"
-        },
-        {
-          "dest": "skills/autopilot/schemas/autopilot.host.schema.json",
-          "sha256": "03c4007e638b12bbe2da1a00af0f7272856b1c1d5661c53f2679e2e24f97125b",
-          "src": "schemas/autopilot.host.schema.json"
-        },
-        {
-          "dest": "skills/autopilot/schemas/autopilot.schema.json",
-          "sha256": "3656d07d02bce46d51315104700283f9f8d9fa452d7c03cbdcb6b0a3a9c065f3",
-          "src": "schemas/autopilot.schema.json"
         },
         {
           "dest": "skills/autopilot/SKILL.md",
@@ -203,7 +203,7 @@
       "files": [
         {
           "dest": "skills/ci/assets/crosscheck-guide.md",
-          "sha256": "0d7308fec238f328ffd6eb1f416130a1a243db6de524fb342514f02be48294f3",
+          "sha256": "7567162ebf6f2cda8d14f7d2e25fc6e984efb3cd480926673defe96deddc8779",
           "src": "skills/ci/assets/crosscheck-guide.md"
         },
         {
@@ -213,7 +213,7 @@
         },
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "113cfebb65e5cb0580479c557197a749b9130d7b8d4beb268761a78e79953ee2",
+          "sha256": "55e375a0170f976b096009ce05cc136db30c3dd3072935b4883aeefce416b9a0",
           "src": "skills/ci/SKILL.md"
         }
       ],

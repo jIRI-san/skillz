@@ -19,6 +19,11 @@ context: fork
 2. Migrate any legacy loose plan files into folder structure before continuing.
 3. Read the selected plan and any sibling `evolution-log.md` / `decisions/*.md`.
 4. Read `docs/design-notes/.design-notes.md` and load relevant design notes for the current step.
+5. Run dependency preflight as a hard gate when the selected plan declares `depends-on: 006`:
+
+```powershell
+pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -PlanPath <selected-plan-path>
+```
 
 ## Step 2: Emit progress snapshot (always)
 
