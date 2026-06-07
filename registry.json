@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T17:41:10.6287646Z",
+  "generatedAt": "2026-06-07T17:48:43.5998500Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -239,12 +239,12 @@
       "files": [
         {
           "dest": "skills/cip/assets/dr-guide.md",
-          "sha256": "e62ce1d7d1bd8a36bc96c3716658277e83f7b4cf78d241aab0399da5f170d7ea",
+          "sha256": "bcb7c217fb8e7a8c4f51a8ae1d604c920356f4845a53b1f8b2b9aff254d9a2fe",
           "src": "skills/cip/assets/dr-guide.md"
         },
         {
           "dest": "skills/cip/assets/drafting-guide.md",
-          "sha256": "3a4efe090f6f578c14b7ea72bf780e068ba0021aa0c2bed3d299f2377ba95153",
+          "sha256": "babbb355e27cdee977211877bab91617194c00a098e34014aa1e89c21bdb7782",
           "src": "skills/cip/assets/drafting-guide.md"
         },
         {

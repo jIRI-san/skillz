@@ -49,3 +49,21 @@ When approaching limits:
 
 - Set/update `<!-- cip-stage: drafted -->` after drafting.
 - Re-run `Test-Plan.ps1 -Stage Draft` after drafting and after each DR round.
+
+## Capture section (`evolution-log.md`)
+
+When drafting or refining a plan, initialize and maintain a delimited `## Capture` section in the plan folder `evolution-log.md` (separate from DR-round history):
+
+```markdown
+## Capture
+
+No entries for this phase.
+```
+
+Record interview decisions and notable implementation assumptions in this section only, using one line per entry:
+
+```text
+- [interview] [step:<source-step>] <decision or assumption>
+```
+
+Initialize this section and commit `evolution-log.md` by explicit filename at phase start, even if no entries are added yet. Commit again whenever entries are appended.
