@@ -141,7 +141,11 @@ function Invoke-CopilotPhase {
         }
 
         $psi.FileName = 'cmd.exe'
-        $psi.Arguments = $cmdTokens -join ' '
+        # cmd.exe /c strips only the outermost quote pair before parsing. Wrap the
+        # whole command in an extra pair so a quoted executable path plus quoted
+        # args survive intact (without this, a quoted copilot.cmd path is corrupted).
+        $innerCmd = ($cmdTokens | Select-Object -Skip 1) -join ' '
+        $psi.Arguments = '/c "' + $innerCmd + '"'
     }
     elseif ($CopilotType -eq 'ps1') {
         $pwshTokens = @(

@@ -117,9 +117,10 @@ if ($effectiveRuntime -eq 'sandbox') {
 }
 
 # --- Detect partial state ---
-$branchName = "feature/$PlanSlug"
+$branchName = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
 if ($effectiveRuntime -eq 'host') {
-    $worktreePath = Join-Path (Split-Path $RepoRoot -Parent) "autopilot-$PlanSlug"
+    $worktreeRoot = Join-Path (Split-Path $RepoRoot -Parent) "$((Split-Path $RepoRoot -Leaf)).worktrees"
+    $worktreePath = Join-Path $worktreeRoot $branchName.Replace('/', '-')
     if (Test-Path $worktreePath) {
         Write-Host ""
         Write-Host "NOTICE: Existing worktree detected at $worktreePath"
@@ -194,7 +195,9 @@ $dispatchParams = @{
     Token = $Token
     Branch = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
 }
-if ($AdoToken) { $dispatchParams.AdoToken = $AdoToken }
+# Host mode runs locally and authenticates to git via ambient credentials, so it
+# does not accept -AdoToken; only forward the token to container/sandbox runtimes.
+if ($AdoToken -and $effectiveRuntime -ne 'host') { $dispatchParams.AdoToken = $AdoToken }
 
 switch ($effectiveRuntime) {
     'host' {

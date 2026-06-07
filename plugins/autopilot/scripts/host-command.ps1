@@ -22,8 +22,10 @@ function Test-UnsafeShellToken {
         [string]$Token
     )
 
-    # Reject shell metacharacters across all launch types.
-    $unsafePattern = '[;&|$`<>\r\n]'
+    # Reject shell metacharacters across all launch types. The double-quote is
+    # included so a hostile config token cannot break out of the per-token
+    # quoting applied on the cmd.exe / powershell.exe wrapper paths.
+    $unsafePattern = '[;&|$`<>"\r\n]'
     return $Token -match $unsafePattern
 }
 

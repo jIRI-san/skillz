@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T07:19:14.6166323Z",
+  "generatedAt": "2026-06-07T07:48:30.5856794Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -26,7 +26,7 @@
         },
         {
           "dest": "skills/autopilot/.autopilot.json.example",
-          "sha256": "e0ac26b7a89de93966baa1f5d177ac9708a7859a41adc7aeb3ed352824627328",
+          "sha256": "b8a769fcbe39ec8e0a4408e9e95f5b7ce800296e62a3b452af314fa70effa8db",
           "src": ".autopilot.json.example"
         },
         {
@@ -56,7 +56,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/host-command.ps1",
-          "sha256": "45cc93657b5aabaf7bb177d58b09c83cc60f54f7099c0fb6b2abfbef0e2529ad",
+          "sha256": "f3146b41c3929acf47895ba1f0567bb7068b730af9f570ac3f08e7f8e9c3de62",
           "src": "scripts/host-command.ps1"
         },
         {
@@ -66,7 +66,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/launch-host.ps1",
-          "sha256": "b3bb089e65cf2b4c3eb5447f4df23a0225e30b343317bd5bb9849f6b20a84296",
+          "sha256": "583b235d4242f9a17c36c47e9ca10515d099a9ac396407f08373e95ca2ad140e",
           "src": "scripts/launch-host.ps1"
         },
         {
@@ -76,7 +76,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/launch.ps1",
-          "sha256": "2a3bcf727d6b6bd4f7eadb70b08762750aa19bd6d541d7e2818720ad8ff6a551",
+          "sha256": "2e1b8338c4c6ee405b9f101fd747f1c677d296dc81f63ed98e67587942498010",
           "src": "scripts/launch.ps1"
         },
         {

@@ -1,5 +1,5 @@
 {
-  "$schema": "./schemas/autopilot.schema.json",
+  "$schema": "./.github/skills/autopilot/schemas/autopilot.schema.json",
   "runtime": "container",
   "copilotAuth": "pat",
   "gitProvider": "github",
