@@ -20,3 +20,7 @@ Phase 2 Crosscheck:
 ✓ REQ-5 — test:Remove-LedgerEntry.RejectsBadCategory — passed — 7d651a9
 ✓ REQ-5 — test:Remove-LedgerEntry.RetentionGuard — passed — 7d651a9
 ✓ REQ-5 — test:Remove-LedgerEntry.NoSubstringOverDelete — passed — 7d651a9
+
+Phase 4 Crosscheck:
+✓ REQ-10 — file:plugins/create-implementation-plan/skills/cip/assets/drafting-guide.md#contains:ledger-consult — passed — 77cf9d6
+✓ REQ-10 — file:plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md#contains:ledger-consult — passed — 77cf9d6
