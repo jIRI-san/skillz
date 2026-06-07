@@ -154,6 +154,6 @@
 <!-- Points: 2+1+1+1 = 5 -->
 
 - [x] 6.1 Design notes: update `copilot-customizations.design.md` (two-branch harvest loop, ephemeral capture, readers), `plan-workflow.design.md` (taxonomy + dedup-key contract + `Add`/`Remove` scripts), `autopilot-execution.design.md` (harvest in agent, `Test-Path` guard, Rule-5 carve-out, branch ordering); add the `docs/review-ledger` reference to the `.design-notes.md` index. (REQ-15) [after: 5.1, 5.2] `M`
-- [ ] 6.2 Verify manifest scope: confirm **no `files[]` delta** is required (touched assets already registered by 006) and that `docs/review-ledger/**` + `Add-LedgerEntry.ps1` + `Remove-LedgerEntry.ps1` are in **no** manifest (not `dr`/`cr`). (REQ-16, RISK-9) [after: 3.1, 3.3, 5.1, 5.2] `S`
+- [x] 6.2 Verify manifest scope: confirm **no `files[]` delta** is required (touched assets already registered by 006) and that `docs/review-ledger/**` + `Add-LedgerEntry.ps1` + `Remove-LedgerEntry.ps1` are in **no** manifest (not `dr`/`cr`). (REQ-16, RISK-9) [after: 3.1, 3.3, 5.1, 5.2] `S`
 - [ ] 6.3 Rebuild + verify: `Build-Registry.ps1`; `Sync-Dogfood.ps1 -WhatIf` shows only intended changes; `Test-Registry.ps1` passes. (REQ-16, RISK-9) [after: 6.2] `S`
 - [ ] 6.4 Quality gate: `Invoke-ScriptAnalyzer -Settings PSScriptAnalyzerSettings.psd1` zero warnings on `Add-LedgerEntry.ps1` + `Remove-LedgerEntry.ps1`; `npm run test:unit` green (incl. the dependency start-gate); `npm run validate-plan` green on 007. (REQ-2, REQ-5, REQ-13) [after: 1.3, 2.2, 5.1] `S`
