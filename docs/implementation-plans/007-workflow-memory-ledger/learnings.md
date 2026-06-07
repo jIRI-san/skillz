@@ -6,4 +6,4 @@ Phase: 4
 ## Learnings Capture
 Phase: 5
 
-No entries for this phase.
+- [5.2] [trigger:rework>1] Mirror documentation must restate command-construction safety constraints for both Add and Remove script invocations, not just one side.

@@ -72,6 +72,25 @@ pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -Pl
 
 It validates 006 behavior contracts through public script paths (including pass/fail `file:` probes, evidence vocabulary contracts, Rule 5 wording, and the `test:unit` gate). If it exits non-zero, stop execution immediately.
 
+## Interactive harvest trigger (`/ci`) — mirror of canonical autopilot flow
+
+This section is a **mirror** of the canonical harvest procedure in `plugins/autopilot/agents/autopilot.agent.md`. Keep parity with that file whenever harvest behavior changes.
+
+At interactive plan completion, `/ci` runs harvest with the same shared scripts and ordering:
+
+1. Run dependency preflight (`Test-DependencyPlan006.ps1`) before entering harvest/finalization.
+2. If repo infra is present (`Test-Path scripts/skalary/Add-LedgerEntry.ps1` and `Test-Path docs/review-ledger`), execute append harvest first:
+   - Distill entries from `evolution-log.md` (`## Capture`), `cr-log.md`, and `learnings.md`.
+   - Invoke `Add-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (no shell-string interpolation).
+   - Stage and commit ledger updates by explicit file names under `docs/review-ledger/`.
+3. Branch after the append commit:
+   - Autonomous completion: push, archive commit, push, create non-draft PR.
+   - `@human` escalation: push, run `Remove-LedgerEntry.ps1` + `/udn` reconciliation with the user present, commit prune/design-note edits, push, create draft PR, write marker, stop.
+   - Invoke `Remove-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (never shell-string interpolation).
+4. If repo infra is absent, skip harvest and continue standard completion flow.
+
+Fail-loud behavior: error only when expected log sections/placeholders are missing; `No entries for this phase.` is valid and must not fail harvest.
+
 ## `ledger-consult` (before a CR round)
 
 Before launching a CR round (`@cr`, `code-review`, or `rubber-duck`), consult only the relevant category files from `docs/review-ledger/`:

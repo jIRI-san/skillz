@@ -147,7 +147,7 @@
 <!-- Points: 3+2 = 5 -->
 
 - [x] 5.1 Implement the **canonical** harvest procedure in `autopilot.agent.md`'s Finalization handling, wrapped in `if (Test-Path scripts/skalary/Add-LedgerEntry.ps1)` (else fall through to standard archive/push/PR): **append phase** (`Add-LedgerEntry` distilling `evolution-log`/`cr-log`/`learnings`, staging `docs/review-ledger/*` by name) runs + commits **before** the branch; then **autonomous branch** (commit→push→archive-commit→push→`gh pr create`) vs **escalation branch** (commit→push→`Remove`+`/udn`→commit→push→`gh pr create --draft`→marker→exit 42, never archive); invoke both scripts via **argument arrays** (no shell string); amend Absolute Rule 5 to authorize both by name; fail-loud only on a missing log section. (REQ-6, REQ-11, REQ-9, RISK-6, RISK-7, RISK-10, RISK-12, RISK-13) [after: 0.1, 1.2, 2.1, 3.1, 3.2, 3.3] `L`
-- [ ] 5.2 Add the host/interactive harvest trigger to `ci` `crosscheck-guide.md` as a **mirror** of the canonical spec (with a parity note pointing at `autopilot.agent.md`): `/ci` at interactive plan completion runs the same shared `Add`/`Remove` harvest (append always; prune+`/udn` with the user present). (REQ-12, REQ-11, RISK-10) [after: 5.1] `M`
+- [x] 5.2 Add the host/interactive harvest trigger to `ci` `crosscheck-guide.md` as a **mirror** of the canonical spec (with a parity note pointing at `autopilot.agent.md`): `/ci` at interactive plan completion runs the same shared `Add`/`Remove` harvest (append always; prune+`/udn` with the user present). (REQ-12, REQ-11, RISK-10) [after: 5.1] `M`
 
 ## Phase 6: Design notes + registry + verification
 <!-- worktree: (recorded by /ci when worktree is created) -->
