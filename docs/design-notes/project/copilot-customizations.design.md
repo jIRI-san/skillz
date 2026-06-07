@@ -26,6 +26,7 @@ All customizations are **workspace-local** — everything lives under `.github/`
 | `.github/agents/cr-codex.agent.md` | Subagent (hidden) | Code reviewer (GPT Codex) — invoked by `cr` only |
 | `.github/agents/cr-gemini.agent.md` | Subagent (hidden) | Code reviewer (Gemini) — invoked by `cr` only |
 | `.github/agents/autopilot.agent.md` | Agent (`autopilot`) | Autonomous plan execution — implements one phase per invocation, builds, tests, commits |
+| `.github/skills/autopilot/SKILL.md` | Skill (`autopilot`, internal) | `/ci` Autonomous-mode handoff — first-run config bootstrap, Host/Container/Sandbox sub-menu, custom host command; read-by-path, not invoked. Co-ships with the autopilot scripts/schemas/devcontainer under `.github/skills/autopilot/**` |
 | `.github/agents/scripts/get-diff-*.ps1` | Helper scripts | Git diff helpers used by `cr` for discovery (branch, commits, files, paths, smart default, uncommitted) |
 | `.github/skills/cip/SKILL.md` | Skill (`/cip`) | Create Implementation Plan — requirements interview, phased plan with step tracking, iterative `dr` review, saves to `docs/implementation-plans/` |
 | `.github/skills/ci/SKILL.md` | Skill (`/ci`) | Continue Implementation — executes a plan step-by-step, manages git worktrees, build/test iteration, `cr` review, explicit commit gate |
@@ -91,7 +92,7 @@ All three subagents perform a **comprehensive review** across every important di
 
 **`ci` flow:**
 1. Select plan from `docs/implementation-plans/`; load relevant design notes
-2. Choose execution mode (approve / autopilot / host / container / sandbox)
+2. Choose execution mode (Approve / Autopilot / Autonomous) — Autonomous reads `.github/skills/autopilot/SKILL.md` by path for the Host/Container/Sandbox sub-menu + first-run config bootstrap (`AUTOPILOT_CONTAINER=true` suppresses Autonomous)
 3. Branch detection: on main/master → create git worktree + open new VS Code window (`code <path>`); on feature branch → continue
 4. Branch name recorded as `<!-- worktree: <branch-name> -->` in the plan file to avoid derivation drift
 5. One step at a time: mark `[~]` → implement → build+test → validate acceptance criteria → `@cr` review → explicit commit gate
@@ -118,4 +119,4 @@ All three subagents perform a **comprehensive review** across every important di
 - [x] 1.3 Step title (done)
 ```
 
-See [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the autonomous (host/container/sandbox) execution infrastructure that backs the `ci` skill's autopilot modes.
+See [autopilot-skill.design.md](../architecture/autopilot-skill.design.md) for the autopilot skill (`/ci` Autonomous handoff, first-run bootstrap, custom host command) and [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the host/container/sandbox execution infrastructure that backs the `ci` skill's autopilot modes.

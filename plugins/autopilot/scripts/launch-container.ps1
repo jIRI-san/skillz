@@ -50,10 +50,11 @@ $exitCode = 1
 try {
     # --- Build image ---
     Write-Host "Building Docker image: $ImageName"
-    $dockerfilePath = Join-Path $RepoRoot '.devcontainer/autopilot/Dockerfile'
+    $bundleRoot = Join-Path $PSScriptRoot '..'
+    $dockerfilePath = Join-Path $bundleRoot 'devcontainer/Dockerfile'
 
     # Handle dockerfileExtensions - generate extended Dockerfile if needed
-    $buildContext = $RepoRoot
+    $buildContext = $bundleRoot
     $actualDockerfile = $dockerfilePath
 
     if ($Config.PSObject.Properties.Name -contains 'dockerfileExtensions' -and $Config.dockerfileExtensions -and $Config.dockerfileExtensions.Count -gt 0) {

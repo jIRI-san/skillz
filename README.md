@@ -67,7 +67,7 @@ Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 <!-- BEGIN SKALARY PLUGIN CATALOG -->
 | Plugin | Version | Status | Dependencies | Files | Description |
 |--------|---------|--------|--------------|-------|-------------|
-| `autopilot` | 1.0.0 | partial | — | 1 | Autonomous plan execution agent payload for .github/agents. |
+| `autopilot` | 1.1.0 | partial | — | 18 | Self-contained autopilot plugin payload for agent, skill, scripts, schemas, and devcontainer. |
 | `cdn` | 1.0.0 | stable | — | 1 | Create design notes prompt. |
 | `ci` | 1.0.0 | stable | autopilot, cr | 3 | Code implementation workflow skill with autonomous execution guidance. |
 | `cip` | 1.0.0 | stable | dr | 5 | Implementation plan generation skill for coding workflows. |

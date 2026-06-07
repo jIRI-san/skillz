@@ -33,6 +33,8 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+. (Join-Path $PSScriptRoot 'host-command.ps1')
+
 $BranchName = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
 $RepoRoot = git rev-parse --show-toplevel
 $WorktreeRoot = Join-Path (Split-Path $RepoRoot -Parent) "$((Split-Path $RepoRoot -Leaf)).worktrees"
@@ -83,13 +85,36 @@ $totalPhases = $phaseMatches.Count
 Write-Host "Plan has $totalPhases phases."
 
 # --- Per-phase execution loop ---
+function ConvertTo-CmdQuotedToken {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Token
+    )
+
+    '"' + ($Token -replace '"', '""') + '"'
+}
+
+function ConvertTo-PowerShellQuotedToken {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Token
+    )
+
+    '"' + ($Token -replace '"', '""') + '"'
+}
+
 function Invoke-CopilotPhase {
     param(
         [int]$PhaseNumber,
         [string]$CopilotToken,
         [string]$Cwd,
         [string]$PlanRelPath,
-        [int]$TimeoutMin
+        [int]$TimeoutMin,
+        [string]$CopilotPath,
+        [ValidateSet('exe', 'bat', 'cmd', 'ps1')]
+        [string]$CopilotType,
+        [string[]]$ExtraArgs,
+        [string]$Model
     )
 
     $transcriptName = "session-transcript-phase$PhaseNumber.md"
@@ -98,22 +123,63 @@ function Invoke-CopilotPhase {
     Write-Host ""
     Write-Host "=== Invoking Copilot CLI for Phase $PhaseNumber (timeout: ${TimeoutMin}m) ==="
 
-    # Resolve copilot CLI executable. Process.Start with UseShellExecute=$false
-    # only finds .exe natively; .bat/.ps1 need explicit resolution.
-    $copilotCmd = Get-Command copilot -ErrorAction SilentlyContinue
-    if (-not $copilotCmd) { throw "Copilot CLI not found in PATH. Install via: npm install -g @github/copilot" }
-    $copilotPath = $copilotCmd.Source
-
     $psi = New-Object System.Diagnostics.ProcessStartInfo
-    if ($copilotPath -match '\.bat$') {
+    if ($CopilotType -eq 'bat' -or $CopilotType -eq 'cmd') {
+        $cmdTokens = @(
+            '/c',
+            (ConvertTo-CmdQuotedToken -Token $CopilotPath),
+            '-p',
+            (ConvertTo-CmdQuotedToken -Token $prompt),
+            '--agent',
+            'autopilot',
+            '--no-ask-user',
+            '--allow-all',
+            (ConvertTo-CmdQuotedToken -Token "--share=./$transcriptName")
+        )
+        foreach ($arg in $ExtraArgs) {
+            $cmdTokens += ConvertTo-CmdQuotedToken -Token $arg
+        }
+
         $psi.FileName = 'cmd.exe'
-        $psi.Arguments = "/c `"$copilotPath`" -p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
-    } elseif ($copilotPath -match '\.ps1$') {
+        # cmd.exe /c strips only the outermost quote pair before parsing. Wrap the
+        # whole command in an extra pair so a quoted executable path plus quoted
+        # args survive intact (without this, a quoted copilot.cmd path is corrupted).
+        $innerCmd = ($cmdTokens | Select-Object -Skip 1) -join ' '
+        $psi.Arguments = '/c "' + $innerCmd + '"'
+    }
+    elseif ($CopilotType -eq 'ps1') {
+        $pwshTokens = @(
+            '-ExecutionPolicy',
+            'Bypass',
+            '-File',
+            (ConvertTo-PowerShellQuotedToken -Token $CopilotPath),
+            '-p',
+            (ConvertTo-PowerShellQuotedToken -Token $prompt),
+            '--agent',
+            'autopilot',
+            '--no-ask-user',
+            '--allow-all',
+            (ConvertTo-PowerShellQuotedToken -Token "--share=./$transcriptName")
+        )
+        foreach ($arg in $ExtraArgs) {
+            $pwshTokens += ConvertTo-PowerShellQuotedToken -Token $arg
+        }
+
         $psi.FileName = 'powershell.exe'
-        $psi.Arguments = "-ExecutionPolicy Bypass -File `"$copilotPath`" -p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
-    } else {
-        $psi.FileName = $copilotPath
-        $psi.Arguments = "-p `"$prompt`" --agent autopilot --no-ask-user --allow-all --share=./$transcriptName"
+        $psi.Arguments = $pwshTokens -join ' '
+    }
+    else {
+        $psi.FileName = $CopilotPath
+        $psi.ArgumentList.Add('-p')
+        $psi.ArgumentList.Add($prompt)
+        $psi.ArgumentList.Add('--agent')
+        $psi.ArgumentList.Add('autopilot')
+        $psi.ArgumentList.Add('--no-ask-user')
+        $psi.ArgumentList.Add('--allow-all')
+        $psi.ArgumentList.Add("--share=./$transcriptName")
+        foreach ($arg in $ExtraArgs) {
+            $psi.ArgumentList.Add($arg)
+        }
     }
     $psi.WorkingDirectory = $Cwd
     $psi.UseShellExecute = $false
@@ -123,7 +189,7 @@ function Invoke-CopilotPhase {
     $psi.EnvironmentVariables['COPILOT_GITHUB_TOKEN'] = $CopilotToken
     $psi.EnvironmentVariables['GH_TOKEN'] = $CopilotToken
     $psi.EnvironmentVariables['COPILOT_ALLOW_ALL'] = 'true'
-    $psi.EnvironmentVariables['COPILOT_MODEL'] = $Config.model
+    $psi.EnvironmentVariables['COPILOT_MODEL'] = $Model
 
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $psi
@@ -167,6 +233,9 @@ function Invoke-CopilotPhase {
 }
 
 # --- Main execution ---
+$hostCommand = Resolve-HostCommand
+Write-Host "Using Copilot launcher: $($hostCommand.Path) [$($hostCommand.Type)]"
+
 $phasesExecuted = 0
 for ($phase = 1; $phase -le $totalPhases; $phase++) {
     # Re-read plan to check current phase status
@@ -186,7 +255,16 @@ for ($phase = 1; $phase -le $totalPhases; $phase++) {
     }
 
     Write-Host "Phase ${phase}: has uncompleted steps - executing."
-    $result = Invoke-CopilotPhase -PhaseNumber $phase -CopilotToken $Token -Cwd $WorktreePath -PlanRelPath $PlanPath -TimeoutMin $TimeoutMinutes
+    $result = Invoke-CopilotPhase `
+        -PhaseNumber $phase `
+        -CopilotToken $Token `
+        -Cwd $WorktreePath `
+        -PlanRelPath $PlanPath `
+        -TimeoutMin $TimeoutMinutes `
+        -CopilotPath $hostCommand.Path `
+        -CopilotType $hostCommand.Type `
+        -ExtraArgs $hostCommand.ExtraArgs `
+        -Model $Config.model
 
     $phasesExecuted++
 

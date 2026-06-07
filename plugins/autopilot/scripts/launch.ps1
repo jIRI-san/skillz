@@ -46,7 +46,7 @@ if (-not (Test-Path (Join-Path $PlanFolder 'plan.md'))) {
 # --- Load and validate config ---
 $ConfigPath = Join-Path $RepoRoot '.autopilot.json'
 if (-not (Test-Path $ConfigPath)) {
-    Write-Error ".autopilot.json not found in repo root."
+    Write-Error ".autopilot.json not found - run '/ci' Autonomous to generate it, or create it from .autopilot.json.example."
     exit 1
 }
 
@@ -87,6 +87,11 @@ if (-not $testAllowed) {
 $effectiveRuntime = if ($Runtime) { $Runtime } else { $Config.runtime }
 Write-Host "Runtime: $effectiveRuntime"
 
+if ($effectiveRuntime -eq 'host' -and $env:AUTOPILOT_DISABLE_HOST -eq 'true') {
+    Write-Error "Host runtime disabled via AUTOPILOT_DISABLE_HOST."
+    exit 1
+}
+
 # --- Docker pre-flight (container mode) ---
 if ($effectiveRuntime -eq 'container') {
     Write-Host "Checking Docker daemon..."
@@ -112,9 +117,10 @@ if ($effectiveRuntime -eq 'sandbox') {
 }
 
 # --- Detect partial state ---
-$branchName = "feature/$PlanSlug"
+$branchName = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
 if ($effectiveRuntime -eq 'host') {
-    $worktreePath = Join-Path (Split-Path $RepoRoot -Parent) "autopilot-$PlanSlug"
+    $worktreeRoot = Join-Path (Split-Path $RepoRoot -Parent) "$((Split-Path $RepoRoot -Leaf)).worktrees"
+    $worktreePath = Join-Path $worktreeRoot $branchName.Replace('/', '-')
     if (Test-Path $worktreePath) {
         Write-Host ""
         Write-Host "NOTICE: Existing worktree detected at $worktreePath"
@@ -184,12 +190,14 @@ Write-Host ""
 
 $dispatchParams = @{
     PlanSlug = $PlanSlug
-    Mode     = $Mode
-    Config   = $Config
-    Token    = $Token
-    Branch   = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
+    Mode = $Mode
+    Config = $Config
+    Token = $Token
+    Branch = if ($Branch) { $Branch } else { "feature/$PlanSlug" }
 }
-if ($AdoToken) { $dispatchParams.AdoToken = $AdoToken }
+# Host mode runs locally and authenticates to git via ambient credentials, so it
+# does not accept -AdoToken; only forward the token to container/sandbox runtimes.
+if ($AdoToken -and $effectiveRuntime -ne 'host') { $dispatchParams.AdoToken = $AdoToken }
 
 switch ($effectiveRuntime) {
     'host' {

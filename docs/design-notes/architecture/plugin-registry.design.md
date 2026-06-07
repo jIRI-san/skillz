@@ -67,11 +67,11 @@ Install/update behavior is implemented in `scripts/skalary/Install-Plugin.ps1` a
 | Destructive overwrite/remove of user edits | Update/remove verify receipt hash and mark modified files as skipped unless `-Force`. |
 | Arbitrary code execution in bootstrap flow | `bootstrap.ps1` downloads scripts + `registry.json` only; it does not execute plugin payload. |
 
-## Autopilot Plugin vs Infra Split
+## Autopilot Plugin Bundle
 
-`autopilot` plugin payload is intentionally confined to `.github/agents/autopilot.agent.md` only.
+`autopilot` is a self-contained plugin: agent, autonomous skill, launch scripts, schema files, devcontainer assets, and config templates ship from `plugins/autopilot/` and install under `.github/agents/` and `.github/skills/autopilot/**`.
 
-Autopilot infrastructure (`scripts/autopilot/**`, `.devcontainer/autopilot/**`, `.autopilot.json`, `schemas/autopilot.schema.json`) is a separate prerequisite provisioned by `scripts/skalary/Initialize-Autopilot.ps1` and not installed through the plugin file-copy path. This preserves `.github/` confinement while allowing `ci` to depend on `autopilot` agent payload.
+No separate autopilot infra bootstrap script exists. Provisioning happens through standard plugin install/update and dogfood sync flows.
 
 ## Dogfood Authority and Sync
 

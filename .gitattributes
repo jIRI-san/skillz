@@ -6,4 +6,5 @@
 
 # Shell scripts must use LF — they run inside the Linux autopilot container.
 *.sh text eol=lf
-scripts/autopilot/container-entrypoint.sh text eol=lf
+plugins/autopilot/scripts/container-entrypoint.sh text eol=lf
+.github/skills/autopilot/scripts/container-entrypoint.sh text eol=lf

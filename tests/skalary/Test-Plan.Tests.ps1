@@ -111,7 +111,7 @@ Describe 'Test-Plan validator' {
     }
 
     It 'treats legacy plans as warn-only for strict evidence checks' {
-        $plan003 = Join-Path $repoRoot 'docs/implementation-plans/003-autopilot-skill-extraction/plan.md'
+        $plan003 = Join-Path $repoRoot 'docs/implementation-plans/archived/003-autopilot-skill-extraction/plan.md'
         $plan004 = Join-Path $repoRoot 'docs/implementation-plans/archived/004-process-pr-comments/plan.md'
         (& $invokeTestPlan -PlanPath $plan003).ExitCode | Should -Be 0
         (& $invokeTestPlan -PlanPath $plan004).ExitCode | Should -Be 0

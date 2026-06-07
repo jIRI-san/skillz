@@ -1,7 +1,7 @@
 @{
     # PSScriptAnalyzer settings for skalary PowerShell scripts.
     # Plan 002 extends this shared baseline to scripts/skalary/** so both
-    # scripts/autopilot/** and scripts/skalary/** stay warning-free.
+    # plugins/autopilot/scripts/** and scripts/skalary/** stay warning-free.
 
     # Use the full built-in rule set as the baseline.
     IncludeDefaultRules = $true

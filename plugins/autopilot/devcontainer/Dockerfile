@@ -1,5 +1,5 @@
 # Autopilot execution container — .NET 10 SDK + Copilot CLI + tooling
-# Used by scripts/autopilot/launch-container.ps1 via `docker build`
+# Used by plugins/autopilot/scripts/launch-container.ps1 via `docker build`
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
@@ -45,7 +45,7 @@ RUN npm install -g @github/copilot@${COPILOT_CLI_VERSION}
 RUN pwsh -NoProfile -Command "Install-Module Pester -RequiredVersion 5.6.1 -Force -Scope AllUsers"
 
 # Container entry-point script
-COPY scripts/autopilot/container-entrypoint.sh /usr/local/bin/container-entrypoint.sh
+COPY scripts/container-entrypoint.sh /usr/local/bin/container-entrypoint.sh
 RUN chmod +x /usr/local/bin/container-entrypoint.sh
 
 # Non-root user for security — add to docker group for socket access

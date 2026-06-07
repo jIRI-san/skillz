@@ -4,3 +4,7 @@
 
 # Plugin install runtime state (receipts, tmp staging) — never committed
 .github/.skalary/
+
+# Autopilot local runtime/host configuration (never committed)
+.autopilot.json
+.autopilot.host.json
