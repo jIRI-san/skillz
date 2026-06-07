@@ -71,10 +71,11 @@ Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 | `code-review` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
 | `continue-implementation` | 1.0.0 | stable | autopilot, code-review | 3 | Code implementation workflow skill with autonomous execution guidance. |
 | `create-implementation-plan` | 1.0.0 | stable | design-review | 5 | Implementation plan generation skill for coding workflows. |
-| `design-notes` | 1.0.0 | stable | — | 4 | Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run. |
+| `design-notes` | 1.0.0 | stable | — | 5 | Design notes toolkit — /design-notes init bootstraps the docs/design-notes scaffold from bundled templates; /cdn and /udn create and update notes. |
 | `design-review` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
 | `process-pr-comments` | 1.0.0 | stable | — | 2 | Process PR comments skill for classifying, fixing, and replying to review feedback. |
 <!-- END SKALARY PLUGIN CATALOG -->
+
 
 
 

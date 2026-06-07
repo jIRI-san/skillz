@@ -14,6 +14,7 @@ Describe 'design-notes structural evals' {
     }
 
     It 'validates each prompt: frontmatter, name slug, body, and link resolution' -TestCases @(
+        @{ Src = 'prompts/design-notes.prompt.md'; Slug = 'design-notes' }
         @{ Src = 'prompts/cdn.prompt.md'; Slug = 'cdn' }
         @{ Src = 'prompts/udn.prompt.md'; Slug = 'udn' }
     ) {
@@ -49,9 +50,9 @@ Describe 'design-notes structural evals' {
         @($resolvedTargets | Where-Object { $_ -match '/docs/design-notes/' }).Count | Should -BeGreaterThan 0
     }
 
-    It 'ships both bootstrap seed assets as payload files' -TestCases @(
-        @{ Src = 'prompts/design-notes/assets/design-notes-index.seed.md' }
-        @{ Src = 'prompts/design-notes/assets/design-note-writing-style.seed.md' }
+    It 'ships both bootstrap template assets as payload files' -TestCases @(
+        @{ Src = 'prompts/design-notes/templates/design-notes-index.template.md' }
+        @{ Src = 'prompts/design-notes/templates/design-note-writing-style.template.md' }
     ) {
         param($Src)
 

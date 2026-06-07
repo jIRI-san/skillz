@@ -13,10 +13,11 @@ Customization artifacts are **workspace-local** and centered in `.github/`. The 
 | File | Type | Purpose |
 |---|---|---|
 | `.github/copilot-instructions.md` | Workspace Instructions | Always-on project context; single `<instruction>` entry loads `.design-notes.md` as the discovery layer for all contextual design notes |
-| `.github/prompts/cdn.prompt.md` | Prompt (`/cdn`) | Creates a new design note file from a name argument; bootstraps the `docs/design-notes/` scaffold on first run if missing |
-| `.github/prompts/udn.prompt.md` | Prompt (`/udn`) | Updates design notes from the current chat session; bootstraps the `docs/design-notes/` scaffold on first run if missing |
-| `.github/prompts/design-notes/assets/design-notes-index.seed.md` | Seed asset | Generic `.design-notes.md` index copied to `docs/design-notes/.design-notes.md` during first-run bootstrap |
-| `.github/prompts/design-notes/assets/design-note-writing-style.seed.md` | Seed asset | Writing-style guide copied to `docs/design-notes/project/design-note-writing-style.design.md` during first-run bootstrap |
+| `.github/prompts/design-notes.prompt.md` | Prompt (`/design-notes`) | `/design-notes init` (or `bootstrap`) scaffolds `docs/design-notes/` from the bundled templates; canonical bootstrap path |
+| `.github/prompts/cdn.prompt.md` | Prompt (`/cdn`) | Creates a new design note file from a name argument; defers to `/design-notes init` when the scaffold is missing |
+| `.github/prompts/udn.prompt.md` | Prompt (`/udn`) | Updates design notes from the current chat session; defers to `/design-notes init` when the scaffold is missing |
+| `.github/prompts/design-notes/templates/design-notes-index.template.md` | Template asset | Generic `.design-notes.md` index copied to `docs/design-notes/.design-notes.md` by `/design-notes init` |
+| `.github/prompts/design-notes/templates/design-note-writing-style.template.md` | Template asset | Writing-style guide copied to `docs/design-notes/project/design-note-writing-style.design.md` by `/design-notes init` |
 | `.github/prompts/cr.prompt.md` | Prompt (`/cr`) | Code review entry point |
 | `.github/prompts/dr.prompt.md` | Prompt (`/dr`) | Design review entry point |
 | `.github/agents/dr.agent.md` | Agent (`dr`) | Design review orchestrator — reviews a plan using three specialist models |
@@ -126,11 +127,11 @@ See [autopilot-skill.design.md](../architecture/autopilot-skill.design.md) for t
 
 ## Design-Notes Bootstrap (`design-notes` plugin)
 
-The `/cdn` and `/udn` prompts ship together in a single `design-notes` plugin (the former standalone `create-design-notes` / `update-design-notes` plugins were consolidated into it). The plugin also ships two seed assets installed alongside the prompts under `.github/prompts/design-notes/assets/`.
+The `design-notes` plugin ships three prompts — `/design-notes` (init/bootstrap), `/cdn`, `/udn` — plus two template assets installed under `.github/prompts/design-notes/templates/` (the former standalone `create-design-notes` / `update-design-notes` plugins were consolidated into it).
 
-Because the installer is hard-confined to `.github/` (it cannot write to `docs/`), the `docs/design-notes/` scaffold is bootstrapped **on first prompt use**, not at install time — the only hook available. Each prompt's Step 0 checks whether `docs/design-notes/.design-notes.md` exists; if missing, it scaffolds `docs/design-notes/` + `docs/design-notes/project/` and copies the two seeds (index → `.design-notes.md`, writing-style → `project/design-note-writing-style.design.md`), never overwriting existing files. In a repo that already has design notes (like this one), Step 0 is a no-op.
+Because the installer is hard-confined to `.github/` (it cannot write to `docs/`), the `docs/design-notes/` scaffold is created **on demand by `/design-notes init`**, not at install time. `/design-notes init` (alias `bootstrap`) checks whether `docs/design-notes/.design-notes.md` exists; if missing, it creates `docs/design-notes/` + `docs/design-notes/project/` and copies the two bundled templates (index → `.design-notes.md`, writing-style → `project/design-note-writing-style.design.md`), never overwriting existing files. `/cdn` and `/udn` carry a Step 0 that defers to `/design-notes init` when the scaffold is absent, so `/design-notes init` is the single canonical bootstrap path. In a repo that already has design notes (like this one), all of these are no-ops.
 
-The writing-style seed mirrors this repo's `docs/design-notes/project/design-note-writing-style.design.md`; keep them in sync when the canonical guide changes.
+The writing-style template mirrors this repo's `docs/design-notes/project/design-note-writing-style.design.md`; keep them in sync when the canonical guide changes.
 
 ## Plugin Eval Workflow
 

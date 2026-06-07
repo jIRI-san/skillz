@@ -1,0 +1,9 @@
+{
+  "artifact": "prompts/design-notes.prompt.md",
+  "scenario": "A fresh repository has no docs/design-notes/ directory. Initialize the design-notes scaffold.",
+  "rubric": [
+    "Creates docs/design-notes/.design-notes.md and docs/design-notes/project/design-note-writing-style.design.md from the bundled templates.",
+    "Does not overwrite existing files and reports already-initialized when the scaffold is present.",
+    "Points the user at /cdn and /udn as next steps."
+  ]
+}

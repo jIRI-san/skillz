@@ -113,7 +113,7 @@ Prompt payload must include:
 - disposition
 - full reply body
 
-On `edit`, use the edited body for posting.  
+On `edit`, use the edited body for posting.
 On `skip`, do not post.
 
 ## 3.6 Post approved replies with dedup

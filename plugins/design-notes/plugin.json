@@ -1,7 +1,7 @@
 {
   "name": "design-notes",
   "version": "1.0.0",
-  "description": "Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run.",
+  "description": "Design notes toolkit — /design-notes init bootstraps the docs/design-notes scaffold from bundled templates; /cdn and /udn create and update notes.",
   "author": "jIRI-san",
   "license": "MIT",
   "tags": [
@@ -13,6 +13,10 @@
   "status": "stable",
   "files": [
     {
+      "src": "prompts/design-notes.prompt.md",
+      "dest": "prompts/design-notes.prompt.md"
+    },
+    {
       "src": "prompts/cdn.prompt.md",
       "dest": "prompts/cdn.prompt.md"
     },
@@ -21,12 +25,12 @@
       "dest": "prompts/udn.prompt.md"
     },
     {
-      "src": "prompts/design-notes/assets/design-notes-index.seed.md",
-      "dest": "prompts/design-notes/assets/design-notes-index.seed.md"
+      "src": "prompts/design-notes/templates/design-notes-index.template.md",
+      "dest": "prompts/design-notes/templates/design-notes-index.template.md"
     },
     {
-      "src": "prompts/design-notes/assets/design-note-writing-style.seed.md",
-      "dest": "prompts/design-notes/assets/design-note-writing-style.seed.md"
+      "src": "prompts/design-notes/templates/design-note-writing-style.template.md",
+      "dest": "prompts/design-notes/templates/design-note-writing-style.template.md"
     }
   ],
   "evals": {

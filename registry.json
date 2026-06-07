@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T13:46:49.9415851Z",
+  "generatedAt": "2026-06-07T14:16:20.7122015Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -275,29 +275,34 @@
     {
       "author": "jIRI-san",
       "dependencies": [],
-      "description": "Design notes toolkit — /cdn and /udn prompts that bootstrap the docs/design-notes scaffold (index + writing-style guide) on first run.",
+      "description": "Design notes toolkit — /design-notes init bootstraps the docs/design-notes scaffold from bundled templates; /cdn and /udn create and update notes.",
       "evals": {
         "status": "none"
       },
       "files": [
         {
           "dest": "prompts/cdn.prompt.md",
-          "sha256": "1c35a3662ade7722ae89e8322802d2a5ea2bd7518fc9973f394a6c8b112a1017",
+          "sha256": "33fe6ea511f8faf283d92e7867e97d5bf77184bc8ea45ebe683becde53c31d8f",
           "src": "prompts/cdn.prompt.md"
         },
         {
-          "dest": "prompts/design-notes/assets/design-note-writing-style.seed.md",
-          "sha256": "b48f49bfd89cdbdac90e0b90c5a0ac47b11662ed26c2dc3376cdda97c692f913",
-          "src": "prompts/design-notes/assets/design-note-writing-style.seed.md"
+          "dest": "prompts/design-notes.prompt.md",
+          "sha256": "c5b3d3500d1535a3fd1489a34654726ad4f9abf89301d6194bded2c2f5ecae91",
+          "src": "prompts/design-notes.prompt.md"
         },
         {
-          "dest": "prompts/design-notes/assets/design-notes-index.seed.md",
+          "dest": "prompts/design-notes/templates/design-note-writing-style.template.md",
+          "sha256": "b48f49bfd89cdbdac90e0b90c5a0ac47b11662ed26c2dc3376cdda97c692f913",
+          "src": "prompts/design-notes/templates/design-note-writing-style.template.md"
+        },
+        {
+          "dest": "prompts/design-notes/templates/design-notes-index.template.md",
           "sha256": "40070a4a0651ea12b517309c443c3000cc0b2fe2de1e692f925e3bc44ee15a92",
-          "src": "prompts/design-notes/assets/design-notes-index.seed.md"
+          "src": "prompts/design-notes/templates/design-notes-index.template.md"
         },
         {
           "dest": "prompts/udn.prompt.md",
-          "sha256": "41f862af03fca73a4e93dd10f6dbf23f9e5da9777fbf1ef863a3d744637b666f",
+          "sha256": "1e1da638515d1add966cf16ec08ef1b81ecbfab313f615e5ca89b10097a1d536",
           "src": "prompts/udn.prompt.md"
         }
       ],

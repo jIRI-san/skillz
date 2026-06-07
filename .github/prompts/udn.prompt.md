@@ -6,17 +6,13 @@ agent: agent
 
 Review the current chat history and update the design notes in `docs/design-notes/` to reflect any implementation changes, new components, or architectural decisions that were made.
 
-## Step 0: Bootstrap the design-notes scaffold (first run)
+## Step 0: Ensure the design-notes scaffold exists
 
-Before anything else, ensure the design-notes scaffold exists in this repository:
+Before anything else, confirm the design-notes scaffold is present in this repository:
 
 1. Check whether [docs/design-notes/.design-notes.md](../../docs/design-notes/.design-notes.md) exists.
-2. **If it is missing**, bootstrap it (this is a fresh repo):
-   - Create the folders `docs/design-notes/` and `docs/design-notes/project/`.
-   - Copy the index seed [./design-notes/assets/design-notes-index.seed.md](./design-notes/assets/design-notes-index.seed.md) to `docs/design-notes/.design-notes.md`.
-   - Copy the writing-style seed [./design-notes/assets/design-note-writing-style.seed.md](./design-notes/assets/design-note-writing-style.seed.md) to `docs/design-notes/project/design-note-writing-style.design.md`.
-   - Do **not** overwrite either file if it already exists — bootstrap only fills in what is missing.
-3. **If it already exists**, skip bootstrap and continue.
+2. **If it is missing**, run the `/design-notes init` bootstrap first — it creates `docs/design-notes/` + `docs/design-notes/project/` from the bundled templates (see [design-notes.prompt.md](./design-notes.prompt.md)). Then continue.
+3. **If it already exists**, continue.
 
 ## Instructions
 

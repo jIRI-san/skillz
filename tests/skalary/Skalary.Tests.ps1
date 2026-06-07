@@ -373,7 +373,7 @@ Describe 'skalary plugin registry scripts' {
         $repo = New-RepoClone
         $manifestPath = Join-Path $repo 'plugins/design-notes/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
-        $manifest.files[0].dest = 'prompts/udn.prompt.md'
+        $manifest.files[0].dest = 'prompts/cr.prompt.md'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
 
         Invoke-SkalaryScript -RepoRoot $repo -ScriptName 'Build-Registry.ps1'
