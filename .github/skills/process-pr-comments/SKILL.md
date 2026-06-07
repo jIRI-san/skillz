@@ -20,7 +20,7 @@ context: fork
 ## Workflow
 
 1. Resolve target PR:
-   - `Import-Module ./plugins/pprc/skills/process-pr-comments/scripts/GitHubPr.psm1 -Force`
+   - `Import-Module ./plugins/process-pr-comments/skills/process-pr-comments/scripts/GitHubPr.psm1 -Force`
    - `$targetPr = Resolve-TargetPr`
 2. Fetch review items:
    - `$threads = Get-PrReviewThreads -TargetPr $targetPr`

@@ -41,6 +41,9 @@ RUN curl -sSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /u
 # GitHub Copilot CLI
 RUN npm install -g @github/copilot@${COPILOT_CLI_VERSION}
 
+# Pester (pinned) for PowerShell unit gates in autopilot container mode
+RUN pwsh -NoProfile -Command "Install-Module Pester -RequiredVersion 5.6.1 -Force -Scope AllUsers"
+
 # Container entry-point script
 COPY scripts/container-entrypoint.sh /usr/local/bin/container-entrypoint.sh
 RUN chmod +x /usr/local/bin/container-entrypoint.sh

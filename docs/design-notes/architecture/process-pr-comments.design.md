@@ -1,7 +1,7 @@
 ---
 description: PR-review comment processing plugin (`pprc`) — workflow contract, auth model, API split, safety gates, and reply/idempotency rules
 globs:
-  - plugins/pprc/**
+  - plugins/process-pr-comments/**
   - .github/skills/process-pr-comments/**
   - tests/pprc/**
 ---
@@ -14,9 +14,9 @@ The `pprc` plugin ships a single interactive skill (`process-pr-comments`) and a
 
 | Component | Path | Responsibility |
 |---|---|---|
-| Plugin manifest | `plugins/pprc/plugin.json` | Registry metadata and payload file mapping. |
-| Skill workflow | `plugins/pprc/skills/process-pr-comments/SKILL.md` | Deterministic two-phase orchestration and human approval gates. |
-| API + git module | `plugins/pprc/skills/process-pr-comments/scripts/GitHubPr.psm1` | GitHub REST/GraphQL wrappers, branch safety, thread fetch/join, push, reply post/dedup. |
+| Plugin manifest | `plugins/process-pr-comments/plugin.json` | Registry metadata and payload file mapping. |
+| Skill workflow | `plugins/process-pr-comments/skills/process-pr-comments/SKILL.md` | Deterministic two-phase orchestration and human approval gates. |
+| API + git module | `plugins/process-pr-comments/skills/process-pr-comments/scripts/GitHubPr.psm1` | GitHub REST/GraphQL wrappers, branch safety, thread fetch/join, push, reply post/dedup. |
 | Dogfood install target | `.github/skills/process-pr-comments/**` | Installed copy used by this repository’s Copilot runtime. |
 
 ## Key Patterns

@@ -118,13 +118,6 @@ done
 
 echo ""
 echo "=== Execution finished ==="
-if [ -f ".autopilot-finalize-needed" ]; then
-    echo "Human finalization requested (container mode only)."
-    echo "Draft PR should already exist from the Finalization flow."
-    echo "Skipping entrypoint push because Finalization already pushed the branch."
-    exit 42
-fi
-
 echo "Pushing branch ${WORK_BRANCH}..."
 git push origin "${WORK_BRANCH}"
 

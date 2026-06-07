@@ -2,7 +2,7 @@
 description: The internal autopilot SKILL.md — /ci Autonomous-mode handoff, first-run .autopilot.json bootstrap, mode sub-menu, and the launcher contract. Load when editing the autopilot skill, the /ci execution-mode menu, or the custom host-command flow.
 globs:
   - plugins/autopilot/skills/**
-  - plugins/ci/skills/**
+  - plugins/continue-implementation/skills/**
   - .autopilot.json
   - .autopilot.host.json
 ---

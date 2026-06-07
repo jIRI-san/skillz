@@ -3,37 +3,38 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Describe 'ci structural evals' {
+Describe 'cdn structural evals' {
     BeforeAll {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
         Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $pluginRoot = Join-Path $script:repoRoot 'plugins/ci'
+        $pluginRoot = Join-Path $script:repoRoot 'plugins/create-design-notes'
         $manifestPath = Join-Path $pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
-        $skillEntries = @($manifest.files | Where-Object { [string]$_.src -eq 'skills/ci/SKILL.md' })
-        $skillEntries.Count | Should -Be 1
+        $promptEntries = @($manifest.files | Where-Object { [string]$_.src -eq 'prompts/cdn.prompt.md' })
+        $promptEntries.Count | Should -Be 1
 
-        $script:artifactPath = Join-Path $pluginRoot 'skills/ci/SKILL.md'
-        $script:destinationPath = [string]$skillEntries[0].dest
+        $script:artifactPath = Join-Path $pluginRoot 'prompts/cdn.prompt.md'
+        $script:destinationPath = [string]$promptEntries[0].dest
     }
 
-    It 'validates skill frontmatter, required keys, and folder-name alignment' {
+    It 'validates prompt frontmatter, required keys, and name slug alignment' {
         $artifactType = Get-ArtifactType -DestinationPath $script:destinationPath
-        $artifactType | Should -Be 'skill'
+        $artifactType | Should -Be 'prompt'
 
         $frontmatter = Get-PluginFrontmatter -Path $script:artifactPath
-        Test-RequiredFrontmatter -ArtifactType 'skill' -Frontmatter $frontmatter -Path $script:artifactPath | Should -BeTrue
-        [string]$frontmatter.name | Should -Be 'ci'
+        Test-RequiredFrontmatter -ArtifactType 'prompt' -Frontmatter $frontmatter -Path $script:artifactPath | Should -BeTrue
+        [string]$frontmatter.name | Should -Be 'cdn'
     }
 
-    It 'requires skill body headings and step procedure content' {
-        Test-BodySection -ArtifactType 'skill' -Path $script:artifactPath | Should -BeTrue
+    It 'requires prompt body sections/procedure content' {
+        Test-BodySection -ArtifactType 'prompt' -Path $script:artifactPath | Should -BeTrue
     }
 
-    It 'resolves markdown links from the simulated install base' {
+    It 'resolves markdown links and design-note references from simulated install path' {
         $raw = Get-Content -LiteralPath $script:artifactPath -Raw
         $linkMatches = [regex]::Matches($raw, '\[[^\]]+\]\((?<target>[^)]+)\)')
+        @($linkMatches).Count | Should -BeGreaterThan 0
 
         $resolvedTargets = [System.Collections.Generic.List[string]]::new()
         foreach ($match in $linkMatches) {
@@ -45,9 +46,6 @@ Describe 'ci structural evals' {
             }
         }
 
-        $designNoteLinksInArtifact = @($linkMatches | Where-Object { [string]$_.Groups['target'].Value -match 'docs/design-notes/' }).Count
-        if ($designNoteLinksInArtifact -gt 0) {
-            @($resolvedTargets | Where-Object { $_ -match '/docs/design-notes/' }).Count | Should -BeGreaterThan 0
-        }
+        @($resolvedTargets | Where-Object { $_ -match '/docs/design-notes/' }).Count | Should -BeGreaterThan 0
     }
 }

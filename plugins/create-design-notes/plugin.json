@@ -1,7 +1,7 @@
 {
-  "name": "udn",
+  "name": "create-design-notes",
   "version": "1.0.0",
-  "description": "Update design notes prompt.",
+  "description": "Create design notes prompt.",
   "author": "jIRI-san",
   "license": "MIT",
   "tags": [
@@ -12,8 +12,8 @@
   "status": "stable",
   "files": [
     {
-      "src": "prompts/udn.prompt.md",
-      "dest": "prompts/udn.prompt.md"
+      "src": "prompts/cdn.prompt.md",
+      "dest": "prompts/cdn.prompt.md"
     }
   ],
   "evals": {

@@ -149,7 +149,7 @@ Describe 'skalary plugin registry scripts' {
         $source = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'ci', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'continue-implementation', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         Test-Path -LiteralPath (Join-Path $target '.github/skills/ci/SKILL.md') | Should -BeTrue
@@ -157,7 +157,7 @@ Describe 'skalary plugin registry scripts' {
         Test-Path -LiteralPath (Join-Path $target '.github/agents/autopilot.agent.md') | Should -BeTrue
 
         $receipts = Get-ChildItem -LiteralPath (Join-Path $target '.github/.skalary/receipts') -File -Filter '*.json' | Sort-Object Name
-        @($receipts.Name) | Should -Be @('autopilot.json', 'ci.json', 'cr.json')
+        @($receipts.Name) | Should -Be @('autopilot.json', 'code-review.json', 'continue-implementation.json')
     }
 
     It 'installs a diamond graph exactly once per unique plugin' {
@@ -212,7 +212,7 @@ Describe 'skalary plugin registry scripts' {
                 Add-DependencyClosure -Name ([string]$dependency)
             }
         }
-        Add-DependencyClosure -Name 'ci'
+        Add-DependencyClosure -Name 'continue-implementation'
 
         $beforeHashes = @{}
         foreach ($pluginName in $resolvedPlugins) {
@@ -231,7 +231,7 @@ Describe 'skalary plugin registry scripts' {
 
         $registryPath = Join-Path $source 'registry.json'
         $registry = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json -Depth 100
-        $ci = @($registry.plugins | Where-Object { [string]$_.name -eq 'ci' } | Select-Object -First 1)
+        $ci = @($registry.plugins | Where-Object { [string]$_.name -eq 'continue-implementation' } | Select-Object -First 1)
         $ci.Count | Should -Be 1
         $ci[0].files[0].sha256 = ('0' * 64)
         Set-Content -LiteralPath $registryPath -Value (($registry | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
@@ -240,12 +240,12 @@ Describe 'skalary plugin registry scripts' {
         if ($LASTEXITCODE -ne 0) {
             throw "git add failed in '$source' (exit $LASTEXITCODE)."
         }
-        git -C $source commit -m 'test: tamper ci hash' | Out-Null
+        git -C $source commit -m 'test: tamper continue-implementation hash' | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "git commit failed in '$source' (exit $LASTEXITCODE)."
         }
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'ci', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'continue-implementation', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Not -Be 0
         $install.Output | Should -Match 'Staged hash mismatch'
 
@@ -269,7 +269,7 @@ Describe 'skalary plugin registry scripts' {
         $updatedSource = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cr', '-Source', $baseSource, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'code-review', '-Source', $baseSource, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         Set-Content -LiteralPath (Join-Path $target '.github/prompts/cr.prompt.md') -Value "user-edited`n" -Encoding utf8
@@ -278,25 +278,25 @@ Describe 'skalary plugin registry scripts' {
         # The eol=lf gitattribute renormalizes the working tree on commit, so a
         # platform-dependent Set-Content terminator (CRLF on Windows) would make
         # the recorded hash diverge from the post-commit content.
-        [System.IO.File]::WriteAllText((Join-Path $updatedSource 'plugins/cr/prompts/cr.prompt.md'), "upstream update`n")
-        $manifestPath = Join-Path $updatedSource 'plugins/cr/plugin.json'
+        [System.IO.File]::WriteAllText((Join-Path $updatedSource 'plugins/code-review/prompts/cr.prompt.md'), "upstream update`n")
+        $manifestPath = Join-Path $updatedSource 'plugins/code-review/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.version = '1.0.1'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
         Invoke-SkalaryScript -RepoRoot $updatedSource -ScriptName 'Build-Registry.ps1'
-        git -C $updatedSource add plugins/cr registry.json README.md
+        git -C $updatedSource add plugins/code-review registry.json README.md
         if ($LASTEXITCODE -ne 0) {
             throw "git add failed in '$updatedSource' (exit $LASTEXITCODE)."
         }
-        git -C $updatedSource commit -m 'test: bump cr to 1.0.1' | Out-Null
+        git -C $updatedSource commit -m 'test: bump code-review to 1.0.1' | Out-Null
         if ($LASTEXITCODE -ne 0) {
             throw "git commit failed in '$updatedSource' (exit $LASTEXITCODE)."
         }
 
-        $update = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Update-Plugin.ps1' -Arguments @('-Name', 'cr', '-Source', $updatedSource, '-Ref', 'HEAD')
+        $update = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Update-Plugin.ps1' -Arguments @('-Name', 'code-review', '-Source', $updatedSource, '-Ref', 'HEAD')
         $update.ExitCode | Should -Be 0
 
-        $receipt = Get-Content -LiteralPath (Join-Path $target '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
+        $receipt = Get-Content -LiteralPath (Join-Path $target '.github/.skalary/receipts/code-review.json') -Raw | ConvertFrom-Json -Depth 100
         [bool]$receipt.degraded | Should -BeTrue
         [string]$receipt.version | Should -Be '1.0.0'
         @($receipt.files | Where-Object { [string]$_.outcome -eq 'skipped-modified' }).Count | Should -BeGreaterThan 0
@@ -306,25 +306,25 @@ Describe 'skalary plugin registry scripts' {
         $source = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'ci', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'continue-implementation', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         {
-            Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cr' }
-        } | Should -Throw -ExpectedMessage "*installed dependent plugin(s): ci*"
+            Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'code-review' }
+        } | Should -Throw -ExpectedMessage "*installed dependent plugin(s): continue-implementation*"
     }
 
     It 'keeps modified files during remove unless -Force is used' {
         $source = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cip', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'create-implementation-plan', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         $installedPath = Join-Path $target '.github/skills/cip/SKILL.md'
         Set-Content -LiteralPath $installedPath -Value "changed locally`n" -Encoding utf8
 
-        Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'cip' }
+        Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Remove-Plugin.ps1' -Parameters @{ Name = 'create-implementation-plan' }
         Test-Path -LiteralPath $installedPath | Should -BeTrue
     }
 
@@ -332,24 +332,24 @@ Describe 'skalary plugin registry scripts' {
         $source = New-RepoClone
         $target = New-RepoClone
 
-        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cdn', '-Source', $source, '-Ref', 'HEAD')
+        $install = Invoke-ScriptProcess -RepoRoot $target -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'create-design-notes', '-Source', $source, '-Ref', 'HEAD')
         $install.ExitCode | Should -Be 0
 
         $plugins = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1'
-        $cdn = @($plugins | Where-Object { [string]$_.name -eq 'cdn' } | Select-Object -First 1)
+        $cdn = @($plugins | Where-Object { [string]$_.name -eq 'create-design-notes' } | Select-Object -First 1)
         $cdn.Count | Should -Be 1
         [bool]$cdn[0].installed | Should -BeTrue
         [bool]$cdn[0].modified | Should -BeFalse
 
         Set-Content -LiteralPath (Join-Path $target '.github/prompts/cdn.prompt.md') -Value "mutated`n" -Encoding utf8
         $pluginsAfter = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Get-Plugin.ps1' -Parameters @{ Installed = $true }
-        $cdnAfter = @($pluginsAfter | Where-Object { [string]$_.name -eq 'cdn' } | Select-Object -First 1)
+        $cdnAfter = @($pluginsAfter | Where-Object { [string]$_.name -eq 'create-design-notes' } | Select-Object -First 1)
         $cdnAfter.Count | Should -Be 1
         [bool]$cdnAfter[0].modified | Should -BeTrue
 
         $search = Invoke-SkalaryScript -RepoRoot $target -ScriptName 'Find-Plugin.ps1' -Parameters @{ Query = 'review' }
-        @($search.name) | Should -Contain 'cr'
-        @($search.name) | Should -Contain 'dr'
+        @($search.name) | Should -Contain 'code-review'
+        @($search.name) | Should -Contain 'design-review'
     }
 
     It 'keeps Build-Registry idempotent across repeated runs' {
@@ -371,7 +371,7 @@ Describe 'skalary plugin registry scripts' {
 
     It 'fails Test-Registry on destination collisions' {
         $repo = New-RepoClone
-        $manifestPath = Join-Path $repo 'plugins/cdn/plugin.json'
+        $manifestPath = Join-Path $repo 'plugins/create-design-notes/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.files[0].dest = 'prompts/udn.prompt.md'
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
@@ -392,7 +392,7 @@ Describe 'skalary plugin registry scripts' {
         param($Dest)
 
         $repo = New-RepoClone
-        $manifestPath = Join-Path $repo 'plugins/cdn/plugin.json'
+        $manifestPath = Join-Path $repo 'plugins/create-design-notes/plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 100
         $manifest.files[0].dest = $Dest
         Set-Content -LiteralPath $manifestPath -Value (($manifest | ConvertTo-Json -Depth 100) + "`n") -Encoding utf8
@@ -408,13 +408,13 @@ Describe 'skalary plugin registry scripts' {
         $targetLocal = New-RepoClone
         $targetRemote = New-RepoClone
 
-        $localInstall = Invoke-ScriptProcess -RepoRoot $targetLocal -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cr', '-Source', $source, '-Ref', 'HEAD')
-        $remoteInstall = Invoke-ScriptProcess -RepoRoot $targetRemote -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'cr', '-Repository', $source, '-Ref', 'HEAD')
+        $localInstall = Invoke-ScriptProcess -RepoRoot $targetLocal -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'code-review', '-Source', $source, '-Ref', 'HEAD')
+        $remoteInstall = Invoke-ScriptProcess -RepoRoot $targetRemote -ScriptName 'Install-Plugin.ps1' -Arguments @('-Name', 'code-review', '-Repository', $source, '-Ref', 'HEAD')
         $localInstall.ExitCode | Should -Be 0
         $remoteInstall.ExitCode | Should -Be 0
 
-        $localReceipt = Get-Content -LiteralPath (Join-Path $targetLocal '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
-        $remoteReceipt = Get-Content -LiteralPath (Join-Path $targetRemote '.github/.skalary/receipts/cr.json') -Raw | ConvertFrom-Json -Depth 100
+        $localReceipt = Get-Content -LiteralPath (Join-Path $targetLocal '.github/.skalary/receipts/code-review.json') -Raw | ConvertFrom-Json -Depth 100
+        $remoteReceipt = Get-Content -LiteralPath (Join-Path $targetRemote '.github/.skalary/receipts/code-review.json') -Raw | ConvertFrom-Json -Depth 100
 
         [string]$localReceipt.ref | Should -Be ([string]$remoteReceipt.ref)
 

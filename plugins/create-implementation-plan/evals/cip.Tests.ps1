@@ -8,7 +8,7 @@ Describe 'cip structural evals' {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
         Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $pluginRoot = Join-Path $script:repoRoot 'plugins/cip'
+        $pluginRoot = Join-Path $script:repoRoot 'plugins/create-implementation-plan'
         $manifestPath = Join-Path $pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
 
@@ -40,7 +40,7 @@ Describe 'cip structural evals' {
 
     It 'requires known referenced asset to exist in plugin payload' {
         $resolved = Test-ReferencedFile -BasePath $pluginRoot -RelativePath ([string]$script:assetEntry.src)
-        [string]$resolved.Replace('\', '/') | Should -Match '/plugins/cip/skills/cip/assets/plan-template.md$'
+        [string]$resolved.Replace('\', '/') | Should -Match '/plugins/create-implementation-plan/skills/cip/assets/plan-template.md$'
         Test-Path -LiteralPath $script:assetPath -PathType Leaf | Should -BeTrue
     }
 

@@ -8,7 +8,7 @@ Describe 'udn structural evals' {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
         Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $pluginRoot = Join-Path $script:repoRoot 'plugins/udn'
+        $pluginRoot = Join-Path $script:repoRoot 'plugins/update-design-notes'
         $manifestPath = Join-Path $pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
         $promptEntries = @($manifest.files | Where-Object { [string]$_.src -eq 'prompts/udn.prompt.md' })

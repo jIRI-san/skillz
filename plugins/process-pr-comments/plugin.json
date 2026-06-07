@@ -1,5 +1,5 @@
 {
-  "name": "pprc",
+  "name": "process-pr-comments",
   "version": "1.0.0",
   "description": "Process PR comments skill for classifying, fixing, and replying to review feedback.",
   "author": "jIRI-san",

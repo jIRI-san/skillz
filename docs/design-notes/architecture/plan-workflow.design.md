@@ -6,8 +6,8 @@ globs:
   - scripts/skalary/PlanEvidence.psm1
   - scripts/skalary/Validate-Plan.ps1
   - scripts/validate.ps1
-  - plugins/cip/**
-  - plugins/ci/**
+  - plugins/create-implementation-plan/**
+  - plugins/continue-implementation/**
 ---
 
 # Plan Workflow
@@ -16,8 +16,8 @@ globs:
 
 | Component | Responsibility | Notes |
 |---|---|---|
-| `plugins/cip/skills/cip/SKILL.md` | Orchestrates interview, drafting, DR rounds | Stays orchestration-only; calls validator scripts, does not embed validation logic |
-| `plugins/ci/skills/ci/SKILL.md` | Orchestrates step execution and crosschecks | Uses deterministic script entry points before execution/crosscheck |
+| `plugins/create-implementation-plan/skills/cip/SKILL.md` | Orchestrates interview, drafting, DR rounds | Stays orchestration-only; calls validator scripts, does not embed validation logic |
+| `plugins/continue-implementation/skills/ci/SKILL.md` | Orchestrates step execution and crosschecks | Uses deterministic script entry points before execution/crosscheck |
 | `scripts/skalary/Test-Plan.ps1` | Deterministic plan validator and file-evidence verifier | Supports `-Stage Draft|PhaseCrosscheck|PlanCrosscheck`; reusable evidence verification path |
 | `scripts/skalary/PlanEvidence.psm1` | Confined `file:` marker evaluator | Canonicalize-then-confine path checks, assertion vocabulary, regex/time budget enforcement |
 | `scripts/skalary/Validate-Plan.ps1` + `scripts/validate.ps1` | Repo-level and single-plan entry points | Keep validation pre-approvable and composable via npm scripts |

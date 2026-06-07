@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T11:35:05.2422838Z",
+  "generatedAt": "2026-06-07T13:16:10.8637682Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -119,111 +119,6 @@
     {
       "author": "jIRI-san",
       "dependencies": [],
-      "description": "Create design notes prompt.",
-      "evals": {
-        "status": "none"
-      },
-      "files": [
-        {
-          "dest": "prompts/cdn.prompt.md",
-          "sha256": "e8b8c8e98e45736b08c62ec1f8e8ca35a286bd780850274890c95599f66b571a",
-          "src": "prompts/cdn.prompt.md"
-        }
-      ],
-      "license": "MIT",
-      "name": "cdn",
-      "status": "stable",
-      "tags": [
-        "documentation",
-        "prompt"
-      ],
-      "version": "1.0.0"
-    },
-    {
-      "author": "jIRI-san",
-      "dependencies": [
-        "autopilot",
-        "cr"
-      ],
-      "description": "Code implementation workflow skill with autonomous execution guidance.",
-      "evals": {
-        "status": "none"
-      },
-      "files": [
-        {
-          "dest": "skills/ci/assets/crosscheck-guide.md",
-          "sha256": "0d7308fec238f328ffd6eb1f416130a1a243db6de524fb342514f02be48294f3",
-          "src": "skills/ci/assets/crosscheck-guide.md"
-        },
-        {
-          "dest": "skills/ci/assets/execution-guide.md",
-          "sha256": "ab317bd07d82d170a995793cf5d81707b5620b8e66f3ba97872ac115900e4840",
-          "src": "skills/ci/assets/execution-guide.md"
-        },
-        {
-          "dest": "skills/ci/SKILL.md",
-          "sha256": "9af63aa20cc70b8d303f74ee84660bedb178bb108a286b2340a4f8bf889f2da9",
-          "src": "skills/ci/SKILL.md"
-        }
-      ],
-      "license": "MIT",
-      "name": "ci",
-      "status": "stable",
-      "tags": [
-        "autopilot",
-        "implementation",
-        "skill"
-      ],
-      "version": "1.0.0"
-    },
-    {
-      "author": "jIRI-san",
-      "dependencies": [
-        "dr"
-      ],
-      "description": "Implementation plan generation skill for coding workflows.",
-      "evals": {
-        "status": "none"
-      },
-      "files": [
-        {
-          "dest": "skills/cip/assets/dr-guide.md",
-          "sha256": "e62ce1d7d1bd8a36bc96c3716658277e83f7b4cf78d241aab0399da5f170d7ea",
-          "src": "skills/cip/assets/dr-guide.md"
-        },
-        {
-          "dest": "skills/cip/assets/drafting-guide.md",
-          "sha256": "3a4efe090f6f578c14b7ea72bf780e068ba0021aa0c2bed3d299f2377ba95153",
-          "src": "skills/cip/assets/drafting-guide.md"
-        },
-        {
-          "dest": "skills/cip/assets/interview-guide.md",
-          "sha256": "df76672635b3dfdc80fefa29a352295bd49e10f24e0eaca8b836b09bc3edfd34",
-          "src": "skills/cip/assets/interview-guide.md"
-        },
-        {
-          "dest": "skills/cip/assets/plan-template.md",
-          "sha256": "211a0beb971ed0493073abbb154c2c18527cb0b1e0419b88fb0f206b889acb77",
-          "src": "skills/cip/assets/plan-template.md"
-        },
-        {
-          "dest": "skills/cip/SKILL.md",
-          "sha256": "ca46817beaca20bbd304cf90ec050dd7b6c3109bd3eb0308fa1dc83a791907a1",
-          "src": "skills/cip/SKILL.md"
-        }
-      ],
-      "license": "MIT",
-      "name": "cip",
-      "status": "stable",
-      "tags": [
-        "planning",
-        "skill"
-      ],
-      "version": "1.0.0"
-    },
-    {
-      "author": "jIRI-san",
-      "dependencies": [],
       "description": "Code review orchestrator with specialist subagents and git diff helpers.",
       "evals": {
         "status": "none"
@@ -286,12 +181,117 @@
         }
       ],
       "license": "MIT",
-      "name": "cr",
+      "name": "code-review",
       "status": "stable",
       "tags": [
         "agent",
         "prompt",
         "review"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "author": "jIRI-san",
+      "dependencies": [
+        "autopilot",
+        "code-review"
+      ],
+      "description": "Code implementation workflow skill with autonomous execution guidance.",
+      "evals": {
+        "status": "none"
+      },
+      "files": [
+        {
+          "dest": "skills/ci/assets/crosscheck-guide.md",
+          "sha256": "0d7308fec238f328ffd6eb1f416130a1a243db6de524fb342514f02be48294f3",
+          "src": "skills/ci/assets/crosscheck-guide.md"
+        },
+        {
+          "dest": "skills/ci/assets/execution-guide.md",
+          "sha256": "ab317bd07d82d170a995793cf5d81707b5620b8e66f3ba97872ac115900e4840",
+          "src": "skills/ci/assets/execution-guide.md"
+        },
+        {
+          "dest": "skills/ci/SKILL.md",
+          "sha256": "9af63aa20cc70b8d303f74ee84660bedb178bb108a286b2340a4f8bf889f2da9",
+          "src": "skills/ci/SKILL.md"
+        }
+      ],
+      "license": "MIT",
+      "name": "continue-implementation",
+      "status": "stable",
+      "tags": [
+        "autopilot",
+        "implementation",
+        "skill"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "author": "jIRI-san",
+      "dependencies": [],
+      "description": "Create design notes prompt.",
+      "evals": {
+        "status": "none"
+      },
+      "files": [
+        {
+          "dest": "prompts/cdn.prompt.md",
+          "sha256": "e8b8c8e98e45736b08c62ec1f8e8ca35a286bd780850274890c95599f66b571a",
+          "src": "prompts/cdn.prompt.md"
+        }
+      ],
+      "license": "MIT",
+      "name": "create-design-notes",
+      "status": "stable",
+      "tags": [
+        "documentation",
+        "prompt"
+      ],
+      "version": "1.0.0"
+    },
+    {
+      "author": "jIRI-san",
+      "dependencies": [
+        "design-review"
+      ],
+      "description": "Implementation plan generation skill for coding workflows.",
+      "evals": {
+        "status": "none"
+      },
+      "files": [
+        {
+          "dest": "skills/cip/assets/dr-guide.md",
+          "sha256": "e62ce1d7d1bd8a36bc96c3716658277e83f7b4cf78d241aab0399da5f170d7ea",
+          "src": "skills/cip/assets/dr-guide.md"
+        },
+        {
+          "dest": "skills/cip/assets/drafting-guide.md",
+          "sha256": "3a4efe090f6f578c14b7ea72bf780e068ba0021aa0c2bed3d299f2377ba95153",
+          "src": "skills/cip/assets/drafting-guide.md"
+        },
+        {
+          "dest": "skills/cip/assets/interview-guide.md",
+          "sha256": "df76672635b3dfdc80fefa29a352295bd49e10f24e0eaca8b836b09bc3edfd34",
+          "src": "skills/cip/assets/interview-guide.md"
+        },
+        {
+          "dest": "skills/cip/assets/plan-template.md",
+          "sha256": "211a0beb971ed0493073abbb154c2c18527cb0b1e0419b88fb0f206b889acb77",
+          "src": "skills/cip/assets/plan-template.md"
+        },
+        {
+          "dest": "skills/cip/SKILL.md",
+          "sha256": "ca46817beaca20bbd304cf90ec050dd7b6c3109bd3eb0308fa1dc83a791907a1",
+          "src": "skills/cip/SKILL.md"
+        }
+      ],
+      "license": "MIT",
+      "name": "create-implementation-plan",
+      "status": "stable",
+      "tags": [
+        "planning",
+        "skill"
       ],
       "version": "1.0.0"
     },
@@ -330,7 +330,7 @@
         }
       ],
       "license": "MIT",
-      "name": "dr",
+      "name": "design-review",
       "status": "stable",
       "tags": [
         "agent",
@@ -354,12 +354,12 @@
         },
         {
           "dest": "skills/process-pr-comments/SKILL.md",
-          "sha256": "7068c8f17554eb8e625324f51f058db6169bd54de19464f3af677a4efd6ecf33",
+          "sha256": "e18aa9812049184131957f51ba735678caa4a64a836074cfbee2f2d0538d6bf6",
           "src": "skills/process-pr-comments/SKILL.md"
         }
       ],
       "license": "MIT",
-      "name": "pprc",
+      "name": "process-pr-comments",
       "status": "stable",
       "tags": [
         "github",
@@ -384,7 +384,7 @@
         }
       ],
       "license": "MIT",
-      "name": "udn",
+      "name": "update-design-notes",
       "status": "stable",
       "tags": [
         "documentation",

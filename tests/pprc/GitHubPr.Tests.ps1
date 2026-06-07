@@ -2,7 +2,7 @@
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-$modulePath = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' 'plugins' 'pprc' 'skills' 'process-pr-comments' 'scripts' 'GitHubPr.psm1')).Path
+$modulePath = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' 'plugins' 'process-pr-comments' 'skills' 'process-pr-comments' 'scripts' 'GitHubPr.psm1')).Path
 $moduleName = (Import-Module $modulePath -Force -PassThru).Name
 
 Describe 'pprc GitHubPr module' {

@@ -54,7 +54,7 @@ pwsh -NoProfile -File scripts/skalary/Find-Plugin.ps1 -Query review
 
 ### Plugin-specific prerequisites
 
-- `pprc` (`process-pr-comments`): requires GitHub CLI (`gh`) installed and authenticated for the current user (`gh auth login`), because the plugin resolves auth exclusively via `gh auth token`.
+- `process-pr-comments`: requires GitHub CLI (`gh`) installed and authenticated for the current user (`gh auth login`), because the plugin resolves auth exclusively via `gh auth token`.
 
 ## Security Note (`irm | iex`)
 
@@ -68,13 +68,14 @@ Generated from `registry.json` by `scripts/skalary/Build-Registry.ps1`.
 | Plugin | Version | Status | Dependencies | Files | Description |
 |--------|---------|--------|--------------|-------|-------------|
 | `autopilot` | 1.1.0 | partial | — | 18 | Self-contained autopilot plugin payload for agent, skill, scripts, schemas, and devcontainer. |
-| `cdn` | 1.0.0 | stable | — | 1 | Create design notes prompt. |
-| `ci` | 1.0.0 | stable | autopilot, cr | 3 | Code implementation workflow skill with autonomous execution guidance. |
-| `cip` | 1.0.0 | stable | dr | 5 | Implementation plan generation skill for coding workflows. |
-| `cr` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
-| `dr` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
-| `pprc` | 1.0.0 | stable | — | 2 | Process PR comments skill for classifying, fixing, and replying to review feedback. |
-| `udn` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
+| `code-review` | 1.0.0 | stable | — | 11 | Code review orchestrator with specialist subagents and git diff helpers. |
+| `continue-implementation` | 1.0.0 | stable | autopilot, code-review | 3 | Code implementation workflow skill with autonomous execution guidance. |
+| `create-design-notes` | 1.0.0 | stable | — | 1 | Create design notes prompt. |
+| `create-implementation-plan` | 1.0.0 | stable | design-review | 5 | Implementation plan generation skill for coding workflows. |
+| `design-review` | 1.0.0 | stable | — | 5 | Design review orchestrator with specialist model agents. |
+| `process-pr-comments` | 1.0.0 | stable | — | 2 | Process PR comments skill for classifying, fixing, and replying to review feedback. |
+| `update-design-notes` | 1.0.0 | stable | — | 1 | Update design notes prompt. |
 <!-- END SKALARY PLUGIN CATALOG -->
+
 
 

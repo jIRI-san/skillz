@@ -1,5 +1,5 @@
 {
-  "name": "cip",
+  "name": "create-implementation-plan",
   "version": "1.0.0",
   "description": "Implementation plan generation skill for coding workflows.",
   "author": "jIRI-san",
@@ -9,7 +9,7 @@
     "planning"
   ],
   "dependencies": [
-    "dr"
+    "design-review"
   ],
   "status": "stable",
   "files": [

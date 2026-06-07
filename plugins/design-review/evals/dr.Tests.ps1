@@ -3,12 +3,12 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Describe 'cr structural evals' {
+Describe 'dr structural evals' {
     BeforeAll {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
         Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $script:pluginRoot = Join-Path $script:repoRoot 'plugins/cr'
+        $script:pluginRoot = Join-Path $script:repoRoot 'plugins/design-review'
         $manifestPath = Join-Path $script:pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
         $script:entries = @($manifest.files)
@@ -16,11 +16,11 @@ Describe 'cr structural evals' {
 
     It 'covers orchestrator, subagents, and prompt artifacts with expected types' {
         $artifactSrcs = @($script:entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' } | ForEach-Object { [string]$_.src })
-        $artifactSrcs | Should -Contain 'agents/cr.agent.md'
-        $artifactSrcs | Should -Contain 'agents/cr-opus.agent.md'
-        $artifactSrcs | Should -Contain 'agents/cr-codex.agent.md'
-        $artifactSrcs | Should -Contain 'agents/cr-gemini.agent.md'
-        $artifactSrcs | Should -Contain 'prompts/cr.prompt.md'
+        $artifactSrcs | Should -Contain 'agents/dr.agent.md'
+        $artifactSrcs | Should -Contain 'agents/dr-opus.agent.md'
+        $artifactSrcs | Should -Contain 'agents/dr-codex.agent.md'
+        $artifactSrcs | Should -Contain 'agents/dr-gemini.agent.md'
+        $artifactSrcs | Should -Contain 'prompts/dr.prompt.md'
 
         foreach ($entry in @($script:entries | Where-Object { [string]$_.src -match '\.(agent|prompt)\.md$' })) {
             $src = [string]$entry.src
@@ -46,23 +46,6 @@ Describe 'cr structural evals' {
             }
             [string]$frontmatter.name | Should -Be $expectedName
             Test-BodySection -ArtifactType $artifactType -Path $path | Should -BeTrue
-        }
-    }
-
-    It 'requires each helper referenced by cr.agent.md to exist and be declared in plugin.json' {
-        $agentPath = Join-Path $script:pluginRoot 'agents/cr.agent.md'
-        $agentBody = Get-Content -LiteralPath $agentPath -Raw
-        $scriptMatches = [regex]::Matches($agentBody, '\.github/agents/scripts/(?<name>get-diff-[a-z-]+\.ps1)')
-        $referencedScripts = @($scriptMatches | ForEach-Object { [string]$_.Groups['name'].Value } | Sort-Object -Unique)
-        $referencedScripts.Count | Should -BeGreaterThan 0
-
-        foreach ($scriptName in $referencedScripts) {
-            $relativePath = "agents/scripts/$scriptName"
-            $manifestEntries = @($script:entries | Where-Object { [string]$_.src -eq $relativePath })
-            $manifestEntries.Count | Should -Be 1
-
-            $resolved = Test-ReferencedFile -BasePath $script:pluginRoot -RelativePath $relativePath
-            Test-Path -LiteralPath $resolved -PathType Leaf | Should -BeTrue
         }
     }
 

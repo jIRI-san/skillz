@@ -8,7 +8,7 @@ Describe 'pprc structural evals' {
         $script:repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..' '..')).Path
         Import-Module (Join-Path $script:repoRoot 'tests/evals/EvalCommon.psm1') -Force
 
-        $pluginRoot = Join-Path $script:repoRoot 'plugins/pprc'
+        $pluginRoot = Join-Path $script:repoRoot 'plugins/process-pr-comments'
         $manifestPath = Join-Path $pluginRoot 'plugin.json'
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -Depth 50
 
@@ -41,7 +41,7 @@ Describe 'pprc structural evals' {
 
     It 'requires the referenced GitHubPr module to exist in plugin payload' {
         $resolved = Test-ReferencedFile -BasePath $script:pluginRoot -RelativePath ([string]$script:assetEntry.src)
-        [string]$resolved.Replace('\', '/') | Should -Match '/plugins/pprc/skills/process-pr-comments/scripts/GitHubPr.psm1$'
+        [string]$resolved.Replace('\', '/') | Should -Match '/plugins/process-pr-comments/skills/process-pr-comments/scripts/GitHubPr.psm1$'
         Test-Path -LiteralPath $script:assetPath -PathType Leaf | Should -BeTrue
     }
 
