@@ -18,6 +18,14 @@
     {
       "src": "skills/ci/SKILL.md",
       "dest": "skills/ci/SKILL.md"
+    },
+    {
+      "src": "skills/ci/assets/execution-guide.md",
+      "dest": "skills/ci/assets/execution-guide.md"
+    },
+    {
+      "src": "skills/ci/assets/crosscheck-guide.md",
+      "dest": "skills/ci/assets/crosscheck-guide.md"
     }
   ],
   "evals": {

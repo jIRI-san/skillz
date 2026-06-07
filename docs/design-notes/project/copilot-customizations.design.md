@@ -97,6 +97,9 @@ All three subagents perform a **comprehensive review** across every important di
 5. One step at a time: mark `[~]` → implement → build+test → validate acceptance criteria → `@cr` review → explicit commit gate
 6. Commit: `feat(<scope>): <step title> [plan-NNN step X.Y]`; plan file updated in same commit
 7. On all steps `[x]`: plan-level crosscheck → mark plan `[DONE]` in title → move folder to `docs/implementation-plans/archived/`
+8. Validation is script-only: orchestrators delegate to `npm run validate-plan` / `scripts/skalary/Test-Plan.ps1` / `scripts/validate.ps1` and never embed ad-hoc validation logic
+9. `cr` smart default scope is changed files including committed branch deltas plus uncommitted changes
+10. Deep review-flow redesign is intentionally deferred to plan 007; current `cr` keeps lightweight flow wins only
 
 **Plan file format** (designed to be scannable by a human reviewer — no prose implementation instructions):
 ```markdown

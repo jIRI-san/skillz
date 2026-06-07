@@ -55,6 +55,8 @@ npm run validate-plan
 
 If validation reports blocking failures, do not start execution until they are fixed.
 
+Do not add inline validation logic in this orchestrator. All plan validation must delegate to `scripts/skalary/Test-Plan.ps1` via `npm run validate-plan` or `scripts/validate.ps1`.
+
 Use the execution asset for implementation/build/test/code-review/commit loop.
 
 ## Step 6: Crosscheck and completion (`./assets/crosscheck-guide.md`)

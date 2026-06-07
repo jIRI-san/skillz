@@ -74,6 +74,8 @@ pwsh -NoProfile -File scripts/skalary/Test-Plan.ps1 -PlanPath <plan-path> -RepoR
 pwsh -NoProfile -File scripts/skalary/Test-Plan.ps1 -PlanPath <plan-path> -RepoRoot . -Stage Draft
 ```
 
+Keep this file orchestration-only: validation logic lives in `scripts/skalary/Test-Plan.ps1` and `scripts/validate.ps1`, never as ad-hoc checks embedded in markdown instructions.
+
 ## Step 5: Finish
 
 1. Confirm `plan.md` is saved in repo.

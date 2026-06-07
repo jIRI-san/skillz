@@ -25,8 +25,16 @@ Describe 'skalary plugin registry scripts' {
                 throw "Failed to configure git identity for '$path'."
             }
 
-            # Keep fixture repos aligned with uncommitted local script changes under test.
+            # Keep fixture repos aligned with uncommitted local changes under test.
             Copy-Item -LiteralPath (Join-Path $projectRoot 'scripts/skalary') -Destination (Join-Path $path 'scripts') -Recurse -Force
+            Copy-Item -LiteralPath (Join-Path $projectRoot 'plugins') -Destination $path -Recurse -Force
+            Copy-Item -LiteralPath (Join-Path $projectRoot 'registry.json') -Destination $path -Force
+            Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination $path -Force
+            git -C $path add scripts/skalary plugins registry.json README.md | Out-Null
+            $staged = @(git -C $path diff --cached --name-only)
+            if ($staged.Count -gt 0) {
+                git -C $path commit -m 'test: sync fixture with local changes' | Out-Null
+            }
 
             $tempRepos.Add($path)
             return $path
@@ -252,7 +260,7 @@ Describe 'skalary plugin registry scripts' {
         }
         $tmpRoot = Join-Path $target '.github/.skalary/tmp'
         if (Test-Path -LiteralPath $tmpRoot -PathType Container) {
-            (Get-ChildItem -LiteralPath $tmpRoot -Directory -Filter 'install-*').Count | Should -Be 0
+            @(Get-ChildItem -LiteralPath $tmpRoot -Directory -Filter 'install-*').Count | Should -Be 0
         }
     }
 

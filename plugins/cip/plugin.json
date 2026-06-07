@@ -18,6 +18,18 @@
       "dest": "skills/cip/SKILL.md"
     },
     {
+      "src": "skills/cip/assets/interview-guide.md",
+      "dest": "skills/cip/assets/interview-guide.md"
+    },
+    {
+      "src": "skills/cip/assets/drafting-guide.md",
+      "dest": "skills/cip/assets/drafting-guide.md"
+    },
+    {
+      "src": "skills/cip/assets/dr-guide.md",
+      "dest": "skills/cip/assets/dr-guide.md"
+    },
+    {
       "src": "skills/cip/assets/plan-template.md",
       "dest": "skills/cip/assets/plan-template.md"
     }

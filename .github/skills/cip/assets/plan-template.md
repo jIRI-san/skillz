@@ -3,6 +3,8 @@
 <!-- Optional execution metadata — defaults used by /ci mode selection -->
 <!-- execution-mode: manual | host-autopilot | container-autopilot -->
 <!-- scope: step | phase | plan -->
+<!-- evidence: required -->
+<!-- phase-budget-points: 6 -->
 
 ## Decisions
 <!-- Key decisions made during planning — one bullet per decision -->
@@ -12,7 +14,7 @@
 
 | ID | Requirement | Acceptance Criteria | Phases/Steps |
 |----|-------------|---------------------|--------------|
-| REQ-1 | | When X, then Y | |
+| REQ-1 | | Use typed evidence markers in criteria: `test:<TestId>` · `file:<path>#exists` · `file:<path>#contains:<regex>` · `file:<path>#count>=<N>` · `file:<path>#dircount>=<N>` · `review:cr|dr` | |
 
 ## Risks
 
@@ -25,6 +27,7 @@
 <!-- Steps with no [after:] annotation can start immediately and run in parallel. -->
 <!-- Roles: @ai-agent (default, not annotated) or @human (explicit). -->
 <!-- Sizes: S (< 30 min) · M (30 min – 2 h) · L (2 h+) -->
+<!-- Point legend: S=1, M=2, L=3 (phase-budget advisory cap: 6) -->
 
 - [ ] 1.1 Step title (REQ-1) `S`
 - [ ] 1.2 Step title (REQ-1, RISK-1) @human `M`
@@ -43,3 +46,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 
 - [ ] 2.1 Step title (REQ-1, RISK-1) [after: 1.1] `S`
+
+## Finalization (conditional)
+
+- [ ] X.Y Finalization gate (REQ-1) @human `S`

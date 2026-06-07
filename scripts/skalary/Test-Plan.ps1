@@ -614,8 +614,8 @@ foreach ($warning in $result.Warnings) {
 }
 
 if ($result.Errors.Count -gt 0) {
-    foreach ($error in $result.Errors) {
-        Write-Host "ERROR: $error" -ForegroundColor Red
+    foreach ($validationError in $result.Errors) {
+        Write-Host "ERROR: $validationError" -ForegroundColor Red
     }
     exit 1
 }

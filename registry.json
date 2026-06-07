@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-06T17:10:31.0506163Z",
+  "generatedAt": "2026-06-07T08:01:46.6597379Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -16,7 +16,7 @@
       "files": [
         {
           "dest": "agents/autopilot.agent.md",
-          "sha256": "091c3920671c558f2ff8568b93b2eaa22fb67edc1d201b159f1dc9dbed854ac4",
+          "sha256": "0ae1e9550fab92d931af6360c155ea64a8048a6cb6230982ee63e92cc3b22a7f",
           "src": "agents/autopilot.agent.md"
         }
       ],
@@ -64,8 +64,18 @@
       },
       "files": [
         {
+          "dest": "skills/ci/assets/crosscheck-guide.md",
+          "sha256": "0d7308fec238f328ffd6eb1f416130a1a243db6de524fb342514f02be48294f3",
+          "src": "skills/ci/assets/crosscheck-guide.md"
+        },
+        {
+          "dest": "skills/ci/assets/execution-guide.md",
+          "sha256": "ab317bd07d82d170a995793cf5d81707b5620b8e66f3ba97872ac115900e4840",
+          "src": "skills/ci/assets/execution-guide.md"
+        },
+        {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "92bbd7cc83717eded3283ee2066619a5429446704be1cbaf986b72e0d36c85ac",
+          "sha256": "9af63aa20cc70b8d303f74ee84660bedb178bb108a286b2340a4f8bf889f2da9",
           "src": "skills/ci/SKILL.md"
         }
       ],
@@ -90,13 +100,28 @@
       },
       "files": [
         {
+          "dest": "skills/cip/assets/dr-guide.md",
+          "sha256": "e62ce1d7d1bd8a36bc96c3716658277e83f7b4cf78d241aab0399da5f170d7ea",
+          "src": "skills/cip/assets/dr-guide.md"
+        },
+        {
+          "dest": "skills/cip/assets/drafting-guide.md",
+          "sha256": "3a4efe090f6f578c14b7ea72bf780e068ba0021aa0c2bed3d299f2377ba95153",
+          "src": "skills/cip/assets/drafting-guide.md"
+        },
+        {
+          "dest": "skills/cip/assets/interview-guide.md",
+          "sha256": "df76672635b3dfdc80fefa29a352295bd49e10f24e0eaca8b836b09bc3edfd34",
+          "src": "skills/cip/assets/interview-guide.md"
+        },
+        {
           "dest": "skills/cip/assets/plan-template.md",
-          "sha256": "b8818280e9044f83f3305706ba052098a8e227d17fbbe1b1c57d905d145d033e",
+          "sha256": "211a0beb971ed0493073abbb154c2c18527cb0b1e0419b88fb0f206b889acb77",
           "src": "skills/cip/assets/plan-template.md"
         },
         {
           "dest": "skills/cip/SKILL.md",
-          "sha256": "6d2dbc976a126c57ef0d0a7161a4cdb609232ec605f204b38b624f751fb67677",
+          "sha256": "ca46817beaca20bbd304cf90ec050dd7b6c3109bd3eb0308fa1dc83a791907a1",
           "src": "skills/cip/SKILL.md"
         }
       ],
@@ -134,7 +159,7 @@
         },
         {
           "dest": "agents/cr.agent.md",
-          "sha256": "ef621dc239607405bba9da2a9d8b50f61a6b69a05bee8d01576a335e6819c32b",
+          "sha256": "504336fb27216f6066597afc750f4da7e72ecbb6f0ed1d01fa98b6ffe80550b4",
           "src": "agents/cr.agent.md"
         },
         {
