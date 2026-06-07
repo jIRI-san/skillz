@@ -33,19 +33,28 @@ Next pending:   Step C.D — title
 
 ## Step 3: Determine execution mode and branch/worktree
 
-1. **Read the plan's declared execution mode.** Parse the plan header for `<!-- execution-mode: manual | host-autopilot | container-autopilot -->` and `<!-- scope: step | phase | plan -->`. This marker is a *runtime* selector, not a pacing hint — `*-autopilot` means the plan is meant to run autonomously (host or container), not interactively with approvals.
-2. **Map the marker to a mode and present the selection.** Always use `vscode_askQuestions`, with the plan-declared mode marked recommended:
-   | Plan marker | Recommended mode |
-   |---|---|
-   | `manual` or absent | **Approve** (interactive, approve each step) |
-   | `host-autopilot` | **Autonomous → Host autopilot** |
-   | `container-autopilot` | **Autonomous → Container autopilot** |
-   | `sandbox-autopilot` | **Autonomous → Sandbox autopilot** |
+1. **Read the plan's declared execution mode.** Parse the plan header for `<!-- execution-mode: manual | host-autopilot | container-autopilot | sandbox-autopilot -->` and `<!-- scope: step | phase | plan -->`. This marker is a *runtime* selector, not a pacing hint — `*-autopilot` means the plan is meant to run autonomously, not interactively with approvals.
 
-   Never silently downgrade an `*-autopilot` plan to interactive Approve. When the plan declares an autopilot mode and the session is interactive, ask the user to confirm the declared runtime (Container/Host) or pick another — do not just proceed interactively.
-3. **Hand off to the autopilot launcher when an autonomous mode is chosen.** Read `.github/skills/autopilot/SKILL.md` by path and follow its bootstrap + sub-menu + launcher steps. The declared `container-autopilot`/`host-autopilot` marker pre-selects the matching runtime in the autopilot sub-menu. After launch, exit the `/ci` flow.
-4. **Suppression:** if `AUTOPILOT_CONTAINER=true` (already running inside the autopilot container), skip the autonomous handoff and execute in-place regardless of the marker.
-5. For interactive (Approve) execution: validate or create the expected branch/worktree naming.
+2. **Always present the full mode menu.** Use `vscode_askQuestions` and list **every** mode below on every run, regardless of which configs exist. Mark the plan-declared mode as recommended. Never hide a mode because its config is missing — if the user picks an autonomous mode without config, the autopilot skill runs first-run bootstrap (Step 3.4).
+
+   | Option | Kind | Description |
+   |---|---|---|
+   | **Interactive (approve each step)** | in-session | Pause for approval at each step. Recommended when marker is `manual` or absent. |
+   | **Autopilot (autoapprove)** | in-session | Run in this session without per-step approval prompts. |
+   | **Host autopilot** | autonomous | Headless via `launch.ps1 -Runtime host`. Recommended when marker is `host-autopilot`. |
+   | **Container autopilot** | autonomous | Headless via `launch.ps1 -Runtime container`. Recommended when marker is `container-autopilot`. |
+   | **Sandbox autopilot** | autonomous | Headless via `launch.ps1 -Runtime sandbox`. Recommended when marker is `sandbox-autopilot`. |
+
+   Never silently downgrade an `*-autopilot` plan to interactive — always confirm with the user via this menu.
+
+3. **Environment suppressions (security, not config gaps):**
+   - `AUTOPILOT_CONTAINER=true` (already inside the autopilot container): omit all autonomous options **and** Autopilot; execute in-place per the marker.
+   - `AUTOPILOT_DISABLE_HOST=true`: omit **Host autopilot** only (`launch.ps1` also refuses `-Runtime host`).
+
+4. **Autonomous handoff.** When the user picks Host / Container / Sandbox autopilot, read `.github/skills/autopilot/SKILL.md` by path and follow its steps: first-run `.autopilot.json` bootstrap (if config missing), then invoke the launcher for the chosen runtime. The chosen runtime pre-selects the autopilot sub-menu. After launch, print the handoff line and exit the `/ci` flow.
+
+5. **In-session execution (Interactive / Autopilot).** Validate or create the expected branch/worktree naming, then continue to Step 4. Autopilot skips per-step approval prompts; Interactive pauses at each step.
+
 6. Record `<!-- worktree: <branch> -->` in the current phase when first running in that worktree.
 
 ## Step 4: Pick next eligible step

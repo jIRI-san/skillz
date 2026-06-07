@@ -1,7 +1,7 @@
 # NNN: Plan Title
 
 <!-- Optional execution metadata — defaults used by /ci mode selection -->
-<!-- execution-mode: manual | host-autopilot | container-autopilot -->
+<!-- execution-mode: manual | host-autopilot | container-autopilot | sandbox-autopilot -->
 <!-- scope: step | phase | plan -->
 <!-- evidence: required -->
 <!-- phase-budget-points: 6 -->

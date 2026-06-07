@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T15:13:24.1752351Z",
+  "generatedAt": "2026-06-07T15:36:02.7998798Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -213,7 +213,7 @@
         },
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "113cfebb65e5cb0580479c557197a749b9130d7b8d4beb268761a78e79953ee2",
+          "sha256": "9c380bad39245da98e6eb66afffdbf9102fa985e4d344c5082d065285509fb7d",
           "src": "skills/ci/SKILL.md"
         }
       ],
@@ -249,12 +249,12 @@
         },
         {
           "dest": "skills/cip/assets/interview-guide.md",
-          "sha256": "df76672635b3dfdc80fefa29a352295bd49e10f24e0eaca8b836b09bc3edfd34",
+          "sha256": "b2e8186a281ec9c13be047de1affc132a1bbd19918df61b2a0ac4066a116b8f2",
           "src": "skills/cip/assets/interview-guide.md"
         },
         {
           "dest": "skills/cip/assets/plan-template.md",
-          "sha256": "211a0beb971ed0493073abbb154c2c18527cb0b1e0419b88fb0f206b889acb77",
+          "sha256": "cb34a324c475f3360a76875abd27c4b6902b45e196f93be89b1f4112edc51529",
           "src": "skills/cip/assets/plan-template.md"
         },
         {
