@@ -62,6 +62,65 @@ Before archive/PR completion, require:
 
 If the gate is not satisfied, block archival/completion.
 
+## Dependency preflight (hard start-gate)
+
+For plans declaring `<!-- depends-on: 006 -->`, run this deterministic non-Pester check at plan start and again immediately before any interactive harvest/finalization branch:
+
+```powershell
+pwsh -NoProfile -File scripts/skalary/Test-DependencyPlan006.ps1 -RepoRoot . -PlanPath <selected-plan-path>
+```
+
+It validates 006 behavior contracts through public script paths (including pass/fail `file:` probes, evidence vocabulary contracts, Rule 5 wording, and the `test:unit` gate). If it exits non-zero, stop execution immediately.
+
+## Interactive harvest trigger (`/ci`) — mirror of canonical autopilot flow
+
+This section is a **mirror** of the canonical harvest procedure in `plugins/autopilot/agents/autopilot.agent.md`. Keep parity with that file whenever harvest behavior changes.
+
+At interactive plan completion, `/ci` runs harvest with the same shared scripts and ordering:
+
+1. Run dependency preflight (`Test-DependencyPlan006.ps1`) before entering harvest/finalization.
+2. If repo infra is present (`Test-Path scripts/skalary/Add-LedgerEntry.ps1`, `Test-Path scripts/skalary/Remove-LedgerEntry.ps1`, and `Test-Path docs/review-ledger`), execute append harvest first:
+   - Require `Test-Path docs/review-ledger/.archive` and required category files before invoking harvest scripts.
+   - Distill entries from `evolution-log.md` (`## Capture`), `cr-log.md`, and `learnings.md`.
+   - Map candidates deterministically into `Add-LedgerEntry` inputs:
+     - `-Category` from the 7-category rubric (`ledger-consult` mapping),
+     - `-Plan` from the current plan id,
+     - `-Src` = `ci` for this interactive trigger,
+     - `-Severity` from captured finding severity or default `Med`,
+     - `-Entry` one sanitized one-line lesson,
+     - `-Tags` deterministic sorted tags.
+   - Invoke `Add-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (no shell-string interpolation).
+   - Stage and commit ledger updates by explicit file names under `docs/review-ledger/`.
+   - If harvest is idempotent/no-op and there is no staged ledger delta, skip the append commit and continue to branch selection.
+3. Branch after the append commit:
+   - Autonomous completion: push, archive commit, push, create non-draft PR.
+   - `@human` escalation: push, run `Remove-LedgerEntry.ps1` + `/udn` reconciliation with the user present, commit prune/design-note edits, push, create draft PR, write marker, stop.
+   - `/udn` contract: run deterministic reconciliation prompts/checks; if ambiguity remains, keep the draft-PR + marker path (no archive).
+   - Invoke `Remove-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (never shell-string interpolation).
+   - Always pass required `Remove` inputs: `-Category`, `-CurrentPlan`, and full-line candidate match payload (`-Match`/`-MatchBase64`).
+   - Feed `Remove-LedgerEntry` full-line match candidates only (`-Match`/`-MatchBase64`), never substring/regex targeting.
+4. If repo infra is absent, skip harvest and keep branch semantics explicit: autonomous completion may continue standard completion flow, but `@human` completion must still route to draft PR + marker (no archive).
+
+Fail-loud behavior: error only when expected log sections/placeholders are missing; `No entries for this phase.` is valid and must not fail harvest.
+
+## `ledger-consult` (before a CR round)
+
+Before launching a CR round (`@cr`, `code-review`, or `rubber-duck`), consult only the relevant category files from `docs/review-ledger/`:
+
+- `security.md` for auth/trust-boundary/injection/secret/ACL concerns
+- `performance.md` for latency/throughput/allocation/N+1 concerns
+- `error-handling.md` for retry/timeout/fail-loud/exception-flow concerns
+- `consistency.md` for contract drift/naming parity/duplication concerns
+- `plan-structure.md` for dependency gates/phase order/evidence-flow concerns
+- `testing.md` for flaky/missing/weak evidence coverage concerns
+- `observability.md` for logs/metrics/tracing/audit concerns
+
+Rules:
+- Exclude `docs/review-ledger/.archive/` from all consult reads.
+- Read only categories implied by the current step's REQ/RISK scope.
+- Optional narrowing: within selected files, filter by relevant `#tag` values.
+- This is on-demand context only; do not auto-load all ledger files by default.
+
 ## Ephemeral capture: `cr-log.md` (mid-run only)
 
 During plan execution, capture review findings in the plan folder `cr-log.md` as ephemeral state (not durable ledger state):

@@ -79,15 +79,27 @@ This section is a **mirror** of the canonical harvest procedure in `plugins/auto
 At interactive plan completion, `/ci` runs harvest with the same shared scripts and ordering:
 
 1. Run dependency preflight (`Test-DependencyPlan006.ps1`) before entering harvest/finalization.
-2. If repo infra is present (`Test-Path scripts/skalary/Add-LedgerEntry.ps1` and `Test-Path docs/review-ledger`), execute append harvest first:
+2. If repo infra is present (`Test-Path scripts/skalary/Add-LedgerEntry.ps1`, `Test-Path scripts/skalary/Remove-LedgerEntry.ps1`, and `Test-Path docs/review-ledger`), execute append harvest first:
+   - Require `Test-Path docs/review-ledger/.archive` and required category files before invoking harvest scripts.
    - Distill entries from `evolution-log.md` (`## Capture`), `cr-log.md`, and `learnings.md`.
+   - Map candidates deterministically into `Add-LedgerEntry` inputs:
+     - `-Category` from the 7-category rubric (`ledger-consult` mapping),
+     - `-Plan` from the current plan id,
+     - `-Src` = `ci` for this interactive trigger,
+     - `-Severity` from captured finding severity or default `Med`,
+     - `-Entry` one sanitized one-line lesson,
+     - `-Tags` deterministic sorted tags.
    - Invoke `Add-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (no shell-string interpolation).
    - Stage and commit ledger updates by explicit file names under `docs/review-ledger/`.
+   - If harvest is idempotent/no-op and there is no staged ledger delta, skip the append commit and continue to branch selection.
 3. Branch after the append commit:
    - Autonomous completion: push, archive commit, push, create non-draft PR.
    - `@human` escalation: push, run `Remove-LedgerEntry.ps1` + `/udn` reconciliation with the user present, commit prune/design-note edits, push, create draft PR, write marker, stop.
+   - `/udn` contract: run deterministic reconciliation prompts/checks; if ambiguity remains, keep the draft-PR + marker path (no archive).
    - Invoke `Remove-LedgerEntry.ps1` via argument arrays / `ArgumentList` only (never shell-string interpolation).
-4. If repo infra is absent, skip harvest and continue standard completion flow.
+   - Always pass required `Remove` inputs: `-Category`, `-CurrentPlan`, and full-line candidate match payload (`-Match`/`-MatchBase64`).
+   - Feed `Remove-LedgerEntry` full-line match candidates only (`-Match`/`-MatchBase64`), never substring/regex targeting.
+4. If repo infra is absent, skip harvest and keep branch semantics explicit: autonomous completion may continue standard completion flow, but `@human` completion must still route to draft PR + marker (no archive).
 
 Fail-loud behavior: error only when expected log sections/placeholders are missing; `No entries for this phase.` is valid and must not fail harvest.
 

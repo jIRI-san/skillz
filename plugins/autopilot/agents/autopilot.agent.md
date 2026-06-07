@@ -25,7 +25,7 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
    - **Exception: conditional Finalization step** → do not stop immediately. Run the canonical harvest finalization flow (append harvest first, then autonomous vs escalation branch), then continue per branch outcome.
    - `[discovery]` → treat as exploratory. Acceptance criteria are softer; iterate until the step's intent is satisfied rather than a strict pass/fail.
 8. **Mark in-progress** — change `- [ ]` to `- [~]` for the current step.
-9. **Initialize ephemeral logs by name** — in the selected plan folder, ensure `cr-log.md` and `learnings.md` exist for the active phase with stable headers and explicit empty-state lines. For `learnings.md`, append a new phase section if missing (do not truncate prior phases):
+9. **Initialize ephemeral logs by name** — in the selected plan folder, ensure `cr-log.md`, `learnings.md`, and `evolution-log.md` are ready for the active phase with stable headers and explicit empty-state lines. For `learnings.md`, append a new phase section if missing (do not truncate prior phases):
 
    ```text
    ## CR Capture
@@ -37,6 +37,14 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
    ```text
    ## Learnings Capture
    Phase: <N>
+
+   No entries for this phase.
+   ```
+
+   Ensure `evolution-log.md` contains the capture section scaffold:
+
+   ```text
+   ## Capture
 
    No entries for this phase.
    ```
@@ -132,22 +140,34 @@ You receive a prompt like: "Execute docs/implementation-plans/<slug>/plan.md, ph
 
 3. **Harvest finalization (canonical)**:
    - Run this block only when repo infra exists:
-     - `if (Test-Path scripts/skalary/Add-LedgerEntry.ps1)` and `if (Test-Path docs/review-ledger)`.
-     - If either check fails, skip harvest and continue with standard archive/push/PR flow (do not fail downstream installs that do not carry repo infra).
+     - `if (Test-Path scripts/skalary/Add-LedgerEntry.ps1)` and `if (Test-Path scripts/skalary/Remove-LedgerEntry.ps1)` and `if (Test-Path docs/review-ledger)`.
+     - Also require `Test-Path docs/review-ledger/.archive` and required category files (at minimum `security.md` + `testing.md`) before invoking ledger scripts.
+     - If checks fail, skip harvest and follow the existing branch policy without infra scripts: autonomous completion may continue standard archive/push/PR; `@human` completion must still use draft-PR + marker + exit 42 (no archive).
    - **Fail-loud contract for ephemeral logs by name**:
      - Require `evolution-log.md` to contain `## Capture`.
      - Require `cr-log.md` and `learnings.md` to contain either a phase section or `No entries for this phase.`.
      - Fail only when the required section/placeholder is missing; an intentionally empty phase is valid.
    - **Append harvest phase (always before branch):**
      - Distill one-line lessons from `evolution-log` capture entries, `cr-log`, and `learnings`.
+     - Deterministic mapping into `Add-LedgerEntry` arguments:
+       - `-Category`: selected from the 7-category taxonomy by keyword/REQ scope (same rubric as `ledger-consult`).
+       - `-Plan`: plan number from the executing `docs/implementation-plans/<NNN-*>/plan.md`.
+       - `-Src`: `autopilot` for autopilot harvest, `ci` for interactive `/ci` harvest.
+       - `-Severity`: carried from captured finding severity where present; otherwise default `Med` for reusable process learnings.
+       - `-Entry`: one sanitized one-line lesson per candidate.
+       - `-Tags`: deterministic, sorted tags derived from capture context (`#phase-<N>`, `#req-<ID>`, optional topic tags).
      - Call `Add-LedgerEntry.ps1` via argument arrays only (example: `Start-Process ... -ArgumentList @('-NoProfile','-File','scripts/skalary/Add-LedgerEntry.ps1', ...)`). Never build a shell-interpolated command string.
      - Stage updated ledger files by explicit name under `docs/review-ledger/` and commit before deciding branch outcome.
+     - No-op handling: if harvest produces no staged ledger delta (idempotent duplicate run), skip the append commit and continue to branch selection.
    - **Branch after append-harvest commit:**
      - **Autonomous branch:** `git push origin <current-branch>` -> archive commit -> `git push origin <current-branch>` -> `gh pr create`.
      - **Escalation branch (`@human`):** `git push origin <current-branch>` -> run prune + `/udn` reconciliation -> commit prune/design-note edits -> `git push origin <current-branch>` -> `gh pr create --draft --head <branch> --label "@human"` -> write `.autopilot-finalize-needed` marker -> exit 42. Never archive on this branch.
+     - `/udn` contract in autopilot finalization: run deterministic reconciliation prompts/checks; if ambiguity remains, keep the draft PR path + marker + exit 42 instead of autonomous archival.
    - **Prune scope in escalation only:**
      - Call `Remove-LedgerEntry.ps1` via argument arrays (`ArgumentList`), never a shell string.
+     - Always pass required `Remove` arguments: `-Category`, `-CurrentPlan`, and full-line candidate match payload (`-Match` or `-MatchBase64`).
      - Prune only prior-plan entries flagged obsolete/superseded by `/udn`; retention guards remain enforced by script.
+     - Candidate selection must pass full-line matches from active ledger files into `Remove` (`-Match` or `-MatchBase64`), never substring or regex targeting.
 
 4. **Archive plan (autonomous branch only)** — mark the plan done and move it:
    - Edit `plan.md` title to append `[DONE]`: `# NNN: Plan Title [DONE]`
