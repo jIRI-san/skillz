@@ -104,7 +104,9 @@ All three subagents perform a **comprehensive review** across every important di
 7. On all steps `[x]`: plan-level crosscheck → mark plan `[DONE]` in title → move folder to `docs/implementation-plans/archived/`
 8. Validation is script-only: orchestrators delegate to `npm run validate-plan` / `scripts/skalary/Test-Plan.ps1` / `scripts/validate.ps1` and never embed ad-hoc validation logic
 9. `cr` smart default scope is changed files including committed branch deltas plus uncommitted changes
-10. Deep review-flow redesign is intentionally deferred to plan 007; current `cr` keeps lightweight flow wins only
+10. Workflow-memory loop from plan 007 is active: mid-run findings/lessons are captured to per-plan `cr-log.md` / `learnings.md` / `evolution-log.md` and initialized each phase with explicit empty-state placeholders
+11. Pre-review `ledger-consult` is part of drafting/crosscheck guidance; readers load only relevant files from `docs/review-ledger/` and exclude `.archive/`
+12. Harvest guidance in `/ci` is a marked mirror of canonical `autopilot.agent.md` finalization behavior (append phase always first, prune + `/udn` only on escalation branch)
 
 **Plan file format** (designed to be scannable by a human reviewer — no prose implementation instructions):
 ```markdown
