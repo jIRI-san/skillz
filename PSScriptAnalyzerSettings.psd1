@@ -10,7 +10,15 @@
     ExcludeRules = @(
         # Autopilot orchestrators stream live Copilot CLI output to the console;
         # Write-Host is the correct tool for human-facing progress, not data.
-        'PSAvoidUsingWriteHost'
+        'PSAvoidUsingWriteHost',
+        # Markdown-plan parsing scripts intentionally use helper names that are
+        # clearer with plural nouns and traversal verbs in this codebase.
+        'PSUseSingularNouns',
+        'PSUseApprovedVerbs',
+        # Validation helpers are pure transformations despite imperative verbs.
+        'PSUseShouldProcessForStateChangingFunctions',
+        # Repository scripts are UTF-8 without BOM by convention.
+        'PSUseBOMForUnicodeEncodedFile'
     )
 
     Rules = @{

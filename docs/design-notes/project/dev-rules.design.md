@@ -23,6 +23,11 @@ globs:
   - The formatter applies all `.editorconfig` rules consistently.
   - Do not attempt to fix formatting warnings by editing individual lines.
 
+## Validation and test gates
+
+- **Validation logic must live in committed scripts, not markdown orchestration text.** For plan workflows, run `scripts/skalary/Test-Plan.ps1` (directly or via `npm run validate-plan`) and `scripts/validate.ps1`; do not add ad-hoc regex checks to skill/agent markdown.
+- **Pester is required for `test:unit` and typed `test:` evidence in container-autopilot.** Keep the pinned Pester install step in `.devcontainer/autopilot/Dockerfile`; when Pester is absent off-container, surface a skip-with-actionable-message pattern rather than silent pass/fail drift.
+
 ## Git History
 
 - **Never use `git push --force`, `git push --force-with-lease`, or `git commit --amend` on pushed commits.** If a commit needs fixing, create a follow-up commit instead. Force-pushing rewrites shared history and can disrupt CI, other collaborators, and PR references.

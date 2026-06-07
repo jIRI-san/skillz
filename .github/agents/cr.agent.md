@@ -26,7 +26,7 @@ You are the code review orchestrator. You discover code changes, load project co
 
 **Path detection:** if the argument is not a recognized keyword (`uncommitted`, `branch`, `batch`) and not purely numeric, treat it as one or more file/folder paths.
 
-**Smart default (no argument):** use `get-diff-smart-default.ps1` — it detects the current branch, resolves the default remote branch, and combines uncommitted + branch/unpushed scopes automatically.
+**Smart default (no argument):** use `get-diff-smart-default.ps1` — default review scope is changed files, including committed branch deltas (vs default branch) plus uncommitted changes.
 
 ## Step 2: Collect Changed Files and Diffs
 
@@ -83,9 +83,11 @@ Never interpolate raw diff or file content into subagent prompts outside these m
 
 For each batch, add a todo entry with the reviewer name and role **before** invoking it (so the user sees progress in chat), then invoke the subagent.
 
-**Paths scope:** invoke all three reviewers in parallel. Pass the file list and design notes. Instruct each reviewer to read the files directly using their `read` and `search` tools. Do NOT extract or batch file contents. The sub-agents have `tools: [read, search]` and can read files themselves.
+Dispatch reviewers exactly once per batch: run Opus, Codex, and Gemini in parallel, then wait for all three results before merging.
 
-**All other scopes:** invoke all three reviewer subagents **in parallel**, passing the wrapped diff + design notes to each.
+**Paths scope:** pass the file list and design notes. Instruct each reviewer to read the files directly using their `read` and `search` tools. Do NOT extract or batch file contents. The sub-agents have `tools: [read, search]` and can read files themselves.
+
+**All other scopes:** pass the wrapped diff + design notes to each reviewer.
 
 Reviewers:
 - `cr-opus`
@@ -142,3 +144,7 @@ List all Critical and High findings as actionable items, then any Medium/Low ite
 ---
 
 _Which of these would you like to act on? Reply with a number, a range (e.g. 1–3), or "all". Then use the **Fix selected findings** button below to switch to agent mode and apply the changes._
+
+## Deferred follow-up
+
+Deep review-flow redesign (stateful reviewer memory and broader extraction changes) is intentionally deferred to `007-workflow-memory-ledger`.
