@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/autopilot.schema.json",
+  "title": "Autopilot Configuration",
+  "description": "Per-project configuration for autonomous plan execution via GitHub Copilot CLI.",
+  "type": "object",
+  "required": ["runtime", "copilotAuth", "gitProvider", "gitAuth", "model", "git", "timeout", "maxIterationsPerStep", "build", "test"],
+  "properties": {
+    "runtime": {
+      "type": "string",
+      "enum": [
+        "host",
+        "container",
+        "sandbox"
+      ],
+      "description": "Execution runtime. 'host' = git worktree on host. 'container' = Docker container clone-from-remote. 'sandbox' = Windows Sandbox (isolated Win32, disposable)."
+    },
+    "copilotAuth": {
+      "type": "string",
+      "enum": ["pat", "oauth"],
+      "description": "How the Copilot CLI authenticates for AI requests."
+    },
+    "gitProvider": {
+      "type": "string",
+      "enum": ["github", "ado"],
+      "description": "Git hosting provider for clone/push/PR operations."
+    },
+    "gitAuth": {
+      "type": "string",
+      "enum": ["pat-shared", "oauth", "azure-cli"],
+      "description": "How git remote operations authenticate. 'pat-shared' = same PAT as copilotAuth. 'oauth' = GitHub OAuth token. 'azure-cli' = ADO token from az CLI."
+    },
+    "model": {
+      "type": "string",
+      "description": "Model identifier for Copilot CLI (e.g. 'gpt-5.3-codex')."
+    },
+    "git": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name": { "type": "string", "description": "Git commit author name." },
+        "email": { "type": "string", "description": "Git commit author email." }
+      }
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum execution time per phase in minutes."
+    },
+    "maxIterationsPerStep": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum fix-retry iterations before giving up on a step."
+    },
+    "build": {
+      "type": "string",
+      "description": "Build command. Must start with an allowed prefix: dotnet build, dotnet publish, npm run, make, cargo build.",
+      "pattern": "^(dotnet build|dotnet publish|npm run|yarn run|pnpm run|make|cargo build|gradle |mvn )"
+    },
+    "test": {
+      "type": "string",
+      "description": "Test command. Must start with an allowed prefix: dotnet test, npm test, npm run test, make test, cargo test.",
+      "pattern": "^(dotnet test|npm test|npm run test|yarn test|pnpm test|make test|cargo test|gradle test|mvn test)"
+    },
+    "adoOrg": {
+      "type": "string",
+      "description": "Azure DevOps organization URL (required if gitProvider=ado)."
+    },
+    "adoProject": {
+      "type": "string",
+      "description": "Azure DevOps project name (required if gitProvider=ado)."
+    },
+    "dockerfileExtensions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Additional RUN directives appended to base Dockerfile at build time."
+    }
+  }
+}

@@ -5,7 +5,9 @@ globs:
   - plugins/autopilot/devcontainer/**
   - .github/agents/autopilot.agent.md
   - .autopilot.json
+  - .autopilot.host.json
   - plugins/autopilot/schemas/autopilot.schema.json
+  - plugins/autopilot/schemas/autopilot.host.schema.json
 ---
 
 # Autonomous Plan Execution
@@ -16,9 +18,9 @@ Infrastructure for delegating implementation plan execution to GitHub Copilot CL
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  /ci skill (VS Code)                            │
-│  ├─ "Host autopilot" / "Container" / "Sandbox"  │
-│  └─ Invokes launch.ps1                          │
+│  /ci skill (VS Code) — Autonomous mode          │
+│  └─ reads autopilot SKILL.md by path            │
+│     └─ Host/Container/Sandbox menu → launch.ps1 │
 └───────────────────┬─────────────────────────────┘
                     │
 ┌───────────────────▼─────────────────────────────┐
@@ -130,33 +132,49 @@ Classic PATs (`ghp_*`) are **not supported** by Copilot CLI — a fine-grained P
 
 ## Configuration (`.autopilot.json`)
 
+Per-repo, gitignored, never committed — the plugin ships `.autopilot.json.example` only. The in-editor first-run bootstrap (autopilot skill) writes it; headless `launch.ps1` fails loud if it is missing.
+
 ```json
 {
   "runtime": "container",
-  "planPath": "docs/implementation-plans/002-plugin-registry/plan.md",
-  "copilotAuth": { "credentialTarget": "copilot-autopilot" },
+  "copilotAuth": "pat",
   "gitProvider": "github",
   "gitAuth": "pat-shared",
   "model": "gpt-5.3-codex",
   "git": { "name": "autopilot", "email": "autopilot@users.noreply.github.com" },
   "timeout": 60,
   "maxIterationsPerStep": 5,
-  "build": "dotnet build src/<Project>/<Project>.csproj",
-  "test": "dotnet test src/<Project>.Tests/<Project>.Tests.csproj"
+  "build": "npm run build",
+  "test": "npm test"
 }
 ```
 
 Key fields:
-- `runtime`: `host` or `container` (`sandbox` is documented but out of scope for the current build)
-- `planPath`: repo-relative, traversal-free `.md` path to the plan being executed
-- `copilotAuth`: `{ credentialTarget }` — Windows Credential Manager target holding the PAT
+- `runtime`: `host`, `container`, or `sandbox` (all three implemented)
+- `copilotAuth`: `pat` or `oauth` (string enum) — selects how the CLI authenticates
 - `gitProvider`: `github` or `ado`
 - `gitAuth`: `pat-shared`, `oauth`, or `azure-cli`
-- `build`/`test`: Coarse-filtered by schema (launcher allowlist + no shell metacharacters); authoritative argv tokenization + flag denylist enforced in `launch.ps1`
+- `build`/`test`: Coarse-filtered by schema prefix pattern; authoritative argv tokenization + flag denylist enforced in `launch.ps1`
 - `timeout`: Minutes per phase before force-kill
 - `maxIterationsPerStep`: Fix-retry cap
 
+**No plan path in config.** `launch.ps1` takes `-PlanSlug` and derives `docs/implementation-plans/<PlanSlug>/plan.md`; the config never carries a plan path.
+
 Schema: `plugins/autopilot/schemas/autopilot.schema.json`
+
+## Custom Host Launch Command
+
+Host mode may run a custom Copilot CLI executable (e.g. a corporate wrapper injecting MCP servers + internal skills) instead of vanilla `copilot`. Configured via operator-provisioned, gitignored `.autopilot.host.json` at the repo root (schema: `plugins/autopilot/schemas/autopilot.host.schema.json`, draft 2020-12). `launch-host.ps1` is the **sole reader** — the skill and agent never touch the file (agent Absolute Rule #10).
+
+`Resolve-HostCommand` (in `host-command.ps1`, dot-sourced by `launch-host.ps1` only) reads the file **once** before the phase loop, resolves `command` to an absolute path, classifies type (`exe`/`bat`/`cmd`/`ps1` by extension), and returns `@{ Path; Type; ExtraArgs }`. `Invoke-CopilotPhase` branches per type — direct-`.exe` via `ProcessStartInfo.ArgumentList` (no shell), `.bat`/`.cmd`→`cmd.exe /c` and `.ps1`→`powershell.exe -File` via denylist-backed per-token quoting.
+
+> **Security — headless, no approval prompt.** `launch-host.ps1` runs the Copilot CLI via `System.Diagnostics.Process` (`UseShellExecute=$false`) with **no VS Code command-approval popup**. `command` therefore runs unattended. Point it only at trusted binaries. Defense in depth: absent config → `copilot` (type classified by the resolved shim's extension, npm shims are `*.cmd`); present-but-invalid (malformed JSON, empty `command`, shell metachar in `command`/`args`) → throw before any phase starts (never silent-fallback); gitignore keeps the file host-local. Residual local-persistence risk (untrusted build/test planting the file) is accepted and documented (RISK-5).
+
+**Disable toggle.** `AUTOPILOT_DISABLE_HOST=true` makes the skill omit Host from its menu **and** makes `launch.ps1` refuse `-Runtime host` and exit non-zero.
+
+## First-run Config Bootstrap
+
+The in-editor autopilot skill — not the launcher — owns first-run config. On Autonomous selection it checks for repo-root `.autopilot.json`; if absent it interviews the user, writes the file from `.autopilot.json.example`, and structurally validates required fields/types before invoking `launch.ps1`. See [autopilot-skill.design.md](autopilot-skill.design.md).
 
 ## Agent Definition (`.github/agents/autopilot.agent.md`)
 
@@ -184,6 +202,7 @@ The agent's `model:` frontmatter uses a **bare Copilot CLI model slug** (e.g. `g
 | `launch-host.ps1` | Host-mode orchestrator (worktree + per-phase CLI) |
 | `launch-container.ps1` | Container-mode orchestrator (docker build/run/cp) |
 | `launch-sandbox.ps1` | Sandbox-mode orchestrator (WSB + clone + per-phase CLI) |
+| `host-command.ps1` | `param()`-less helper exporting `Resolve-HostCommand` (custom host command resolution); dot-sourced by `launch-host.ps1` only |
 | `clean-sandbox-cache.ps1` | Remove sandbox toolchain cache (~700MB) |
 | `get-credential.ps1` | Read tokens from Windows Credential Manager |
 | `prepare-env-file.ps1` | Create temp env file with restrictive ACL |

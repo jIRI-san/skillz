@@ -4,20 +4,105 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-06T17:10:31.0506163Z",
+  "generatedAt": "2026-06-07T07:19:14.6166323Z",
   "plugins": [
     {
       "author": "jIRI-san",
       "dependencies": [],
-      "description": "Autonomous plan execution agent payload for .github/agents.",
+      "description": "Self-contained autopilot plugin payload for agent, skill, scripts, schemas, and devcontainer.",
       "evals": {
         "status": "none"
       },
       "files": [
         {
           "dest": "agents/autopilot.agent.md",
-          "sha256": "091c3920671c558f2ff8568b93b2eaa22fb67edc1d201b159f1dc9dbed854ac4",
+          "sha256": "6990520c0f0ee594d0f0f43af46a6752882b3c0ae2771e65e5b52fecbdf1f05f",
           "src": "agents/autopilot.agent.md"
+        },
+        {
+          "dest": "skills/autopilot/.autopilot.host.json.example",
+          "sha256": "457b97ebafc83d4dd7ef190993adda11bbdf576bc1fafbd542fdb72fd6c872f7",
+          "src": ".autopilot.host.json.example"
+        },
+        {
+          "dest": "skills/autopilot/.autopilot.json.example",
+          "sha256": "e0ac26b7a89de93966baa1f5d177ac9708a7859a41adc7aeb3ed352824627328",
+          "src": ".autopilot.json.example"
+        },
+        {
+          "dest": "skills/autopilot/devcontainer/devcontainer.json",
+          "sha256": "213e3fa92cc65a33d62e4853df795e83085d7fea398fbcd8772186a1d9be94ce",
+          "src": "devcontainer/devcontainer.json"
+        },
+        {
+          "dest": "skills/autopilot/devcontainer/Dockerfile",
+          "sha256": "d5594484b854cbdbad9b076ad1ce01612c5684da6a9d7e8cfdee250bdf8c7025",
+          "src": "devcontainer/Dockerfile"
+        },
+        {
+          "dest": "skills/autopilot/scripts/clean-sandbox-cache.ps1",
+          "sha256": "73ac229a4af4ca35e54cac7af5256eb52f7bad0eef5c421708d58f71cee4937a",
+          "src": "scripts/clean-sandbox-cache.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/container-entrypoint.sh",
+          "sha256": "7478590dc70a8b869734813506548c7504d3024e7ae4b2ae9d65f87145bcd7cd",
+          "src": "scripts/container-entrypoint.sh"
+        },
+        {
+          "dest": "skills/autopilot/scripts/get-credential.ps1",
+          "sha256": "cc5551692ae65882b77024013dd24b6c8088e8aae1be70b9fc3561b789fccf79",
+          "src": "scripts/get-credential.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/host-command.ps1",
+          "sha256": "45cc93657b5aabaf7bb177d58b09c83cc60f54f7099c0fb6b2abfbef0e2529ad",
+          "src": "scripts/host-command.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/launch-container.ps1",
+          "sha256": "450a8244c1922f95d67307b07c68ec59cbfdc25a68abf31897e0baf88f66c8a1",
+          "src": "scripts/launch-container.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/launch-host.ps1",
+          "sha256": "b3bb089e65cf2b4c3eb5447f4df23a0225e30b343317bd5bb9849f6b20a84296",
+          "src": "scripts/launch-host.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/launch-sandbox.ps1",
+          "sha256": "055bda44002786856a5237b020a07cd20a48e06b09953b0d026bb1e0bb1bb932",
+          "src": "scripts/launch-sandbox.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/launch.ps1",
+          "sha256": "2a3bcf727d6b6bd4f7eadb70b08762750aa19bd6d541d7e2818720ad8ff6a551",
+          "src": "scripts/launch.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/prepare-env-file.ps1",
+          "sha256": "48ea12ec7521024d9ce1ef9013e55a22457b1b83843ff1f1c65224c191182462",
+          "src": "scripts/prepare-env-file.ps1"
+        },
+        {
+          "dest": "skills/autopilot/scripts/validate-auth.ps1",
+          "sha256": "6c4f4744600cdfb8bacad1e4fe52b5965a3e3837d540d0451253e74a3042d874",
+          "src": "scripts/validate-auth.ps1"
+        },
+        {
+          "dest": "skills/autopilot/schemas/autopilot.host.schema.json",
+          "sha256": "03c4007e638b12bbe2da1a00af0f7272856b1c1d5661c53f2679e2e24f97125b",
+          "src": "schemas/autopilot.host.schema.json"
+        },
+        {
+          "dest": "skills/autopilot/schemas/autopilot.schema.json",
+          "sha256": "3656d07d02bce46d51315104700283f9f8d9fa452d7c03cbdcb6b0a3a9c065f3",
+          "src": "schemas/autopilot.schema.json"
+        },
+        {
+          "dest": "skills/autopilot/SKILL.md",
+          "sha256": "2bb69cc61cab9f24c8f3d55446974e39ce0f7ba53f0d586e1cc2baacb62598c2",
+          "src": "skills/autopilot/SKILL.md"
         }
       ],
       "license": "MIT",
@@ -25,9 +110,11 @@
       "status": "partial",
       "tags": [
         "agent",
-        "autopilot"
+        "automation",
+        "autopilot",
+        "skill"
       ],
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     {
       "author": "jIRI-san",
@@ -65,7 +152,7 @@
       "files": [
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "92bbd7cc83717eded3283ee2066619a5429446704be1cbaf986b72e0d36c85ac",
+          "sha256": "4cc673b24e0cbaef99771a0b31f7df574e37ccf3f0861f1a4f549d81f7834a5c",
           "src": "skills/ci/SKILL.md"
         }
       ],
