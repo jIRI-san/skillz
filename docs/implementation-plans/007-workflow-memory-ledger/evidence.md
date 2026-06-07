@@ -24,3 +24,13 @@ Phase 2 Crosscheck:
 Phase 4 Crosscheck:
 ✓ REQ-10 — file:plugins/create-implementation-plan/skills/cip/assets/drafting-guide.md#contains:ledger-consult — passed — 77cf9d6
 ✓ REQ-10 — file:plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md#contains:ledger-consult — passed — 77cf9d6
+
+Phase 5 Crosscheck:
+✓ REQ-6 — file:plugins/autopilot/agents/autopilot.agent.md#contains:harvest — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✗ REQ-6 — review:dr — failed: remaining high-severity DR findings in latest phase-5-focused review — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-9 — file:plugins/autopilot/agents/autopilot.agent.md#contains:ephemeral logs by name — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-9 — file:plugins/autopilot/agents/autopilot.agent.md#contains:No entries for this phase — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-11 — file:plugins/autopilot/agents/autopilot.agent.md#contains:Test-Path scripts/skalary — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-11 — file:plugins/autopilot/agents/autopilot.agent.md#contains:ArgumentList — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-12 — file:plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md#contains:harvest — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
+✓ REQ-12 — file:plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md#contains:mirror — passed — b46143d406fc88f468f95bdd2d2edb8b29ba9ef2
