@@ -5,3 +5,4 @@
 .eval-report.json
 .eval.config.json
 .eval-artifacts/
+tests/evals/output/

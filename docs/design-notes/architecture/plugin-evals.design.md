@@ -41,6 +41,20 @@ Tier-2 execution is backend-pluggable (`copilot-cli` now, `container` reserved).
 
 This prevents live-tree mutation during no-approval `--allow-all` eval runs. The isolation boundary is sandbox cwd only; container backend is the stronger filesystem boundary. Under `--allow-all`, a scenario can still target live-repo absolute paths, so sandbox cwd is not a filesystem containment guarantee.
 
+## Config and Auth
+
+Tier-2 reads a gitignored `.eval.config.json` (shape documented by committed `.eval.config.json.example`):
+
+| Key | Purpose |
+|---|---|
+| `judgeModel` | Judge model slug (no identity hardcoded in committed files) |
+| `credentialTarget` | Optional Windows Credential Manager target holding the eval PAT; loaded into `COPILOT_GITHUB_TOKEN`/`GH_TOKEN`, mirroring autopilot `copilotAuth.credentialTarget`. A dedicated eval secret (e.g. `copilot-eval`) keeps eval auth separate from `copilot-autopilot` |
+| `temperature` / `passThreshold` / `timeoutSeconds` | Judge/run tuning; optional fields fall back to `.example` defaults |
+
+Credential resolution is skip-not-error: an unset `credentialTarget` falls back to ambient `copilot` auth; a set-but-missing target (or missing `CredentialManager` module) records an actionable `skip` and keeps the run green.
+
+On first `-IncludeLlm` run, a missing `.eval.config.json` is bootstrapped from the example; the scaffolded file keeps the `<slug>` placeholder so the run skips with a note pointing at the new file to fill in.
+
 ## Known Limitations
 
 | Limitation | Current handling |
@@ -59,7 +73,7 @@ This prevents live-tree mutation during no-approval `--allow-all` eval runs. The
 
 ## Report and Writeback Model
 
-Runs write `.eval-report.json` plus optional copied transcripts in `.eval-artifacts/` (both gitignored). Registry/manifests/receipts stay unchanged:
+Each run writes a timestamped folder `tests/evals/output/<yyyy-MM-dd_HH-mm-ss>/` (gitignored) containing `report.json` (structured summary + per-entry verdicts), `report.md` (human-readable summary + judge rationale), and any Tier-2 transcripts (`<plugin>-<case>.eval.txt`). The folder name uses filesystem-safe separators (no `:`); collisions in the same second get a `-<fff>` suffix. Registry/manifests/receipts stay unchanged:
 
 | Surface | Status |
 |---|---|

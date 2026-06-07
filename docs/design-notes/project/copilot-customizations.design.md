@@ -121,3 +121,7 @@ See [autopilot-execution.design.md](../architecture/autopilot-execution.design.m
 ## Plugin Eval Workflow
 
 Plugin payload checks are run with `npm run eval`, which calls `scripts/skalary/Test-Evals.ps1`. Structural checks always run; LLM checks require `-IncludeLlm` and are intentionally out of the CI gate (`npm test`/`validate.ps1`).
+
+Tier-2 (`-IncludeLlm`) reads a gitignored `.eval.config.json`. On the first run, a missing config is **bootstrapped** from the committed `.eval.config.json.example`; the scaffolded copy keeps the `<slug>` placeholder, so that run skips (stays green) with a note to fill in `judgeModel` (and optional `credentialTarget`) and re-run. Auth follows the autopilot pattern: set `credentialTarget` to a Windows Credential Manager target holding a dedicated eval PAT (e.g. `copilot-eval`, kept separate from `copilot-autopilot`), or leave it unset to use ambient `copilot` auth. Missing config/auth/credential is always a skip, never a failure.
+
+Each run writes a timestamped folder under `tests/evals/output/<yyyy-MM-dd_HH-mm-ss>/` (gitignored) holding `report.json`, a human-readable `report.md`, and any Tier-2 transcripts. Override the parent with `-OutputRoot`.

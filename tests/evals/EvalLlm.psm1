@@ -38,6 +38,46 @@ function Get-EvalOkSignal {
     }
 }
 
+function Resolve-LaunchTarget {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [string[]]$ArgumentList
+    )
+
+    # A path with a directory separator is already a concrete target.
+    if ($FilePath.IndexOfAny([char[]]@('/', '\')) -ge 0) {
+        return [pscustomobject]@{ FileName = $FilePath; ArgumentList = $ArgumentList }
+    }
+
+    $command = Get-Command $FilePath -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $command) {
+        return [pscustomobject]@{ FileName = $FilePath; ArgumentList = $ArgumentList }
+    }
+
+    # ExternalScript shims (e.g. the copilot `.ps1` launcher) are not directly
+    # startable via Process.Start. Route them through pwsh -File so arguments
+    # pass as a literal array - preserving the GUID-fenced boundary markers
+    # (`<`/`>`) that a cmd/.bat shim would interpret as redirection.
+    if ($command.CommandType -eq 'ExternalScript') {
+        $pwshPath = [Environment]::ProcessPath
+        if ([string]::IsNullOrWhiteSpace($pwshPath)) {
+            $pwshPath = (Get-Command pwsh -ErrorAction Stop).Source
+        }
+        return [pscustomobject]@{
+            FileName = $pwshPath
+            ArgumentList = @('-NoProfile', '-File', $command.Source) + $ArgumentList
+        }
+    }
+
+    $launchPath = if (-not [string]::IsNullOrWhiteSpace([string]$command.Source)) { [string]$command.Source } else { $FilePath }
+    return [pscustomobject]@{ FileName = $launchPath; ArgumentList = $ArgumentList }
+}
+
 function Invoke-ExternalCommand {
     [CmdletBinding()]
     param(
@@ -53,9 +93,11 @@ function Invoke-ExternalCommand {
         [int]$TimeoutSeconds = 300
     )
 
+    $target = Resolve-LaunchTarget -FilePath $FilePath -ArgumentList $ArgumentList
+
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = $FilePath
-    foreach ($argument in $ArgumentList) {
+    $startInfo.FileName = $target.FileName
+    foreach ($argument in $target.ArgumentList) {
         [void]$startInfo.ArgumentList.Add($argument)
     }
     $startInfo.WorkingDirectory = $WorkingDirectory
@@ -121,9 +163,20 @@ function Resolve-EvalConfig {
         throw "Eval config example file is missing: $examplePath"
     }
 
+    # Bootstrap on first run: scaffold the gitignored config from the example so
+    # the user has a concrete file to edit instead of an absent one. The freshly
+    # copied file still carries the '<slug>' placeholder, so the run skips below
+    # with an actionable note pointing at the new file.
+    $configBootstrapped = $false
+    if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) {
+        Copy-Item -LiteralPath $examplePath -Destination $configPath -Force
+        $configBootstrapped = $true
+    }
+
     $defaults = Get-Content -LiteralPath $examplePath -Raw | ConvertFrom-Json -Depth 20
     $config = [ordered]@{
         judgeModel = [string]$defaults.judgeModel
+        credentialTarget = [string]$defaults.credentialTarget
         temperature = [double]$defaults.temperature
         passThreshold = [double]$defaults.passThreshold
         timeoutSeconds = [int]$defaults.timeoutSeconds
@@ -131,7 +184,7 @@ function Resolve-EvalConfig {
 
     if (Test-Path -LiteralPath $configPath -PathType Leaf) {
         $userConfig = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json -Depth 20
-        foreach ($property in @('judgeModel', 'temperature', 'passThreshold', 'timeoutSeconds')) {
+        foreach ($property in @('judgeModel', 'credentialTarget', 'temperature', 'passThreshold', 'timeoutSeconds')) {
             if ($userConfig.PSObject.Properties.Name -contains $property -and $null -ne $userConfig.$property) {
                 $config[$property] = $userConfig.$property
             }
@@ -139,7 +192,13 @@ function Resolve-EvalConfig {
     }
 
     if ([string]::IsNullOrWhiteSpace([string]$config.judgeModel) -or [string]$config.judgeModel -eq '<slug>') {
-        return Get-EvalSkipSignal -Reason "LLM evals skipped: set '.eval.config.json' with a real 'judgeModel' value." -Config ([pscustomobject]$config)
+        $reason = if ($configBootstrapped) {
+            "LLM evals skipped: created '.eval.config.json' from the example - set a real 'judgeModel' (and 'credentialTarget' if used) then re-run."
+        }
+        else {
+            "LLM evals skipped: set '.eval.config.json' with a real 'judgeModel' value."
+        }
+        return Get-EvalSkipSignal -Reason $reason -Config ([pscustomobject]$config)
     }
 
     if ([double]$config.passThreshold -lt 0 -or [double]$config.passThreshold -gt 1) {
@@ -153,6 +212,39 @@ function Resolve-EvalConfig {
     }
 
     return Get-EvalOkSignal -Config ([pscustomobject]$config)
+}
+
+function Resolve-EvalCredential {
+    [CmdletBinding()]
+    param(
+        [AllowNull()]
+        [AllowEmptyString()]
+        [string]$Target
+    )
+
+    # No target configured: rely on ambient COPILOT_GITHUB_TOKEN/GH_TOKEN (or copilot login).
+    if ([string]::IsNullOrWhiteSpace($Target)) {
+        return Get-EvalOkSignal
+    }
+
+    if (-not (Get-Module -ListAvailable -Name CredentialManager)) {
+        return Get-EvalSkipSignal -Reason "LLM evals skipped: 'credentialTarget' is set but the CredentialManager module is not installed (Install-Module CredentialManager -Scope CurrentUser)."
+    }
+
+    Import-Module CredentialManager -ErrorAction Stop
+    $cred = Get-StoredCredential -Target $Target -ErrorAction SilentlyContinue
+    if (-not $cred) {
+        return Get-EvalSkipSignal -Reason "LLM evals skipped: no credential found for target '$Target' in Windows Credential Manager."
+    }
+
+    $token = $cred.GetNetworkCredential().Password
+    if ([string]::IsNullOrWhiteSpace($token)) {
+        return Get-EvalSkipSignal -Reason "LLM evals skipped: credential '$Target' has an empty token."
+    }
+
+    $env:COPILOT_GITHUB_TOKEN = $token
+    $env:GH_TOKEN = $token
+    return Get-EvalOkSignal
 }
 
 function Test-CopilotAuth {
@@ -323,6 +415,8 @@ function Invoke-EvalBackend {
 
         [string]$ArtifactBody,
 
+        [string]$OutputDir,
+
         [int]$TimeoutSeconds = 300
     )
 
@@ -355,7 +449,7 @@ function Invoke-EvalBackend {
         throw "LLM backend failed (exit $($result.exitCode)): $($result.stderr)"
     }
 
-    $artifactDir = Join-Path $RepoRoot '.eval-artifacts'
+    $artifactDir = if (-not [string]::IsNullOrWhiteSpace($OutputDir)) { $OutputDir } else { Join-Path $RepoRoot '.eval-artifacts' }
     if (-not (Test-Path -LiteralPath $artifactDir -PathType Container)) {
         [void](New-Item -ItemType Directory -Path $artifactDir -Force)
     }
@@ -565,6 +659,8 @@ function Invoke-LlmEvalSuite {
         [Parameter(Mandatory)]
         [string]$RepoRoot,
 
+        [string]$OutputDir,
+
         [ValidateSet('copilot-cli', 'container')]
         [string]$Backend = 'copilot-cli'
     )
@@ -578,6 +674,15 @@ function Invoke-LlmEvalSuite {
         }
     }
     $config = $configSignal.config
+
+    $credentialSignal = Resolve-EvalCredential -Target ([string]$config.credentialTarget)
+    if ($credentialSignal.shouldSkip) {
+        return [pscustomobject]@{
+            entries = @()
+            note = [string]$credentialSignal.reason
+            sandbox = $null
+        }
+    }
 
     $authSignal = Test-CopilotAuth -TimeoutSeconds ([Math]::Min([int]$config.timeoutSeconds, 60))
     if ($authSignal.shouldSkip) {
@@ -665,6 +770,7 @@ function Invoke-LlmEvalSuite {
                     -Scenario $case.scenario `
                     -AgentName ([System.IO.Path]::GetFileName([string]$artifactEntry.src) -replace '\.agent\.md$', '') `
                     -ArtifactBody (Get-Content -LiteralPath $artifactSourcePath -Raw) `
+                    -OutputDir $OutputDir `
                     -TimeoutSeconds ([int]$config.timeoutSeconds)
 
                 if ($backendResult.shouldSkip) {
@@ -715,6 +821,7 @@ function Invoke-LlmEvalSuite {
 
 Export-ModuleMember -Function @(
     'Resolve-EvalConfig',
+    'Resolve-EvalCredential',
     'Test-CopilotAuth',
     'New-EvalSandbox',
     'Remove-EvalSandbox',

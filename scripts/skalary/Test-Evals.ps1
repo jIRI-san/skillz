@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..' '..')).Path,
-    [switch]$IncludeLlm
+    [switch]$IncludeLlm,
+    [string]$OutputRoot
 )
 
 Set-StrictMode -Version Latest
@@ -141,9 +142,91 @@ function Get-OutcomeCount {
     return @($Entries | Where-Object { [string]$_.outcome -eq $Outcome }).Count
 }
 
+function ConvertTo-MarkdownCell {
+    [CmdletBinding()]
+    param(
+        [AllowNull()]
+        [string]$Value
+    )
+
+    if ([string]::IsNullOrEmpty($Value)) {
+        return ''
+    }
+
+    return (($Value -replace '\r?\n', ' ') -replace '\|', '\|')
+}
+
+function ConvertTo-EvalMarkdownReport {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        $Report
+    )
+
+    $builder = [System.Text.StringBuilder]::new()
+    [void]$builder.AppendLine('# Eval Report')
+    [void]$builder.AppendLine()
+    [void]$builder.AppendLine("- Generated: $($Report.generatedAt)")
+    [void]$builder.AppendLine("- Include LLM: $($Report.includeLlm)")
+    [void]$builder.AppendLine()
+
+    $summary = $Report.summary
+    [void]$builder.AppendLine('## Summary')
+    [void]$builder.AppendLine()
+    [void]$builder.AppendLine('| Total | Pass | Fail | Skip | Error |')
+    [void]$builder.AppendLine('|---|---|---|---|---|')
+    [void]$builder.AppendLine("| $($summary.total) | $($summary.pass) | $($summary.fail) | $($summary.skip) | $($summary.error) |")
+    [void]$builder.AppendLine()
+
+    $structural = @($Report.entries | Where-Object { [string]$_.tier -eq 'structural' })
+    $llm = @($Report.entries | Where-Object { [string]$_.tier -eq 'llm' })
+
+    if ($structural.Count -gt 0) {
+        [void]$builder.AppendLine('## Structural (Tier 1)')
+        [void]$builder.AppendLine()
+        [void]$builder.AppendLine('| Plugin | Case | Outcome | Message |')
+        [void]$builder.AppendLine('|---|---|---|---|')
+        foreach ($entry in $structural) {
+            [void]$builder.AppendLine("| $(ConvertTo-MarkdownCell ([string]$entry.plugin)) | $(ConvertTo-MarkdownCell ([string]$entry.case)) | $($entry.outcome) | $(ConvertTo-MarkdownCell ([string]$entry.message)) |")
+        }
+        [void]$builder.AppendLine()
+    }
+
+    if ($llm.Count -gt 0) {
+        [void]$builder.AppendLine('## LLM (Tier 2)')
+        [void]$builder.AppendLine()
+        [void]$builder.AppendLine('| Plugin | Case | Outcome | Score | Threshold | Transcript |')
+        [void]$builder.AppendLine('|---|---|---|---|---|---|')
+        foreach ($entry in $llm) {
+            $score = if ($null -ne $entry.score) { '{0:0.00}' -f [double]$entry.score } else { '' }
+            $threshold = if ($null -ne $entry.threshold) { '{0:0.00}' -f [double]$entry.threshold } else { '' }
+            $transcript = if (-not [string]::IsNullOrWhiteSpace([string]$entry.transcriptPath)) { ConvertTo-MarkdownCell ([string]$entry.transcriptPath) } else { '' }
+            [void]$builder.AppendLine("| $(ConvertTo-MarkdownCell ([string]$entry.plugin)) | $(ConvertTo-MarkdownCell ([string]$entry.case)) | $($entry.outcome) | $score | $threshold | $transcript |")
+        }
+        [void]$builder.AppendLine()
+        [void]$builder.AppendLine('### Judge Rationale')
+        [void]$builder.AppendLine()
+        foreach ($entry in $llm) {
+            [void]$builder.AppendLine("- **$(ConvertTo-MarkdownCell ([string]$entry.plugin)) / $(ConvertTo-MarkdownCell ([string]$entry.case))** ($($entry.outcome)): $(ConvertTo-MarkdownCell ([string]$entry.message))")
+        }
+        [void]$builder.AppendLine()
+    }
+
+    return $builder.ToString()
+}
+
 $repoRootPath = Resolve-RepoRoot -StartPath $RepoRoot
 $pluginsRoot = Join-Path $repoRootPath 'plugins'
-$reportPath = Join-Path $repoRootPath '.eval-report.json'
+
+$outputRootPath = if (-not [string]::IsNullOrWhiteSpace($OutputRoot)) { $OutputRoot } else { Join-Path $repoRootPath 'tests/evals/output' }
+$runStamp = (Get-Date).ToString('yyyy-MM-dd_HH-mm-ss')
+$runDir = Join-Path $outputRootPath $runStamp
+if (Test-Path -LiteralPath $runDir) {
+    $runDir = Join-Path $outputRootPath ($runStamp + '-' + (Get-Date).ToString('fff'))
+}
+[void](New-Item -ItemType Directory -Path $runDir -Force)
+$reportPath = Join-Path $runDir 'report.json'
+$reportMdPath = Join-Path $runDir 'report.md'
 
 $evalTestFiles = @(
     Get-ChildItem -LiteralPath $pluginsRoot -Recurse -File -Filter '*.Tests.ps1' |
@@ -175,7 +258,7 @@ if ($IncludeLlm) {
     }
 
     Import-Module $evalLlmModulePath -Force
-    $llmResult = Invoke-LlmEvalSuite -RepoRoot $repoRootPath -Backend 'copilot-cli'
+    $llmResult = Invoke-LlmEvalSuite -RepoRoot $repoRootPath -OutputDir $runDir -Backend 'copilot-cli'
     foreach ($llmEntry in @($llmResult.entries)) {
         $entries.Add($llmEntry)
     }
@@ -216,6 +299,7 @@ $report = [ordered]@{
 
 $reportJson = ($report | ConvertTo-Json -Depth 20)
 Set-Content -LiteralPath $reportPath -Value ($reportJson + "`n") -Encoding utf8
+Set-Content -LiteralPath $reportMdPath -Value (ConvertTo-EvalMarkdownReport -Report $report) -Encoding utf8
 
 Write-Host 'Eval summary:' -ForegroundColor Cyan
 Write-Host "  total: $($summary.total)"
@@ -223,7 +307,9 @@ Write-Host "  pass:  $($summary.pass)" -ForegroundColor Green
 Write-Host "  fail:  $($summary.fail)" -ForegroundColor Red
 Write-Host "  skip:  $($summary.skip)" -ForegroundColor Yellow
 Write-Host "  error: $($summary.error)" -ForegroundColor Red
-Write-Host "  report: $reportPath"
+Write-Host "  run dir: $runDir"
+Write-Host "  report:  $reportPath"
+Write-Host "  summary: $reportMdPath"
 
 if ($summary.fail -gt 0 -or $summary.error -gt 0) {
     exit 1
