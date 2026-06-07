@@ -20,3 +20,5 @@ Phase: 6
 - [6.1] [src:code-review] [sev:Low] Added explicit idempotence vs recurrence dedup-key definitions to the plan-workflow design note to satisfy REQ-15 contract coverage.
 - [6.2] [src:code-review] [sev:Low] Verified no plugin manifest `files[]` deltas are required and ledger infra (`docs/review-ledger/**`, Add/Remove scripts) remains outside plugin payload manifests, including `dr`/`cr`.
 - [6.3] [src:code-review] [sev:Low] Registry rebuild and dogfood sync surfaced three expected mirrored-asset drifts; sync + recheck returned zero drift and `Test-Registry` passed.
+- [6.4] [src:code-review] [sev:Low] Cleared ScriptAnalyzer warnings by normalizing deterministic sort formatting in `Add-LedgerEntry.ps1` and making recurrence-threshold capture explicit in `Remove-LedgerEntry.ps1`.
+- [6.4] [src:code-review] [sev:Low] Final phase-6 review found no additional substantive correctness or security issues.

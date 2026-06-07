@@ -178,6 +178,7 @@ if (-not (Test-Path -LiteralPath $archivePath -PathType Leaf)) {
 }
 
 $currentPlanNumber = [int]$CurrentPlan
+$recurrenceThreshold = $RecurrenceThreshold
 
 $lockScope = "$([System.IO.Path]::GetFullPath($RepoRoot))|$Category"
 $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
@@ -220,8 +221,8 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
     }
 
     $activeRecurrenceCount = $parseableRecords.Where({ $_.RecurrenceKey -eq $targetRecord.RecurrenceKey }).Count
-    if ($activeRecurrenceCount -gt $RecurrenceThreshold) {
-        throw "Retention guard blocked prune: recurrence count $activeRecurrenceCount exceeds threshold $RecurrenceThreshold."
+    if ($activeRecurrenceCount -gt $recurrenceThreshold) {
+        throw "Retention guard blocked prune: recurrence count $activeRecurrenceCount exceeds threshold $recurrenceThreshold."
     }
 
     $updatedLedger = if ($remainingLines.Count -eq 0) { '' } else { ($remainingLines -join "`n") + "`n" }

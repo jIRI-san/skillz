@@ -12,3 +12,4 @@ Phase: 5
 Phase: 6
 
 - [6.1] [trigger:rework>1] Design-note deltas that update finalization behavior should retire legacy ordering rows in the same edit to avoid split-contract drift.
+- [6.4] [trigger:reusable-pattern] ScriptAnalyzer can miss parameter use inside scriptblocks; capture to a local variable before lock/closure blocks to keep analyzer-clean intent explicit.

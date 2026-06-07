@@ -118,7 +118,7 @@ function Get-LedgerTagSet {
     if ($ordered.Count -gt $maxTagCount) {
         throw "Too many tags ($($ordered.Count)); max is $maxTagCount."
     }
-    return ,$ordered
+    return , $ordered
 }
 
 function ConvertTo-LedgerRecord {
@@ -168,15 +168,8 @@ function Get-DeterministicOrder {
         [Object[]]$Records
     )
 
-    return ,@(
-        $Records | Sort-Object `
-            @{ Expression = { $_.NormalizedLesson } }, `
-            @{ Expression = { $_.SortedTags } }, `
-            @{ Expression = { $_.Plan } }, `
-            @{ Expression = { $_.Src } }, `
-            @{ Expression = { $_.Severity } }, `
-            @{ Expression = { $_.Date } }, `
-            @{ Expression = { $_.Line } }
+    return , @(
+        $Records | Sort-Object @{ Expression = { $_.NormalizedLesson } }, @{ Expression = { $_.SortedTags } }, @{ Expression = { $_.Plan } }, @{ Expression = { $_.Src } }, @{ Expression = { $_.Severity } }, @{ Expression = { $_.Date } }, @{ Expression = { $_.Line } }
     )
 }
 
