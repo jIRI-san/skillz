@@ -139,7 +139,7 @@
 <!-- worktree: (recorded by /ci when worktree is created) -->
 <!-- Points: 1+1 = 2 -->
 
-- [ ] 4.1 Add `ledger-consult` to `cip` `drafting-guide.md`: a **full 7-category mapping rubric** (keyword/REQ-class → file) loading only relevant small files (optional `#tag` filter), **excluding `.archive/`**. (REQ-10, RISK-1) [after: 0.1, 1.1] `S`
+- [x] 4.1 Add `ledger-consult` to `cip` `drafting-guide.md`: a **full 7-category mapping rubric** (keyword/REQ-class → file) loading only relevant small files (optional `#tag` filter), **excluding `.archive/`**. (REQ-10, RISK-1) [after: 0.1, 1.1] `S`
 - [ ] 4.2 Add `ledger-consult` to `ci`/autopilot crosscheck guide: consult relevant category files before a CR round, excluding `.archive/`. (REQ-10, RISK-1) [after: 0.1, 1.1] `S`
 
 ## Phase 5: Harvest — guarded, two-branch, dual-host
