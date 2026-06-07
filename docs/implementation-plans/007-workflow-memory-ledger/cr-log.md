@@ -19,3 +19,4 @@ Phase: 6
 - [6.1] [src:code-review] [sev:Med] Resolved contract ambiguity by narrowing the legacy finalization-ordering row to escalation-path ordering, matching the explicit two-branch harvest model.
 - [6.1] [src:code-review] [sev:Low] Added explicit idempotence vs recurrence dedup-key definitions to the plan-workflow design note to satisfy REQ-15 contract coverage.
 - [6.2] [src:code-review] [sev:Low] Verified no plugin manifest `files[]` deltas are required and ledger infra (`docs/review-ledger/**`, Add/Remove scripts) remains outside plugin payload manifests, including `dr`/`cr`.
+- [6.3] [src:code-review] [sev:Low] Registry rebuild and dogfood sync surfaced three expected mirrored-asset drifts; sync + recheck returned zero drift and `Test-Registry` passed.
