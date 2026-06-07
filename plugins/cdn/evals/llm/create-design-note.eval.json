@@ -1,0 +1,9 @@
+{
+  "artifact": "prompts/cdn.prompt.md",
+  "scenario": "Create a design note for a plugin eval harness that runs structural and LLM checks. Include architecture decisions and concrete constraints for transcript capture.",
+  "rubric": [
+    "Response is a design note draft, not a generic summary.",
+    "Includes at least one concrete architectural decision tied to eval harness behavior.",
+    "Mentions transcript capture constraints for headless runs."
+  ]
+}

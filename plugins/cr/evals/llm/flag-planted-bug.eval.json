@@ -1,0 +1,9 @@
+{
+  "artifact": "agents/cr.agent.md",
+  "scenario": "Review a diff where a null-check was removed before dereferencing a potentially null object. Provide findings.",
+  "rubric": [
+    "Finds a concrete correctness bug (null dereference risk).",
+    "Prioritizes high-signal findings over style commentary.",
+    "References the risky behavior in observable terms (crash/exception path)."
+  ]
+}

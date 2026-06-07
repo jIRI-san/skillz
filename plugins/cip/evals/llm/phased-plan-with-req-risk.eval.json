@@ -1,0 +1,9 @@
+{
+  "artifact": "skills/cip/SKILL.md",
+  "scenario": "Generate an implementation plan for adding plugin LLM eval cases. The plan must include phased steps and explicit REQ and RISK tables.",
+  "rubric": [
+    "Output includes phased steps with clear execution ordering.",
+    "Includes both REQ and RISK tables with concrete, testable entries.",
+    "Plan steps are actionable and map back to listed requirements/risks."
+  ]
+}

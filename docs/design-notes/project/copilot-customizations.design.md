@@ -6,7 +6,7 @@ globs:
 
 # Copilot Customizations
 
-All customizations are **workspace-local** — everything lives under `.github/` in this repo. No user-level files are created or modified.
+Customization artifacts are **workspace-local** and centered in `.github/`. The plugin eval harness is the intentional adjacent exception (`scripts/skalary/Test-Evals.ps1`, `plugins/*/evals/**`). No user-level files are created or modified.
 
 ## File Inventory
 
@@ -30,6 +30,7 @@ All customizations are **workspace-local** — everything lives under `.github/`
 | `.github/agents/scripts/get-diff-*.ps1` | Helper scripts | Git diff helpers used by `cr` for discovery (branch, commits, files, paths, smart default, uncommitted) |
 | `.github/skills/cip/SKILL.md` | Skill (`/cip`) | Create Implementation Plan — requirements interview, phased plan with step tracking, iterative `dr` review, saves to `docs/implementation-plans/` |
 | `.github/skills/ci/SKILL.md` | Skill (`/ci`) | Continue Implementation — executes a plan step-by-step, manages git worktrees, build/test iteration, `cr` review, explicit commit gate |
+| `scripts/skalary/Test-Evals.ps1` + `plugins/*/evals/**` | Eval harness | Two-tier plugin eval runner (`npm run eval`) for structural + opt-in LLM evals |
 
 ## Design Note Loading Strategy
 
@@ -120,3 +121,11 @@ All three subagents perform a **comprehensive review** across every important di
 ```
 
 See [autopilot-skill.design.md](../architecture/autopilot-skill.design.md) for the autopilot skill (`/ci` Autonomous handoff, first-run bootstrap, custom host command) and [autopilot-execution.design.md](../architecture/autopilot-execution.design.md) for the host/container/sandbox execution infrastructure that backs the `ci` skill's autopilot modes.
+
+## Plugin Eval Workflow
+
+Plugin payload checks are run with `npm run eval`, which calls `scripts/skalary/Test-Evals.ps1`. Structural checks always run; LLM checks require `-IncludeLlm` and are intentionally out of the CI gate (`npm test`/`validate.ps1`).
+
+Tier-2 (`-IncludeLlm`) reads a gitignored `.eval.config.json`. On the first run, a missing config is **bootstrapped** from the committed `.eval.config.json.example`; the scaffolded copy keeps the `<slug>` placeholder, so that run skips (stays green) with a note to fill in `judgeModel` (and optional `credentialTarget`) and re-run. Auth follows the autopilot pattern: set `credentialTarget` to a Windows Credential Manager target holding a dedicated eval PAT (e.g. `copilot-eval`, kept separate from `copilot-autopilot`), or leave it unset to use ambient `copilot` auth. Missing config/auth/credential is always a skip, never a failure.
+
+Each run writes a timestamped folder under `tests/evals/output/<yyyy-MM-dd_HH-mm-ss>/` (gitignored) holding `report.json`, a human-readable `report.md`, and any Tier-2 transcripts. Override the parent with `-OutputRoot`.

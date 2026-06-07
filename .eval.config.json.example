@@ -1,0 +1,8 @@
+{
+  "_comment": "Copy to .eval.config.json (gitignored) and set real values for local LLM eval runs.",
+  "judgeModel": "<slug>",
+  "credentialTarget": "copilot-eval",
+  "temperature": 0,
+  "passThreshold": 0.7,
+  "timeoutSeconds": 300
+}

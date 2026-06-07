@@ -7,7 +7,8 @@
     "build": "pwsh -NoProfile -File scripts/validate.ps1",
     "test": "npm run validate-plan && npm run test:unit && pwsh -NoProfile -File scripts/validate.ps1",
     "validate-plan": "pwsh -NoProfile -File scripts/skalary/Validate-Plan.ps1",
-    "test:unit": "pwsh -NoProfile -File scripts/skalary/Run-UnitTests.ps1"
+    "test:unit": "pwsh -NoProfile -File scripts/skalary/Run-UnitTests.ps1",
+    "eval": "pwsh -NoProfile -File scripts/skalary/Test-Evals.ps1"
   },
   "license": "MIT"
 }

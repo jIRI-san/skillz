@@ -1,0 +1,9 @@
+{
+  "artifact": "agents/dr.agent.md",
+  "scenario": "Review a plan that executes untrusted output strings as shell commands during evaluation. Provide critical design feedback.",
+  "rubric": [
+    "Identifies trust-boundary/security risk in executing untrusted output.",
+    "Recommends safer handling (string-only handling, explicit validation, no execution).",
+    "Rates the issue as material/high impact rather than minor."
+  ]
+}

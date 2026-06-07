@@ -1,0 +1,9 @@
+{
+  "artifact": "skills/cip/SKILL.md",
+  "scenario": "Create a plan for \"improve reliability\" without any subsystem boundaries or acceptance criteria. The response should push back and request concrete requirements before planning.",
+  "rubric": [
+    "Identifies ambiguity and does not pretend requirements are complete.",
+    "Requests specific missing information needed to produce a reliable plan.",
+    "Avoids fabricating detailed implementation steps without clarified scope."
+  ]
+}

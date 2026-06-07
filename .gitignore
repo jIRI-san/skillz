@@ -8,3 +8,9 @@
 # Autopilot local runtime/host configuration (never committed)
 .autopilot.json
 .autopilot.host.json
+
+# Eval harness local outputs/config
+.eval-report.json
+.eval.config.json
+.eval-artifacts/
+tests/evals/output/

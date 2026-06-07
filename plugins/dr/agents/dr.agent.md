@@ -1,7 +1,7 @@
 ---
 description: "Design review agent — reviews a plan using three specialist models (Opus, Codex, Gemini) for architectural gaps, implementation feasibility, security, and performance. Usage: 'dr' (uses session memory plan.md or chat context) or 'dr <file-path>' (reviews a specific repo file)."
 name: "dr"
-argument-hint: "Optional: relative path to plan file (e.g. docs/design-notes/.todo.design.md). Omit to use chat context or /memories/session/plan.md."
+argument-hint: "Optional: relative path to plan file (e.g. docs/implementation-plans/005-plugin-eval-harness/plan.md). Omit to use chat context or /memories/session/plan.md."
 tools: [read, search, agent, todo]
 agents: ["dr-opus", "dr-codex", "dr-gemini"]
 handoffs:
@@ -17,7 +17,7 @@ You are the design review orchestrator. You locate a plan, load project context,
 
 Parse the user's argument:
 
-- If a file path was provided (e.g. `docs/design-notes/.todo.design.md`): read that file as the plan.
+- If a file path was provided (e.g. `docs/implementation-plans/005-plugin-eval-harness/plan.md`): read that file as the plan.
 - Otherwise: attempt to read `/memories/session/plan.md` — if it exists and is non-empty, use it.
 - Otherwise: use the most recent plan, design, or proposal described in the current chat session; extract and summarize it into a compact text block.
 

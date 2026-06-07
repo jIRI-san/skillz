@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jIRI-san/skalary/schemas/eval-case.schema.json",
+  "title": "Skalary LLM Eval Case",
+  "description": "Documentation/IDE aid for plugins/<name>/evals/llm/*.eval.json. Runtime validation is implemented in PowerShell (no schema engine dependency).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifact", "scenario", "rubric"],
+  "properties": {
+    "artifact": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Plugin-manifest destination path to evaluate (dest value, not src)."
+    },
+    "scenario": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Prompt/scenario text fed to the target artifact."
+    },
+    "rubric": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Concrete judge criteria; each entry must be non-empty."
+    },
+    "passThreshold": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.7,
+      "description": "Optional per-case threshold; defaults to global config threshold."
+    }
+  }
+}

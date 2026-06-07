@@ -1,0 +1,9 @@
+{
+  "artifact": "skills/ci/SKILL.md",
+  "scenario": "Given a phase where step 3.5 depends on [after:3.4], choose the next eligible step and explain why blocked steps are skipped.",
+  "rubric": [
+    "Recognizes dependency ordering and does not execute blocked work.",
+    "Selects an eligible step with a clear dependency-based rationale.",
+    "Keeps execution focused on one step at a time."
+  ]
+}
