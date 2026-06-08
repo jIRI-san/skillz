@@ -4,7 +4,7 @@
     "ref": "c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd",
     "scriptUrl": "https://raw.githubusercontent.com/jIRI-san/skalary/c0dd31cd7b7a4f5544b052080d4d9f9bd937e0dd/scripts/skalary/bootstrap.ps1"
   },
-  "generatedAt": "2026-06-07T17:02:23.7800024Z",
+  "generatedAt": "2026-06-08T04:12:32.1310858Z",
   "plugins": [
     {
       "author": "jIRI-san",
@@ -16,7 +16,7 @@
       "files": [
         {
           "dest": "agents/autopilot.agent.md",
-          "sha256": "68f0f2c78620244faca0e56f1c15629a17c4d35bba753d82fb52ac1996c6205c",
+          "sha256": "d0c148e7002704d3a158237f9e3ece4d5b0b5b87e7db6c8862bb27369af56ed5",
           "src": "agents/autopilot.agent.md"
         },
         {
@@ -76,7 +76,7 @@
         },
         {
           "dest": "skills/autopilot/scripts/launch.ps1",
-          "sha256": "2e1b8338c4c6ee405b9f101fd747f1c677d296dc81f63ed98e67587942498010",
+          "sha256": "2a0e2de630669b62649422d8a2357c95566954c52fc5583005d11c9a45cc06a6",
           "src": "scripts/launch.ps1"
         },
         {
@@ -203,17 +203,17 @@
       "files": [
         {
           "dest": "skills/ci/assets/crosscheck-guide.md",
-          "sha256": "0d7308fec238f328ffd6eb1f416130a1a243db6de524fb342514f02be48294f3",
+          "sha256": "bb8ab5480adcbe5788f1b2a43089dfa6a0592de2434bc7d1ab8b13b4bb2bb7a6",
           "src": "skills/ci/assets/crosscheck-guide.md"
         },
         {
           "dest": "skills/ci/assets/execution-guide.md",
-          "sha256": "ab317bd07d82d170a995793cf5d81707b5620b8e66f3ba97872ac115900e4840",
+          "sha256": "47991b3fe34da354962ee25b812c6ebc6afcd726c230b342d4fdeacb5596eb61",
           "src": "skills/ci/assets/execution-guide.md"
         },
         {
           "dest": "skills/ci/SKILL.md",
-          "sha256": "9c380bad39245da98e6eb66afffdbf9102fa985e4d344c5082d065285509fb7d",
+          "sha256": "86ef76c002d90338eebc225b7ad3cf0dda3dc34072847e158547b0afb6645970",
           "src": "skills/ci/SKILL.md"
         }
       ],
@@ -239,12 +239,12 @@
       "files": [
         {
           "dest": "skills/cip/assets/dr-guide.md",
-          "sha256": "e62ce1d7d1bd8a36bc96c3716658277e83f7b4cf78d241aab0399da5f170d7ea",
+          "sha256": "bcb7c217fb8e7a8c4f51a8ae1d604c920356f4845a53b1f8b2b9aff254d9a2fe",
           "src": "skills/cip/assets/dr-guide.md"
         },
         {
           "dest": "skills/cip/assets/drafting-guide.md",
-          "sha256": "3a4efe090f6f578c14b7ea72bf780e068ba0021aa0c2bed3d299f2377ba95153",
+          "sha256": "7a96ef4443d21e9312ccf251d2a270e7b06fcd71b298d32c08113a06b08dd2cb",
           "src": "skills/cip/assets/drafting-guide.md"
         },
         {

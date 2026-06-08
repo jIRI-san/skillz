@@ -42,6 +42,26 @@ if (-not (Test-Path (Join-Path $PlanFolder 'plan.md'))) {
     Write-Error "Plan not found: $PlanFolder/plan.md"
     exit 1
 }
+$PlanPath = Join-Path $PlanFolder 'plan.md'
+
+# --- Hard dependency start-gate (depends-on: 006) ---
+$planContent = Get-Content -LiteralPath $PlanPath -Raw -Encoding utf8
+$requires006DependencyGate = [regex]::IsMatch($planContent, '<!--\s*depends-on:\s*[^>]*\b006\b[^>]*-->', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+if ($requires006DependencyGate) {
+    $dependencyGateScript = Join-Path $RepoRoot 'scripts/skalary/Test-DependencyPlan006.ps1'
+    if (-not (Test-Path -LiteralPath $dependencyGateScript -PathType Leaf)) {
+        Write-Error "Missing dependency gate script: $dependencyGateScript"
+        exit 1
+    }
+
+    Write-Host "Running plan dependency preflight..."
+    & $dependencyGateScript -RepoRoot $RepoRoot -PlanPath $PlanPath
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "Plan dependency preflight failed. Resolve 006 dependency contracts before launching autopilot."
+        exit 1
+    }
+    Write-Host "Dependency preflight OK."
+}
 
 # --- Load and validate config ---
 $ConfigPath = Join-Path $RepoRoot '.autopilot.json'

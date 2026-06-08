@@ -2,6 +2,10 @@
 
 Records design-review (DR) round history for this plan. DR agents are given this log to avoid re-reporting fixed issues or contradicting prior deliberate decisions.
 
+## Capture
+
+No entries for this phase.
+
 ## Origin — split from 006 (round 2)
 
 - Created at 006's DR round-2 simplicity gate. All three models flagged 006 as two coupled deliverables; the coupling caused 006's round-1 bootstrapping Criticals. The **workflow-memory ledger + learning capture/harvest** subsystem was extracted here.

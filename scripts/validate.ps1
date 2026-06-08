@@ -22,7 +22,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $errors = [System.Collections.Generic.List[string]]::new()
 
 # Skip noise / vendored / VCS directories.
-$skip = '\\(\.git|node_modules|bin|obj|\.worktrees)\\'
+$skip = '[\\/](\.git|node_modules|bin|obj|\.worktrees)[\\/]'
 
 Write-Host '== Validating PowerShell scripts =='
 $psFiles = Get-ChildItem -LiteralPath $repoRoot -Recurse -File -Include '*.ps1', '*.psm1', '*.psd1' |

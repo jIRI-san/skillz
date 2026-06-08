@@ -49,3 +49,42 @@ When approaching limits:
 
 - Set/update `<!-- cip-stage: drafted -->` after drafting.
 - Re-run `Test-Plan.ps1 -Stage Draft` after drafting and after each DR round.
+
+## Capture section (`evolution-log.md`)
+
+When drafting or refining a plan, initialize and maintain a delimited `## Capture` section in the plan folder `evolution-log.md` (separate from DR-round history):
+
+```markdown
+## Capture
+
+No entries for this phase.
+```
+
+Record interview decisions and notable implementation assumptions in this section only, using one line per entry:
+
+```text
+- [interview] [step:<source-step>] <decision or assumption>
+```
+
+Initialize this section and commit `evolution-log.md` by explicit filename at phase start, even if no entries are added yet. Commit again whenever entries are appended.
+
+## `ledger-consult` (on-demand, before drafting)
+
+When a plan folder includes `docs/review-ledger/`, consult only the small category files relevant to the current change; never auto-load the full ledger.
+
+Rules:
+- Exclude `docs/review-ledger/.archive/` from all reads.
+- Prefer targeted reads by category, then optional `#tag` filtering inside the selected file(s).
+- Keep reads narrow (only categories implied by requirements/risks under discussion).
+
+7-category mapping rubric (keyword / REQ-class -> file):
+
+| Signal in request/REQ/RISK | Ledger file |
+|---|---|
+| auth, trust boundary, injection, secrets, ACL, threat model, OWASP | `docs/review-ledger/security.md` |
+| latency, throughput, N+1, allocation pressure, scaling | `docs/review-ledger/performance.md` |
+| exception flow, retries, timeouts, fail-loud behavior | `docs/review-ledger/error-handling.md` |
+| naming drift, duplicated logic, contract mismatch, parity issues | `docs/review-ledger/consistency.md` |
+| phase ordering, dependency gates, acceptance evidence, crosscheck flow | `docs/review-ledger/plan-structure.md` |
+| unit/integration evidence, flaky tests, fixture quality, coverage gaps | `docs/review-ledger/testing.md` |
+| logs, metrics, tracing, diagnosability, receipt/audit visibility | `docs/review-ledger/observability.md` |
