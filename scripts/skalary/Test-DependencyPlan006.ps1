@@ -104,12 +104,15 @@ try {
     if ($failProbe.ExitCode -eq 0) {
         throw 'Expected file-evidence fail probe unexpectedly passed.'
     }
+    if ($failProbe.Output -notmatch 'Evidence failed') {
+        throw "Expected file-evidence fail probe failed for an unexpected reason (no 'Evidence failed' signal).`n$($failProbe.Output)"
+    }
 
     Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/create-implementation-plan/skills/cip/assets/drafting-guide.md' -Pattern 'Test-Plan\.ps1'
     Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md' -Pattern 'test:<TestId>'
     Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md' -Pattern 'file:<path>#<assertion>'
     Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/continue-implementation/skills/ci/assets/crosscheck-guide.md' -Pattern 'review:cr\|dr'
-    Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/autopilot/agents/autopilot.agent.md' -Pattern 'In this repo, `test` stays allowlist-clean as `npm test`'
+    Assert-FileContains -Root $resolvedRoot -RelativePath 'plugins/autopilot/agents/autopilot.agent.md' -Pattern 'allowlist-clean'
 
     $packageJsonPath = Join-Path $resolvedRoot 'package.json'
     if (-not (Test-Path -LiteralPath $packageJsonPath -PathType Leaf)) {

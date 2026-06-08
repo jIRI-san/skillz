@@ -121,13 +121,31 @@ function Invoke-WithLedgerLock {
     $scopeBytes = [System.Text.Encoding]::UTF8.GetBytes($Scope)
     $hashBytes = [System.Security.Cryptography.SHA256]::HashData($scopeBytes)
     $hash = [Convert]::ToHexString($hashBytes).ToLowerInvariant().Substring(0, 32)
-    $mutexName = "Global\skalary-ledger-$hash"
-    $mutex = [System.Threading.Mutex]::new($false, $mutexName)
+    $mutexBaseName = "skalary-ledger-$hash"
+    $mutex = $null
+    foreach ($prefix in @('Global\', 'Local\')) {
+        try {
+            $mutex = [System.Threading.Mutex]::new($false, "$prefix$mutexBaseName")
+            break
+        }
+        catch {
+            $mutex = $null
+        }
+    }
+    if ($null -eq $mutex) {
+        throw "Unable to create ledger lock '$mutexBaseName'."
+    }
     $hasLock = $false
     try {
-        $hasLock = $mutex.WaitOne([TimeSpan]::FromSeconds($mutexWaitSeconds))
+        try {
+            $hasLock = $mutex.WaitOne([TimeSpan]::FromSeconds($mutexWaitSeconds))
+        }
+        catch [System.Threading.AbandonedMutexException] {
+            # Previous owner terminated without releasing; ownership has transferred to us.
+            $hasLock = $true
+        }
         if (-not $hasLock) {
-            throw "Timed out acquiring ledger lock '$mutexName'."
+            throw "Timed out acquiring ledger lock '$mutexBaseName'."
         }
         return & $Action
     }
@@ -180,7 +198,12 @@ if (-not (Test-Path -LiteralPath $archivePath -PathType Leaf)) {
 $currentPlanNumber = [int]$CurrentPlan
 $recurrenceThreshold = $RecurrenceThreshold
 
-$lockScope = "$([System.IO.Path]::GetFullPath($RepoRoot))|$Category"
+$lockScopeRoot = [System.IO.Path]::GetFullPath($RepoRoot)
+if ($IsWindows) {
+    # Windows file systems are case-insensitive; lowercase so differently-cased roots share one lock.
+    $lockScopeRoot = $lockScopeRoot.ToLowerInvariant()
+}
+$lockScope = "$lockScopeRoot|$Category"
 $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
     $lines = @((Get-Content -LiteralPath $ledgerPath -Encoding utf8))
     $parseableRecords = @()
@@ -226,12 +249,15 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
     }
 
     $updatedLedger = if ($remainingLines.Count -eq 0) { '' } else { ($remainingLines -join "`n") + "`n" }
-    Set-FileAtomically -Path $ledgerPath -Content $updatedLedger
 
     $archiveLines = @((Get-Content -LiteralPath $archivePath -Encoding utf8) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
     $updatedArchive = @($archiveLines + $targetRecord.Line)
     $archiveContent = if ($updatedArchive.Count -eq 0) { '' } else { ($updatedArchive -join "`n") + "`n" }
+
+    # Archive first, then prune. A crash between the two writes leaves a recoverable
+    # duplicate (entry still in the ledger) rather than a hard delete.
     Set-FileAtomically -Path $archivePath -Content $archiveContent
+    Set-FileAtomically -Path $ledgerPath -Content $updatedLedger
 
     return [pscustomobject]@{
         RemovedLine = $targetRecord.Line

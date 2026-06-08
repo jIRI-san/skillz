@@ -242,4 +242,33 @@ Describe 'Add-LedgerEntry script' {
         $lines.Count | Should -Be 2
         ($lines -join "`n") | Should -Match '\[recurrence:2\]'
     }
+
+    It 'Add-LedgerEntry.PreservesHeader' {
+        $root = New-TestRepoRoot
+        $seedPath = Join-Path $root 'docs/review-ledger/security.md'
+        Set-Content -LiteralPath $seedPath -Value "# Security Ledger`n`nNo entries yet.`n" -Encoding utf8NoBOM
+
+        (Invoke-AddLedger -Root $root -Entry 'Header preserved lesson').ExitCode | Should -Be 0
+
+        $content = Get-Content -LiteralPath $seedPath -Raw -Encoding utf8
+        $content | Should -Match '# Security Ledger'
+        $content | Should -Not -Match 'No entries yet\.'
+        $content | Should -Match 'Header preserved lesson'
+        $content.IndexOf('# Security Ledger') | Should -BeLessThan $content.IndexOf('Header preserved lesson')
+
+        # Idempotent re-run keeps the header intact.
+        (Invoke-AddLedger -Root $root -Entry 'Header preserved lesson').ExitCode | Should -Be 0
+        $rerun = Get-Content -LiteralPath $seedPath -Raw -Encoding utf8
+        $rerun | Should -Match '# Security Ledger'
+        $rerun | Should -Not -Match 'No entries yet\.'
+    }
+
+    It 'Add-LedgerEntry.SanitizesPipe' {
+        $root = New-TestRepoRoot
+        (Invoke-AddLedger -Root $root -Entry 'lesson with | pipe char').ExitCode | Should -Be 0
+
+        $line = (Get-LedgerLines -Root $root)[0]
+        $line | Should -Not -Match '\|'
+        $line | Should -Match 'lesson with pipe char'
+    }
 }

@@ -66,7 +66,7 @@ function Sanitize-LedgerText {
     $sanitized = [regex]::Replace($sanitized, '(?i)src\s*:', 'src-')
     $sanitized = [regex]::Replace($sanitized, '(?i)sev\s*:', 'sev-')
     $sanitized = [regex]::Replace($sanitized, '(?i)\[recurrence\s*:\s*\d+\]', ' recurrence- ')
-    $sanitized = [regex]::Replace($sanitized, '[(),#\[\]]', ' ')
+    $sanitized = [regex]::Replace($sanitized, '[(),#\[\]|]', ' ')
     $sanitized = [regex]::Replace($sanitized, '\s+', ' ').Trim()
     if ([string]::IsNullOrWhiteSpace($sanitized)) {
         throw 'Entry text is empty after sanitization.'
@@ -174,6 +174,88 @@ function Get-DeterministicOrder {
     )
 }
 
+function Get-LedgerHeaderLines {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]]$Lines
+    )
+
+    $placeholder = 'No entries yet.'
+    $firstEntryIndex = -1
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        if ([string]::IsNullOrWhiteSpace($Lines[$i])) {
+            continue
+        }
+        if ($null -ne (ConvertTo-LedgerRecord -Line $Lines[$i])) {
+            $firstEntryIndex = $i
+            break
+        }
+    }
+
+    $candidate = if ($firstEntryIndex -eq 0) {
+        @()
+    }
+    elseif ($firstEntryIndex -gt 0) {
+        @($Lines[0..($firstEntryIndex - 1)])
+    }
+    else {
+        @($Lines)
+    }
+
+    $header = [System.Collections.Generic.List[string]]::new()
+    foreach ($line in $candidate) {
+        if ([string]::Equals($line.Trim(), $placeholder, [System.StringComparison]::OrdinalIgnoreCase)) {
+            continue
+        }
+        $header.Add($line)
+    }
+    while ($header.Count -gt 0 -and [string]::IsNullOrWhiteSpace($header[0])) {
+        $header.RemoveAt(0)
+    }
+    while ($header.Count -gt 0 -and [string]::IsNullOrWhiteSpace($header[$header.Count - 1])) {
+        $header.RemoveAt($header.Count - 1)
+    }
+    return , @($header.ToArray())
+}
+
+function Build-LedgerContent {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]]$HeaderLines,
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [AllowEmptyString()]
+        [string[]]$EntryLines
+    )
+
+    $placeholder = 'No entries yet.'
+    $builder = [System.Collections.Generic.List[string]]::new()
+    if ($HeaderLines.Count -gt 0) {
+        $builder.AddRange([string[]]$HeaderLines)
+    }
+    if ($EntryLines.Count -gt 0) {
+        if ($builder.Count -gt 0) {
+            $builder.Add('')
+        }
+        $builder.AddRange([string[]]$EntryLines)
+    }
+    elseif ($HeaderLines.Count -gt 0) {
+        $builder.Add('')
+        $builder.Add($placeholder)
+    }
+
+    if ($builder.Count -eq 0) {
+        return ''
+    }
+    return ($builder -join "`n") + "`n"
+}
+
 function Invoke-WithLedgerLock {
     [CmdletBinding()]
     param(
@@ -186,13 +268,31 @@ function Invoke-WithLedgerLock {
     $scopeBytes = [System.Text.Encoding]::UTF8.GetBytes($Scope)
     $hashBytes = [System.Security.Cryptography.SHA256]::HashData($scopeBytes)
     $hash = [Convert]::ToHexString($hashBytes).ToLowerInvariant().Substring(0, 32)
-    $mutexName = "Global\skalary-ledger-$hash"
-    $mutex = [System.Threading.Mutex]::new($false, $mutexName)
+    $mutexBaseName = "skalary-ledger-$hash"
+    $mutex = $null
+    foreach ($prefix in @('Global\', 'Local\')) {
+        try {
+            $mutex = [System.Threading.Mutex]::new($false, "$prefix$mutexBaseName")
+            break
+        }
+        catch {
+            $mutex = $null
+        }
+    }
+    if ($null -eq $mutex) {
+        throw "Unable to create ledger lock '$mutexBaseName'."
+    }
     $hasLock = $false
     try {
-        $hasLock = $mutex.WaitOne([TimeSpan]::FromSeconds($mutexWaitSeconds))
+        try {
+            $hasLock = $mutex.WaitOne([TimeSpan]::FromSeconds($mutexWaitSeconds))
+        }
+        catch [System.Threading.AbandonedMutexException] {
+            # Previous owner terminated without releasing; ownership has transferred to us.
+            $hasLock = $true
+        }
         if (-not $hasLock) {
-            throw "Timed out acquiring ledger lock '$mutexName'."
+            throw "Timed out acquiring ledger lock '$mutexBaseName'."
         }
 
         function Set-FileAtomically {
@@ -243,9 +343,15 @@ if (-not (Test-Path -LiteralPath $ledgerPath -PathType Leaf)) {
     throw "Ledger category file not found: $ledgerPath"
 }
 
-$lockScope = "$([System.IO.Path]::GetFullPath($RepoRoot))|$Category"
+$normalizedLockRoot = [System.IO.Path]::GetFullPath($RepoRoot)
+if ($IsWindows) {
+    # Windows file systems are case-insensitive; lowercase so differently-cased roots share one lock.
+    $normalizedLockRoot = $normalizedLockRoot.ToLowerInvariant()
+}
+$lockScope = "$normalizedLockRoot|$Category"
 $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
     $lines = @((Get-Content -LiteralPath $ledgerPath -Encoding utf8))
+    $headerLines = Get-LedgerHeaderLines -Lines $lines
     $records = @()
     foreach ($line in $lines) {
         if ([string]::IsNullOrWhiteSpace($line)) {
@@ -262,7 +368,7 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
         $orderedExisting = Get-DeterministicOrder -Records $records
         $orderedLines = @($orderedExisting | ForEach-Object { $_.Line })
         $existingContent = if ($lines.Count -eq 0) { '' } else { ($lines -join "`n") + "`n" }
-        $canonicalContent = if ($orderedLines.Count -eq 0) { '' } else { ($orderedLines -join "`n") + "`n" }
+        $canonicalContent = Build-LedgerContent -HeaderLines $headerLines -EntryLines $orderedLines
         if ($existingContent -ne $canonicalContent) {
             Set-FileAtomically -Path $ledgerPath -Content $canonicalContent
         }
@@ -285,7 +391,7 @@ $result = Invoke-WithLedgerLock -Scope $lockScope -Action {
 
     $ordered = Get-DeterministicOrder -Records (@($records) + $newRecord)
     $updatedLines = @($ordered | ForEach-Object { $_.Line })
-    $content = if ($updatedLines.Count -eq 0) { '' } else { ($updatedLines -join "`n") + "`n" }
+    $content = Build-LedgerContent -HeaderLines $headerLines -EntryLines $updatedLines
     Set-FileAtomically -Path $ledgerPath -Content $content
 
     return [pscustomobject]@{
